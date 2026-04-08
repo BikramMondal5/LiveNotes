@@ -4,7 +4,10 @@ import { Button } from './components/ui/button';
 import { Input } from './components/ui/input';
 import { Zap } from 'lucide-react';
 
+import { useRouter } from 'next/navigation';
+
 const LiveNotesHero = () => {
+    const router = useRouter();
     const [roomInput, setRoomInput] = useState('');
     const [isLoaded, setIsLoaded] = useState(false);
     const inputRef = useRef<HTMLInputElement>(null);
@@ -19,6 +22,7 @@ const LiveNotesHero = () => {
     const handleJoinRoom = () => {
         const roomId = roomInput.trim() || `room-${Math.random().toString(36).substr(2, 9)}`;
         console.log('Joining room:', roomId);
+        router.push(`/room/${roomId}`);
     };
 
     const handleKeyPress = (e: React.KeyboardEvent<HTMLInputElement>) => {
