@@ -1,0 +1,15 @@
+# 📄 Project Abstract: LiveNotes
+
+**LiveNotes** is a real-time collaborative web application designed to enable seamless note sharing through a simple and frictionless user experience. The platform allows users to instantly create or join a room without authentication by entering a name or room code, making collaboration fast and accessible.
+
+The core functionality of LiveNotes is built on WebSocket-based real-time communication, ensuring that any changes made by an authorized user are instantly reflected across all connected clients. Each room follows a controlled collaboration model where the room creator has full read and write access, while other users initially join as viewers. Viewers can request edit permissions, which can be granted or revoked by the room owner, ensuring structured and conflict-free collaboration.
+
+In addition to real-time note synchronization, LiveNotes supports dynamic PDF sharing, allowing users to upload and view documents within the same collaborative space. This enhances its usability for study groups, team discussions, and knowledge sharing.
+
+A key feature of the platform is the integrated AI assistant, **“Ask Elloy”**, which enables users to ask questions, generate summaries, and gain insights from the shared notes. Future enhancements include the integration of Retrieval-Augmented Generation (RAG), enabling the AI to understand and answer queries based on uploaded PDF content.
+
+The frontend is designed with a modern, minimalistic dark-themed interface that prioritizes usability and speed. The entry point of the application is a centered hero section with a single input field and a “Join Room” action, reducing friction and allowing users to start collaborating instantly.
+
+LiveNotes is built using a scalable full-stack architecture with technologies such as React for the frontend, Node.js and Socket.IO for real-time communication, and cloud storage solutions for file handling. The platform is designed to evolve into a powerful collaboration tool with AI-driven capabilities and real-time synchronization at its core.
+
+**Keywords:** Real-time collaboration, WebSockets, AI assistant, RAG, minimal UI, PDF sharing, room-based system
