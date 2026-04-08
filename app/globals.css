@@ -19,6 +19,18 @@
   }
 }
 
+@keyframes float {
+
+  0%,
+  100% {
+    transform: translate(-50%, 0) scale(1);
+  }
+
+  50% {
+    transform: translate(-50%, -20px) scale(1.05);
+  }
+}
+
 body {
   background: var(--background);
   color: var(--foreground);
