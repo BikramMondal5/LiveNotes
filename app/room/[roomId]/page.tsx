@@ -116,9 +116,6 @@ export default function RoomPage() {
 
                 {/* Canvas Area */}
                 <div className="flex-1 w-full h-full relative overflow-hidden bg-[#121212]">
-                    {/* Placeholder rounded rectangle from the reference image */}
-                    <div className="absolute top-1/2 left-1/3 w-32 h-20 border border-zinc-700 rounded-xl transform -translate-x-1/2 -translate-y-1/2" />
-
                     {/* The textarea overlaid invisibly or if viewMode includes document */}
                     <textarea
                         value={notes}
@@ -131,27 +128,6 @@ export default function RoomPage() {
                 {/* Right Top Zoom Control */}
                 <div className="absolute top-4 right-4 flex items-center gap-1 text-xs font-semibold text-zinc-400 hover:text-zinc-200 cursor-pointer transition-colors z-10 px-2 py-1 rounded hover:bg-zinc-800">
                     100% <ChevronDown className="w-3 h-3 ml-0.5" />
-                </div>
-
-                {/* Bottom Center Floating Toolbar */}
-                <div className="absolute bottom-6 left-1/2 transform -translate-x-1/2 flex items-center gap-2 bg-zinc-900/90 border border-zinc-800 rounded-xl p-1 shadow-2xl backdrop-blur-sm z-10">
-                    <button className="w-8 h-8 flex items-center justify-center rounded hover:bg-zinc-800 text-zinc-400 transition-colors">
-                        <Slash className="w-4 h-4 rotate-45" />
-                        <ChevronDown className="w-2.5 h-2.5 ml-0.5 opacity-70" />
-                    </button>
-                    <div className="w-px h-4 bg-zinc-800 mx-0.5" />
-                    <button className="w-8 h-8 flex items-center justify-center rounded hover:bg-zinc-800 text-zinc-400 transition-colors">
-                        <div className="flex flex-col gap-0.75">
-                            <div className="w-4 h-[1.5px] bg-current" />
-                            <div className="w-4 h-[1.5px] bg-current" />
-                            <div className="w-4 h-[1.5px] bg-current" />
-                        </div>
-                        <ChevronDown className="w-2.5 h-2.5 ml-0.5 opacity-70" />
-                    </button>
-                    <div className="w-px h-4 bg-zinc-800 mx-0.5" />
-                    <button className="w-8 h-8 flex items-center justify-center rounded hover:bg-zinc-800 text-zinc-400 transition-colors">
-                        <div className="w-5 h-5 flex items-center justify-center bg-zinc-800 rounded text-[10px] tracking-widest text-zinc-300 pb-1.5">...</div>
-                    </button>
                 </div>
 
                 {/* Bottom Right Help */}

@@ -1,6 +1,7 @@
 'use client';
 import React, { useState, useEffect, useRef } from 'react';
 import { motion, useAnimationFrame, useMotionValue } from 'framer-motion';
+import { useRouter } from 'next/navigation';
 
 // Grid Pattern Component
 const GridPattern = ({ size = 80 }: { size?: number }) => {
@@ -46,6 +47,7 @@ const NeonGlow = ({ className = '' }: { className?: string }) => {
 
 // Main Component
 const LiveNotesHero = () => {
+    const router = useRouter();
     const [roomInput, setRoomInput] = useState('');
     const [isFocused, setIsFocused] = useState(false);
     const inputRef = useRef<HTMLInputElement>(null);
@@ -61,8 +63,10 @@ const LiveNotesHero = () => {
             const randomId = Math.random().toString(36).substring(2, 8).toUpperCase();
             setRoomInput(randomId);
             console.log('Generated room ID:', randomId);
+            router.push(`/room/${randomId}`);
         } else {
             console.log('Joining room:', roomInput);
+            router.push(`/room/${roomInput}`);
         }
     };
 
@@ -84,8 +88,8 @@ const LiveNotesHero = () => {
             <div className="absolute inset-0 bg-gradient-radial from-transparent via-transparent to-[#09090B]/40" />
 
             {/* Neon Glows */}
-            <NeonGlow className="top-[20%] left-1/2 -translate-x-1/2 w-[600px] h-[600px] bg-[#2EFF85]" />
-            <NeonGlow className="top-[35%] left-1/2 -translate-x-1/2 w-[400px] h-[400px] bg-[#2EFF85]" />
+            <NeonGlow className="top-[5%] left-1/2 -translate-x-1/2 w-[600px] h-[600px] bg-[#2EFF85]" />
+            <NeonGlow className="top-[20%] left-1/2 -translate-x-1/2 w-[400px] h-[400px] bg-[#2EFF85]" />
 
             {/* Navbar */}
             <nav className="relative z-20 w-full px-6 py-6">
