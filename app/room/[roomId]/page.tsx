@@ -5,6 +5,8 @@ import { useParams } from "next/navigation";
 import { io, Socket } from "socket.io-client";
 import { Plus, Wand2, MousePointer2, Square, Circle, ArrowUpRight, Slash, PenLine, Type, Image as ImageIcon, Frame, HelpingHand, Settings, ChevronDown, MoreHorizontal, Sparkles } from "lucide-react";
 import DotGrid from "../../components/DotGrid";
+import DrawingCanvas from "../../components/DrawingCanvas";
+import type { DrawingTool } from "../../components/DrawingCanvas";
 
 export default function RoomPage() {
     const { roomId } = useParams() as { roomId: string };
@@ -130,6 +132,15 @@ export default function RoomPage() {
 
                 {/* Canvas Area */}
                 <div className="flex-1 w-full h-full relative overflow-hidden z-5">
+                    {/* Drawing Canvas - visible when canvas mode */}
+                    {viewMode !== 'document' && (
+                        <DrawingCanvas
+                            activeTool={activeTool as DrawingTool}
+                            socket={socketRef.current || undefined}
+                            roomId={roomId}
+                        />
+                    )}
+
                     {/* The textarea overlaid invisibly or if viewMode includes document */}
                     <textarea
                         value={notes}
