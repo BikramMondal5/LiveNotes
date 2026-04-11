@@ -4,6 +4,7 @@ import { useEffect, useState, useRef } from "react";
 import { useParams } from "next/navigation";
 import { io, Socket } from "socket.io-client";
 import { Plus, Wand2, MousePointer2, Square, Circle, ArrowUpRight, Slash, PenLine, Type, Image as ImageIcon, Frame, HelpingHand, Settings, ChevronDown, MoreHorizontal, Sparkles } from "lucide-react";
+import DotGrid from "../../components/DotGrid";
 
 export default function RoomPage() {
     const { roomId } = useParams() as { roomId: string };
@@ -80,7 +81,20 @@ export default function RoomPage() {
             </header>
 
             {/* Main Content Area */}
-            <div className="flex-1 relative flex">
+            <div className="flex-1 relative flex overflow-hidden bg-[#121212]">
+                {/* Dot Grid Background */}
+                <div className="absolute inset-0 z-0">
+                    <DotGrid
+                        dotSize={4}
+                        gap={20}
+                        baseColor="#3F3F46"
+                        activeColor="#10B981"
+                        proximity={100}
+                        speedTrigger={50}
+                        shockRadius={200}
+                        shockStrength={4}
+                    />
+                </div>
 
                 {/* Left Toolbar */}
                 <div className="absolute left-4 top-4 flex flex-col gap-2 z-10 w-11">
@@ -115,7 +129,7 @@ export default function RoomPage() {
                 </div>
 
                 {/* Canvas Area */}
-                <div className="flex-1 w-full h-full relative overflow-hidden bg-[#121212]">
+                <div className="flex-1 w-full h-full relative overflow-hidden z-5">
                     {/* The textarea overlaid invisibly or if viewMode includes document */}
                     <textarea
                         value={notes}
