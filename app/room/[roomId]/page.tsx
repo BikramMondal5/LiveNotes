@@ -6,6 +6,7 @@ import { io, Socket } from "socket.io-client";
 import { Plus, Wand2, MousePointer2, Square, Circle, ArrowUpRight, Slash, PenLine, Type, Image as ImageIcon, Frame, HelpingHand, Settings, ChevronDown, MoreHorizontal, Sparkles } from "lucide-react";
 import DotGrid from "../../components/DotGrid";
 import DrawingCanvas from "../../components/DrawingCanvas";
+import AskAlloy from "../../components/AskAlloy";
 import type { DrawingTool } from "../../components/DrawingCanvas";
 
 export default function RoomPage() {
@@ -14,6 +15,7 @@ export default function RoomPage() {
     const socketRef = useRef<Socket | null>(null);
     const [activeTool, setActiveTool] = useState("square");
     const [viewMode, setViewMode] = useState("canvas"); // document | both | canvas
+    const [isAlloyOpen, setIsAlloyOpen] = useState(false);
 
     useEffect(() => {
         const socket = io();
@@ -72,12 +74,9 @@ export default function RoomPage() {
                     <div className="hidden md:flex items-center gap-1.5 px-2.5 py-1.5 bg-zinc-800/50 border border-zinc-700/50 rounded text-xs text-zinc-400 font-medium">
                         Ctrl K
                     </div>
-                    <button className="text-sm text-blue-400 hover:text-blue-300 font-medium transition-colors">
-                        Sign in
-                    </button>
-                    <button className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-3 py-1.5 rounded-md text-sm font-medium transition-colors">
-                        <Sparkles className="w-4 h-4" />
-                        AI Chat
+                    <button onClick={() => setIsAlloyOpen(true)} className="flex items-center gap-1.5 bg-[#2EFF85] hover:bg-[#25dd72] text-[#0A0A0A] px-2.5 py-1.5 rounded text-xs font-medium transition-colors">
+                        <Sparkles className="w-3.5 h-3.5" />
+                        Ask Elloy
                     </button>
                 </div>
             </header>
@@ -145,8 +144,9 @@ export default function RoomPage() {
                     <textarea
                         value={notes}
                         onChange={handleChange}
-                        className={`absolute inset-0 w-full h-full p-20 bg-transparent border-0 outline-none resize-none placeholder:text-zinc-600/50 leading-relaxed text-zinc-400 tracking-wide z-0 ${viewMode === 'canvas' ? 'opacity-0 pointer-events-none' : 'opacity-100'} transition-opacity duration-300`}
+                        className={`absolute inset-0 w-full h-full p-20 bg-transparent border-0 outline-none resize-none placeholder:text-zinc-600/50 leading-relaxed text-[#2EFF85] tracking-wide z-0 ${viewMode === 'canvas' ? 'opacity-0 pointer-events-none' : 'opacity-100'} transition-opacity duration-300`}
                         placeholder="Type to add notes, or use the canvas tools..."
+                        style={{ caretColor: '#2EFF85' }}
                     />
                 </div>
 
@@ -163,6 +163,9 @@ export default function RoomPage() {
                 </div>
 
             </div>
+
+            {/* Chat Assistant Sidebar */}
+            <AskAlloy isOpen={isAlloyOpen} onOpenChange={setIsAlloyOpen} showFloatingButton={false} />
         </div>
     );
 }

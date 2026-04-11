@@ -28,6 +28,13 @@ const DrawingCanvas: React.FC<DrawingCanvasProps> = ({ activeTool, socket, roomI
             width: canvasRef.current.parentElement?.clientWidth || 800,
             height: canvasRef.current.parentElement?.clientHeight || 600,
             backgroundColor: 'transparent',
+            // Configure selection styling
+            selectionColor: 'rgba(46, 255, 133, 0.1)',
+            selectionBorderColor: '#2EFF85',
+            selectionLineWidth: 2,
+            selectionCornerSize: 8,
+            selectionCornerStyle: 'square',
+            selectionDashArray: undefined,
         });
 
         fabricCanvasRef.current = canvas;
@@ -91,12 +98,15 @@ const DrawingCanvas: React.FC<DrawingCanvasProps> = ({ activeTool, socket, roomI
         [socket, roomId]
     );
 
-    // Mouse Down
-    const handleMouseDown = useCallback(
-        (e: any) => {
-            if (!fabricCanvasRef.current) return;
+    // Attach event listeners only once on mount, never detach/reattach
+    useEffect(() => {
+        if (!fabricCanvasRef.current) return;
 
-            const pointer = fabricCanvasRef.current.getScenePoint(e);
+        const canvas = fabricCanvasRef.current;
+
+        // Handler wrappers that will persist throughout component lifetime
+        const onMouseDown = (e: any) => {
+            const pointer = canvas.getScenePoint(e);
             startPointRef.current = { x: pointer.x, y: pointer.y };
             pointsRef.current = [];
 
@@ -109,17 +119,12 @@ const DrawingCanvas: React.FC<DrawingCanvasProps> = ({ activeTool, socket, roomI
             }
 
             setIsDrawing(true);
-        },
-        [activeTool]
-    );
+        };
 
-    // Mouse Move
-    const handleMouseMove = useCallback(
-        (e: any) => {
-            if (!fabricCanvasRef.current || !isDrawing) return;
+        const onMouseMove = (e: any) => {
+            if (!isDrawing) return;
 
-            const pointer = fabricCanvasRef.current.getScenePoint(e);
-            const canvas = fabricCanvasRef.current;
+            const pointer = canvas.getScenePoint(e);
 
             if (activeTool === 'pencil') {
                 pointsRef.current.push({ x: pointer.x, y: pointer.y });
@@ -129,7 +134,6 @@ const DrawingCanvas: React.FC<DrawingCanvasProps> = ({ activeTool, socket, roomI
                 const left = Math.min(startPointRef.current.x, pointer.x);
                 const top = Math.min(startPointRef.current.y, pointer.y);
 
-                // Remove previous preview
                 if (previewObjectRef.current) {
                     canvas.remove(previewObjectRef.current);
                 }
@@ -139,20 +143,29 @@ const DrawingCanvas: React.FC<DrawingCanvasProps> = ({ activeTool, socket, roomI
                     top,
                     width,
                     height,
-                    fill: 'transparent',
+                    fill: null,
                     stroke: '#2EFF85',
                     strokeWidth: 2,
+                    strokeUniform: true,
+                    originX: 'left',
+                    originY: 'top',
+                    hasControls: false,
+                    hasBorders: false,
+                    selectable: false,
                 });
 
                 canvas.add(rect);
                 previewObjectRef.current = rect;
                 canvas.renderAll();
             } else if (activeTool === 'circle') {
-                const dx = pointer.x - startPointRef.current.x;
-                const dy = pointer.y - startPointRef.current.y;
-                const radius = Math.sqrt(dx * dx + dy * dy) / 2;
-                const left = startPointRef.current.x - radius;
-                const top = startPointRef.current.y - radius;
+                const width = Math.abs(pointer.x - startPointRef.current.x);
+                const height = Math.abs(pointer.y - startPointRef.current.y);
+
+                const diameter = Math.max(width, height);
+                const radius = diameter / 2;
+
+                const left = Math.min(startPointRef.current.x, pointer.x);
+                const top = Math.min(startPointRef.current.y, pointer.y);
 
                 if (previewObjectRef.current) {
                     canvas.remove(previewObjectRef.current);
@@ -162,9 +175,15 @@ const DrawingCanvas: React.FC<DrawingCanvasProps> = ({ activeTool, socket, roomI
                     left,
                     top,
                     radius,
-                    fill: 'transparent',
+                    fill: null,
                     stroke: '#2EFF85',
                     strokeWidth: 2,
+                    strokeUniform: true,
+                    originX: 'left',
+                    originY: 'top',
+                    hasControls: false,
+                    hasBorders: false,
+                    selectable: false,
                 });
 
                 canvas.add(circle);
@@ -180,6 +199,10 @@ const DrawingCanvas: React.FC<DrawingCanvasProps> = ({ activeTool, socket, roomI
                     {
                         stroke: '#2EFF85',
                         strokeWidth: 2,
+                        strokeUniform: true,
+                        hasControls: false,
+                        hasBorders: false,
+                        selectable: false,
                     }
                 );
 
@@ -187,16 +210,9 @@ const DrawingCanvas: React.FC<DrawingCanvasProps> = ({ activeTool, socket, roomI
                 previewObjectRef.current = line;
                 canvas.renderAll();
             }
-        },
-        [isDrawing, activeTool]
-    );
+        };
 
-    // Mouse Up
-    const handleMouseUp = useCallback(
-        (e: any) => {
-            if (!fabricCanvasRef.current) return;
-
-            const canvas = fabricCanvasRef.current;
+        const onMouseUp = (e: any) => {
             const pointer = canvas.getScenePoint(e);
 
             if (activeTool === 'pencil' && pointsRef.current.length > 2) {
@@ -207,15 +223,24 @@ const DrawingCanvas: React.FC<DrawingCanvasProps> = ({ activeTool, socket, roomI
                 const path = new Path(pathData, {
                     stroke: '#2EFF85',
                     strokeWidth: 2,
-                    fill: 'transparent',
+                    fill: null,
+                    strokeUniform: true,
+                    hasControls: true,
+                    hasBorders: true,
+                    selectable: true,
                 });
 
                 canvas.add(path);
                 emitElement(path);
             } else {
-                const objects = canvas.getObjects();
-                if (objects.length > 0 && previewObjectRef.current === objects[objects.length - 1]) {
-                    const preview = objects[objects.length - 1];
+                if (previewObjectRef.current) {
+                    const preview = previewObjectRef.current;
+                    preview.set({
+                        hasControls: true,
+                        hasBorders: true,
+                        selectable: true,
+                    });
+                    canvas.setActiveObject(preview);
                     emitElement(preview);
                     previewObjectRef.current = null;
                 }
@@ -224,16 +249,12 @@ const DrawingCanvas: React.FC<DrawingCanvasProps> = ({ activeTool, socket, roomI
             canvas.renderAll();
             setIsDrawing(false);
             pointsRef.current = [];
-        },
-        [activeTool, emitElement]
-    );
+        };
 
-    // Text tool click handler
-    const handleCanvasClick = useCallback(
-        (e: any) => {
+        const onCanvasClick = (e: any) => {
             if (activeTool !== 'text') return;
 
-            const pointer = fabricCanvasRef.current?.getScenePoint(e);
+            const pointer = canvas?.getScenePoint(e);
             if (!pointer) return;
 
             const text = prompt('Enter text:');
@@ -243,33 +264,29 @@ const DrawingCanvas: React.FC<DrawingCanvasProps> = ({ activeTool, socket, roomI
                     top: pointer.y,
                     fontSize: 16,
                     fill: '#2EFF85',
+                    hasControls: true,
+                    hasBorders: true,
+                    selectable: true,
                 });
 
-                fabricCanvasRef.current?.add(fabricText);
-                fabricCanvasRef.current?.renderAll();
+                canvas?.add(fabricText);
+                canvas?.renderAll();
                 emitElement(fabricText);
             }
-        },
-        [activeTool, emitElement]
-    );
+        };
 
-    // Attach event listeners
-    useEffect(() => {
-        if (!fabricCanvasRef.current) return;
-
-        const canvas = fabricCanvasRef.current;
-        canvas.on('mouse:down', handleMouseDown);
-        canvas.on('mouse:move', handleMouseMove);
-        canvas.on('mouse:up', handleMouseUp);
-        canvas.on('mouse:dblclick', handleCanvasClick);
+        canvas.on('mouse:down', onMouseDown);
+        canvas.on('mouse:move', onMouseMove);
+        canvas.on('mouse:up', onMouseUp);
+        canvas.on('mouse:dblclick', onCanvasClick);
 
         return () => {
-            canvas.off('mouse:down', handleMouseDown);
-            canvas.off('mouse:move', handleMouseMove);
-            canvas.off('mouse:up', handleMouseUp);
-            canvas.off('mouse:dblclick', handleCanvasClick);
+            canvas.off('mouse:down', onMouseDown);
+            canvas.off('mouse:move', onMouseMove);
+            canvas.off('mouse:up', onMouseUp);
+            canvas.off('mouse:dblclick', onCanvasClick);
         };
-    }, [handleMouseDown, handleMouseMove, handleMouseUp, handleCanvasClick]);
+    }, [activeTool, emitElement, isDrawing]);
 
     // Listen for incoming drawings
     useEffect(() => {
