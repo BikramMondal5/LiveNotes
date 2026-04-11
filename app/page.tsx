@@ -1,31 +1,72 @@
 'use client';
 import React, { useState, useEffect, useRef } from 'react';
-import { Button } from './components/ui/button';
-import { Input } from './components/ui/input';
-import { Zap } from 'lucide-react';
+import { motion, useAnimationFrame, useMotionValue } from 'framer-motion';
 
-import { useRouter } from 'next/navigation';
+// Grid Pattern Component
+const GridPattern = ({ size = 80 }: { size?: number }) => {
+    return (
+        <svg className="absolute inset-0 w-full h-full">
+            <defs>
+                <pattern
+                    id="grid-pattern-livenotes"
+                    width={size}
+                    height={size}
+                    patternUnits="userSpaceOnUse"
+                >
+                    <path
+                        d={`M ${size} 0 L 0 0 0 ${size}`}
+                        fill="none"
+                        stroke="rgba(46, 255, 133, 0.08)"
+                        strokeWidth="1"
+                    />
+                </pattern>
+            </defs>
+            <rect width="100%" height="100%" fill="url(#grid-pattern-livenotes)" />
+        </svg>
+    );
+};
 
+// Neon Glow Component
+const NeonGlow = ({ className = '' }: { className?: string }) => {
+    return (
+        <motion.div
+            className={`absolute rounded-full blur-[120px] ${className}`}
+            animate={{
+                scale: [1, 1.1, 1],
+                opacity: [0.08, 0.15, 0.08],
+            }}
+            transition={{
+                duration: 4,
+                repeat: Infinity,
+                ease: 'easeInOut',
+            }}
+        />
+    );
+};
+
+// Main Component
 const LiveNotesHero = () => {
-    const router = useRouter();
     const [roomInput, setRoomInput] = useState('');
-    const [isLoaded, setIsLoaded] = useState(false);
+    const [isFocused, setIsFocused] = useState(false);
     const inputRef = useRef<HTMLInputElement>(null);
 
     useEffect(() => {
-        setIsLoaded(true);
         if (inputRef.current) {
             inputRef.current.focus();
         }
     }, []);
 
     const handleJoinRoom = () => {
-        const roomId = roomInput.trim() || `room-${Math.random().toString(36).substr(2, 9)}`;
-        console.log('Joining room:', roomId);
-        router.push(`/room/${roomId}`);
+        if (!roomInput.trim()) {
+            const randomId = Math.random().toString(36).substring(2, 8).toUpperCase();
+            setRoomInput(randomId);
+            console.log('Generated room ID:', randomId);
+        } else {
+            console.log('Joining room:', roomInput);
+        }
     };
 
-    const handleKeyPress = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    const handleKeyPress = (e: React.KeyboardEvent) => {
         if (e.key === 'Enter') {
             handleJoinRoom();
         }
@@ -33,122 +74,142 @@ const LiveNotesHero = () => {
 
     return (
         <div className="relative min-h-screen w-full overflow-hidden bg-[#09090B]">
-            {/* Ambient Aura Effects */}
-            <div className="absolute inset-0 overflow-hidden">
-                {/* Top center glow behind heading */}
-                <div
-                    className="absolute left-1/2 top-1/3 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] rounded-full opacity-10 blur-[120px] animate-pulse"
-                    style={{
-                        background: 'radial-gradient(circle, #2EFF85 0%, transparent 70%)',
-                        animationDuration: '8s',
-                    }}
-                />
-
-                {/* Bottom glow near input area */}
-                <div
-                    className="absolute left-1/2 top-2/3 -translate-x-1/2 w-[600px] h-[600px] rounded-full opacity-[0.08] blur-[100px]"
-                    style={{
-                        background: 'radial-gradient(circle, #2EFF85 0%, transparent 70%)',
-                        animation: 'float 10s ease-in-out infinite',
-                    }}
-                />
-
-                {/* Subtle noise texture overlay */}
-                <div
-                    className="absolute inset-0 opacity-[0.02]"
-                    style={{
-                        backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 400 400' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' /%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)' /%3E%3C/svg%3E")`,
-                    }}
-                />
-
-                {/* Vignette effect */}
-                <div
-                    className="absolute inset-0"
-                    style={{
-                        background: 'radial-gradient(circle at center, transparent 0%, rgba(9, 9, 11, 0.8) 100%)',
-                    }}
-                />
+            {/* Grid Background */}
+            <div className="absolute inset-0 opacity-100">
+                <GridPattern size={80} />
             </div>
 
-            {/* Navbar */}
-            <nav className="relative z-10 flex items-center justify-between px-6 py-6 md:px-12">
-                <div className="flex items-center gap-3">
-                    <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-[#2EFF85]/10 border border-[#2EFF85]/20">
-                        <Zap className="h-5 w-5 text-[#2EFF85]" fill="#2EFF85" />
-                    </div>
-                    <span className="text-xl font-bold text-white">LiveNotes</span>
-                </div>
+            {/* Gradient Vignette */}
+            <div className="absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-[#09090B]/60" />
+            <div className="absolute inset-0 bg-gradient-radial from-transparent via-transparent to-[#09090B]/40" />
 
-                <div className="flex items-center gap-8">
-                    <a
-                        href="#about"
-                        className="text-sm text-[#A1A1AA] transition-colors duration-300 hover:text-[#2EFF85]"
-                    >
-                        About
-                    </a>
-                    <a
-                        href="#github"
-                        className="flex items-center gap-2 text-sm text-[#A1A1AA] transition-colors duration-300 hover:text-[#2EFF85]"
-                    >
-                        <svg viewBox="0 0 24 24" className="h-4 w-4" fill="currentColor">
-                            <path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z" />
-                        </svg>
-                        <span className="hidden sm:inline">GitHub</span>
-                    </a>
+            {/* Neon Glows */}
+            <NeonGlow className="top-[20%] left-1/2 -translate-x-1/2 w-[600px] h-[600px] bg-[#2EFF85]" />
+            <NeonGlow className="top-[35%] left-1/2 -translate-x-1/2 w-[400px] h-[400px] bg-[#2EFF85]" />
+
+            {/* Navbar */}
+            <nav className="relative z-20 w-full px-6 py-6">
+                <div className="max-w-7xl mx-auto flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                        <div className="w-8 h-8 rounded-lg bg-[#2EFF85] flex items-center justify-center">
+                            <svg
+                                className="w-5 h-5 text-[#09090B]"
+                                fill="none"
+                                stroke="currentColor"
+                                viewBox="0 0 24 24"
+                            >
+                                <path
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
+                                    strokeWidth={2.5}
+                                    d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
+                                />
+                            </svg>
+                        </div>
+                        <span className="text-xl font-bold text-white">LiveNotes</span>
+                    </div>
+
+                    <div className="flex items-center gap-8">
+                        <a
+                            href="#"
+                            className="text-sm text-[#A1A1AA] hover:text-[#2EFF85] transition-colors"
+                        >
+                            About
+                        </a>
+                        <a
+                            href="#"
+                            className="text-sm text-[#A1A1AA] hover:text-[#2EFF85] transition-colors flex items-center gap-2"
+                        >
+                            <svg viewBox="0 0 24 24" className="h-4 w-4" fill="currentColor">
+                                <path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z" />
+                            </svg>
+                            GitHub
+                        </a>
+                    </div>
                 </div>
             </nav>
 
             {/* Hero Content */}
-            <div
-                className={`relative z-10 flex min-h-[calc(100vh-88px)] items-center justify-center px-6 transition-all duration-1000 ${isLoaded ? 'translate-y-0 opacity-100' : 'translate-y-8 opacity-0'
-                    }`}
-            >
-                <div className="w-full max-w-2xl text-center">
+            <div className="relative z-10 flex items-center justify-center min-h-[calc(100vh-88px)] px-6">
+                <motion.div
+                    initial={{ opacity: 0, y: 30 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.8, ease: 'easeOut' }}
+                    className="max-w-4xl mx-auto text-center space-y-8"
+                >
                     {/* Heading */}
-                    <h1 className="mb-6 text-5xl font-bold leading-tight text-white md:text-6xl lg:text-7xl">
-                        Start Writing.{' '}
-                        <span
-                            className="relative inline-block text-[#2EFF85]"
-                            style={{
-                                textShadow: '0 0 40px rgba(46, 255, 133, 0.3)',
-                            }}
-                        >
-                            Share Instantly.
-                        </span>
-                    </h1>
-
-                    {/* Subheading */}
-                    <p className="mb-12 text-lg text-[#A1A1AA] md:text-xl">
-                        Create a room and collaborate in real-time with your friends.
-                    </p>
-
-                    {/* Input + Button */}
-                    <div className="mx-auto mb-6 flex flex-col gap-3 sm:flex-row sm:items-center">
-                        <div className="relative flex-1">
-                            <Input
-                                ref={inputRef}
-                                type="text"
-                                placeholder="Enter your name or room code..."
-                                value={roomInput}
-                                onChange={(e) => setRoomInput(e.target.value)}
-                                onKeyPress={handleKeyPress}
-                                className="h-14 w-full rounded-full border-[#27272A] bg-[#111111] px-6 text-base text-white placeholder:text-[#52525B] transition-all duration-300 focus:border-[#2EFF85] focus:shadow-[0_0_20px_rgba(46,255,133,0.2)] focus:ring-2 focus:ring-[#2EFF85]/20"
-                            />
-                        </div>
-
-                        <Button
-                            onClick={handleJoinRoom}
-                            className="h-14 rounded-full bg-[#2EFF85] px-8 text-base font-semibold text-[#09090B] shadow-[0_0_30px_rgba(46,255,133,0.3)] transition-all duration-300 hover:scale-[1.03] hover:bg-[#2EFF85] hover:shadow-[0_0_40px_rgba(46,255,133,0.5)]"
-                        >
-                            Join Room
-                        </Button>
+                    <div className="space-y-4">
+                        <h1 className="text-5xl md:text-7xl lg:text-8xl font-bold text-white leading-tight tracking-tight">
+                            Start Writing.{' '}
+                            <span className="text-[#2EFF85] relative inline-block">
+                                Share Instantly.
+                                <div className="absolute -inset-4 bg-[#2EFF85] opacity-20 blur-3xl -z-10" />
+                            </span>
+                        </h1>
+                        <p className="text-lg md:text-xl text-[#A1A1AA] max-w-2xl mx-auto leading-relaxed">
+                            Create a room and collaborate in real-time with your friends.
+                        </p>
                     </div>
 
+                    {/* Input + Button */}
+                    <motion.div
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ duration: 0.8, delay: 0.2 }}
+                        className="relative max-w-2xl mx-auto"
+                    >
+                        <div className="relative">
+                            {/* Glow behind input */}
+                            <div
+                                className={`absolute -inset-2 bg-[#2EFF85] opacity-0 blur-2xl transition-opacity duration-300 ${isFocused ? 'opacity-20' : ''
+                                    }`}
+                            />
+
+                            <div className="relative flex items-center gap-3 bg-[#111111] rounded-full p-2 border border-[#2EFF85]/20 transition-all duration-300 hover:border-[#2EFF85]/40">
+                                <input
+                                    ref={inputRef}
+                                    type="text"
+                                    value={roomInput}
+                                    onChange={(e) => setRoomInput(e.target.value)}
+                                    onFocus={() => setIsFocused(true)}
+                                    onBlur={() => setIsFocused(false)}
+                                    onKeyPress={handleKeyPress}
+                                    placeholder="Enter your name or room code..."
+                                    className="flex-1 bg-transparent text-white placeholder:text-[#A1A1AA] px-6 py-4 outline-none text-base md:text-lg"
+                                />
+                                <motion.button
+                                    onClick={handleJoinRoom}
+                                    whileHover={{ scale: 1.05 }}
+                                    whileTap={{ scale: 0.95 }}
+                                    className="relative px-8 py-4 bg-[#2EFF85] text-[#09090B] font-semibold rounded-full text-base md:text-lg overflow-hidden group"
+                                >
+                                    <span className="relative z-10">Join Room</span>
+                                    <div className="absolute inset-0 bg-[#2EFF85] opacity-0 group-hover:opacity-100 blur-xl transition-opacity" />
+                                    <motion.div
+                                        className="absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent"
+                                        initial={{ x: '-100%' }}
+                                        whileHover={{ x: '100%' }}
+                                        transition={{ duration: 0.6 }}
+                                    />
+                                </motion.button>
+                            </div>
+                        </div>
+                    </motion.div>
+
                     {/* Helper Text */}
-                    <p className="text-sm text-[#71717A]">
-                        No sign-up required • Free forever • End-to-end encrypted
-                    </p>
-                </div>
+                    <motion.div
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        transition={{ duration: 0.8, delay: 0.4 }}
+                        className="flex items-center justify-center gap-3 text-xs md:text-sm text-[#A1A1AA]"
+                    >
+                        <span>No sign-up required</span>
+                        <span className="w-1 h-1 rounded-full bg-[#A1A1AA]" />
+                        <span>Free forever</span>
+                        <span className="w-1 h-1 rounded-full bg-[#A1A1AA]" />
+                        <span>End-to-end encrypted</span>
+                    </motion.div>
+                </motion.div>
             </div>
         </div>
     );
