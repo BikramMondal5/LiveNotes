@@ -288,7 +288,7 @@ const AskAlloy: React.FC<AskAlloyProps> = ({ defaultOpen = false, isOpen: contro
             {!isOpen && showFloatingButton && (
                 <button
                     onClick={() => setIsOpen(true)}
-                    className="fixed bottom-6 right-6 z-50 px-6 py-6 rounded-full bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white font-semibold shadow-lg transition-all duration-300 hover:scale-105"
+                    className="fixed bottom-6 right-6 z-50 px-6 py-6 rounded-full bg-[#00C753] hover:bg-[#00a344] text-white font-semibold shadow-lg transition-all duration-300 hover:scale-105"
                     style={{
                         animation: 'glow 2s ease-in-out infinite'
                     }}
@@ -319,7 +319,7 @@ const AskAlloy: React.FC<AskAlloyProps> = ({ defaultOpen = false, isOpen: contro
                             <div className="flex items-center justify-between p-6 border-b border-white/10 bg-black/20">
                                 <div className="flex items-center gap-4">
                                     <div className="relative">
-                                        <div className="w-12 h-12 bg-gradient-to-br from-green-500 to-emerald-600 rounded-full flex items-center justify-center">
+                                        <div className="w-12 h-12 bg-[#00C753] rounded-full flex items-center justify-center">
                                             <img src="/Elloy-logo.png" alt="Elloy" className="w-6 h-6" />
                                         </div>
                                         <div className="absolute -bottom-1 -right-1 w-4 h-4 bg-green-500 rounded-full border-2 border-[#0a0a0a] animate-pulse" />
@@ -341,11 +341,11 @@ const AskAlloy: React.FC<AskAlloyProps> = ({ defaultOpen = false, isOpen: contro
                                 <div ref={scrollRef} className="space-y-4">
                                     {messages.length === 0 ? (
                                         <div className="flex flex-col items-center justify-center h-full min-h-[400px] text-center space-y-6">
-                                            <div className="relative">
-                                                <div className="w-24 h-24 bg-gradient-to-br from-green-500/20 to-emerald-600/20 rounded-full flex items-center justify-center border border-green-500/30">
-                                                    <img src="/Elloy-logo.png" alt="Elloy" className="w-12 h-12" />
+                                            <div className="relative flex items-center justify-center">
+                                                <div className="w-24 h-24 bg-[#00C753] rounded-full flex items-center justify-center">
+                                                    <img src="/Elloy-logo.png" alt="Elloy" className="w-20 h-20" />
                                                 </div>
-                                                <div className="absolute inset-0 bg-green-500/20 rounded-full blur-xl animate-pulse" />
+                                                <div className="absolute inset-0 bg-[#00C753]/20 rounded-full blur-xl" />
                                             </div>
                                             <div className="space-y-2">
                                                 <h3 className="text-xl font-semibold text-white">What can I help you with today?</h3>
@@ -506,7 +506,7 @@ const AskAlloy: React.FC<AskAlloyProps> = ({ defaultOpen = false, isOpen: contro
                                     <button
                                         onClick={handleSend}
                                         disabled={!inputValue.trim()}
-                                        className="bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white rounded-full w-10 h-10 p-0 shrink-0 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-300 flex items-center justify-center"
+                                        className="bg-[#00C753] hover:bg-[#00a344] text-white rounded-full w-10 h-10 p-0 shrink-0 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-300 flex items-center justify-center"
                                     >
                                         <Send className="w-5 h-5" />
                                     </button>
