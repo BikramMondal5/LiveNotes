@@ -508,14 +508,14 @@ const AskAlloy: React.FC<AskAlloyProps> = ({ defaultOpen = false, isOpen: contro
                                                 animate={{ opacity: 1, y: 0, scale: 1 }}
                                                 exit={{ opacity: 0, scale: 0.9 }}
                                                 transition={{ duration: 0.2 }}
-                                                className="absolute bottom-12 left-2 z-50 w-64 bg-[#1a1a1a] border border-[#333] rounded-xl shadow-xl overflow-hidden shadow-black/50"
+                                                className="absolute bottom-12 left-2 z-50 w-64 bg-[#09090B] border border-white/10 rounded-[20px] shadow-2xl overflow-hidden shadow-black/50"
                                             >
-                                                <div className="max-h-64 overflow-y-auto w-full py-2">
+                                                <div className="max-h-64 overflow-y-auto w-full py-2 no-scrollbar">
                                                     {MODEL_CATEGORIES.map(category => (
                                                         <div key={category.category} className="mb-3 px-2">
                                                             {/* Category Label */}
                                                             <div className="flex items-center gap-2 mb-1 pl-2">
-                                                                <span className="text-xs font-semibold text-purple-400 uppercase tracking-wider">
+                                                                <span className="text-[11px] font-semibold text-[#2EFF85]/50 uppercase tracking-wider">
                                                                     {category.category}
                                                                 </span>
                                                             </div>
@@ -527,8 +527,8 @@ const AskAlloy: React.FC<AskAlloyProps> = ({ defaultOpen = false, isOpen: contro
                                                                         setSelectedModel(model.name);
                                                                         setShowModels(false);
                                                                     }}
-                                                                    className={`w-full text-left px-3 py-2 text-sm rounded-lg transition-colors flex items-center gap-3 
-                                                                    ${selectedModel === model.name ? 'bg-purple-600/20 text-purple-300' : 'text-gray-200 hover:bg-[#2a2a2a]'}`}
+                                                                    className={`w-full text-left px-3 py-2 text-sm rounded-xl transition-colors flex items-center gap-3 
+                                                                    ${selectedModel === model.name ? 'bg-[#2EFF85]/10 text-[#2EFF85] shadow-[inset_0_0_10px_rgba(46,255,133,0.05)]' : 'text-gray-300 hover:bg-white/5 hover:text-gray-100'}`}
                                                                 >
                                                                     <div className="w-6 h-6 rounded-full shrink-0 overflow-hidden flex items-center justify-center bg-white/10">
                                                                         <img src={model.icon} alt={model.name} className="w-full h-full object-cover" />
@@ -544,7 +544,7 @@ const AskAlloy: React.FC<AskAlloyProps> = ({ defaultOpen = false, isOpen: contro
                                     </AnimatePresence>
                                 </div>
 
-                                <div className="flex flex-col justify-between bg-[#1A1A1A] rounded-3xl border border-white/10 p-3 focus-within:border-[#2EFF85] focus-within:shadow-[0_0_15px_rgba(46,255,133,0.3),0_0_40px_rgba(46,255,133,0.15),0_0_80px_rgba(46,255,133,0.1),inset_0_1px_1px_rgba(255,255,255,0.15),inset_0_-10px_30px_rgba(46,255,133,0.15)] transition-all duration-300 relative">
+                                <div className="flex flex-col justify-between bg-[#1A1A1A] rounded-3xl border border-white/10 p-3 focus-within:border-[#2EFF85] focus-within:shadow-[0_0_10px_rgba(46,255,133,0.2),0_0_20px_rgba(46,255,133,0.1),0_0_30px_rgba(46,255,133,0.05),inset_0_1px_1px_rgba(255,255,255,0.1),inset_0_-5px_15px_rgba(46,255,133,0.1)] transition-all duration-300 relative">
                                     <textarea
                                         ref={inputRef}
                                         value={inputValue}
@@ -585,7 +585,7 @@ const AskAlloy: React.FC<AskAlloyProps> = ({ defaultOpen = false, isOpen: contro
                                         <button
                                             onClick={handleSend}
                                             disabled={!inputValue.trim()}
-                                            className="bg-[#2EFF85] hover:bg-[#28e075] text-[#0A0A0A] rounded-full w-10 h-10 p-0 shrink-0 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-300 flex items-center justify-center shadow-[0_0_10px_rgba(46,255,133,0.2)]"
+                                            className="bg-[#2EFF85] hover:bg-[#28e075] text-[#0A0A0A] rounded-xl w-10 h-10 p-0 shrink-0 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-300 flex items-center justify-center shadow-[0_0_10px_rgba(46,255,133,0.2)]"
                                         >
                                             <Send className="w-5 h-5 ml-0.5" />
                                         </button>
