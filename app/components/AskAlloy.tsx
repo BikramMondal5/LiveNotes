@@ -312,6 +312,32 @@ const AskAlloy: React.FC<AskAlloyProps> = ({ defaultOpen = false, isOpen: contro
 
                 const data = await response.json();
                 aiResponseContent = data.choices?.[0]?.message?.content || 'No response from Mistral.';
+            } else if (provider === 'grok') {
+                const client = ModelClient(
+                    "https://models.github.ai/inference",
+                    new AzureKeyCredential(API_KEY)
+                );
+
+                const response = await client.path("/chat/completions").post({
+                    body: {
+                        messages: [
+                            { role: "system", content: systemPrompt },
+                            ...messages.concat(userMessage).map(m => ({
+                                role: m.sender === 'user' ? 'user' : 'assistant',
+                                content: m.content
+                            }))
+                        ],
+                        temperature: 1.0,
+                        top_p: 1.0,
+                        model: "xai/grok-3"
+                    }
+                });
+
+                if (isUnexpected(response)) {
+                    throw new Error(`Grok 3 API Error: ${response.body?.error?.message || 'Unknown error'}`);
+                }
+
+                aiResponseContent = response.body.choices[0].message.content || 'No response from Grok 3.';
             } else {
                 // Mock delay simulation for other unconfigured models
                 await new Promise(resolve => setTimeout(resolve, 1500));
