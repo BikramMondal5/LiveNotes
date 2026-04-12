@@ -12,13 +12,8 @@ const getApiKey = (provider: string) => {
         switch (provider) {
             case 'gemini': return process.env.NEXT_PUBLIC_GEMINI_API_KEY || '';
             case 'groq': return process.env.NEXT_PUBLIC_GROQ_API_KEY || '';
-            case 'anthropic': return process.env.NEXT_PUBLIC_POLLINATIONS_API_KEY || '';
-            case 'openai': return process.env.NEXT_PUBLIC_POLLINATIONS_API_KEY || '';
-            case 'deepseek': return process.env.NEXT_PUBLIC_POLLINATIONS_API_KEY || '';
             case 'nova': return process.env.NEXT_PUBLIC_POLLINATIONS_API_KEY || '';
             case 'mistral': return process.env.NEXT_PUBLIC_POLLINATIONS_API_KEY || '';
-            case 'perplexity': return process.env.NEXT_PUBLIC_POLLINATIONS_API_KEY || '';
-            case 'qwen': return process.env.NEXT_PUBLIC_POLLINATIONS_API_KEY || '';
             case 'gpt4o': return process.env.NEXT_PUBLIC_GITHUB_TOKEN || '';
             case 'grok': return process.env.NEXT_PUBLIC_GITHUB_TOKEN || '';
             default: return '';
@@ -31,26 +26,13 @@ const getApiKey = (provider: string) => {
 const API_URLS: Record<string, string> = {
     gemini: "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent",
     groq: "https://api.groq.com/openai/v1/chat/completions",
-    anthropic: "https://gen.pollinations.ai/v1/chat/completions",
-    openai: "https://gen.pollinations.ai/v1/chat/completions",
-    deepseek: "https://gen.pollinations.ai/v1/chat/completions",
     nova: "https://gen.pollinations.ai/v1/chat/completions",
     mistral: "https://gen.pollinations.ai/v1/chat/completions",
-    perplexity: "https://gen.pollinations.ai/v1/chat/completions",
-    qwen: "https://gen.pollinations.ai/v1/chat/completions",
     gpt4o: "https://models.inference.ai.azure.com/chat/completions",
     grok: "https://models.inference.ai.azure.com/chat/completions"
 };
 
 const MODEL_CATEGORIES = [
-    {
-        category: "Reasoning Models",
-        models: [
-            { name: "Deepseek V3.2", icon: "https://img.icons8.com/color/512/deepseek.png", provider: "deepseek" },
-            { name: "Perplexity Sonar", icon: "https://framerusercontent.com/images/gcMkPKyj2RX8EOEja8A1GWvCb7E.jpg?width=2000&height=2000", provider: "perplexity" },
-            { name: "Qwen3.5 Plus", icon: "https://qwenlm.github.io/img/logo.png", provider: "qwen" },
-        ]
-    },
     {
         category: "Fast Models",
         models: [
@@ -63,13 +45,6 @@ const MODEL_CATEGORIES = [
         models: [
             { name: "Grok 3", icon: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQ2jp_76g7jO8SNGczRg1HUW8qa_vHiVaUBJQ&s", provider: "grok" },
             { name: "OpenAI GPT-4o", icon: "https://static.vecteezy.com/system/resources/previews/022/227/364/non_2x/openai-chatgpt-logo-icon-free-png.png", provider: "gpt4o" },
-        ]
-    },
-    {
-        category: "Multi-step Tasks",
-        models: [
-            { name: "OpenAI GPT-5 Mini", icon: "https://static.vecteezy.com/system/resources/previews/022/227/364/non_2x/openai-chatgpt-logo-icon-free-png.png", provider: "openai" },
-            { name: "Claude Haiku 4.5", icon: "https://woopt.modeltheme.com/wp-content/uploads/2025/07/04claude.png", provider: "anthropic" },
         ]
     },
     {
