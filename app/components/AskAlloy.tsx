@@ -5,6 +5,7 @@ import { X, Send, Sparkles } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import ModelClient, { isUnexpected } from "@azure-rest/ai-inference";
 import { AzureKeyCredential } from "@azure/core-auth";
+import ReactMarkdown from 'react-markdown';
 
 // API configuration - Get keys dynamically from env vars
 const getApiKey = (provider: string) => {
@@ -114,6 +115,18 @@ const AskAlloy: React.FC<AskAlloyProps> = ({ defaultOpen = false, isOpen: contro
         if (isOpen && inputRef.current) {
             inputRef.current.focus();
         }
+    }, [isOpen]);
+
+    useEffect(() => {
+        const handleGlobalKeyDown = (e: KeyboardEvent) => {
+            if (e.ctrlKey && e.shiftKey && e.key.toLowerCase() === 'k') {
+                e.preventDefault();
+                setIsOpen(!isOpen);
+            }
+        };
+
+        window.addEventListener('keydown', handleGlobalKeyDown);
+        return () => window.removeEventListener('keydown', handleGlobalKeyDown);
     }, [isOpen]);
 
     useEffect(() => {
@@ -546,7 +559,15 @@ const AskAlloy: React.FC<AskAlloyProps> = ({ defaultOpen = false, isOpen: contro
                                                             : 'bg-[#1A1A1A] text-gray-100 border border-white/5 shadow-[0_4px_12px_rgba(0,0,0,0.5)]'
                                                             }`}
                                                     >
-                                                        <p className="text-sm leading-relaxed">{message.content}</p>
+                                                        {message.sender === 'ai' ? (
+                                                            <div className="text-sm leading-relaxed prose prose-invert prose-p:leading-relaxed max-w-none break-words">
+                                                                <ReactMarkdown>
+                                                                    {message.content}
+                                                                </ReactMarkdown>
+                                                            </div>
+                                                        ) : (
+                                                            <p className="text-sm leading-relaxed whitespace-pre-wrap">{message.content}</p>
+                                                        )}
                                                         <span className={`text-xs mt-1.5 block ${message.sender === 'user' ? 'text-[#09090B]/50' : 'text-gray-500'}`}>
                                                             {formatTime(message.timestamp)}
                                                         </span>
