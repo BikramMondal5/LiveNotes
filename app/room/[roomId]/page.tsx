@@ -16,6 +16,29 @@ export default function RoomPage() {
     const [activeTool, setActiveTool] = useState("square");
     const [viewMode, setViewMode] = useState("canvas"); // document | both | canvas
     const [isAlloyOpen, setIsAlloyOpen] = useState(false);
+    const [pdfFile, setPdfFile] = useState<string | null>(null);
+    const fileInputRef = useRef<HTMLInputElement>(null);
+
+    const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (file && file.type === "application/pdf") {
+            const url = URL.createObjectURL(file);
+            setPdfFile(url);
+        }
+    };
+
+    const handleDrop = (e: React.DragEvent) => {
+        e.preventDefault();
+        const file = e.dataTransfer.files?.[0];
+        if (file && file.type === "application/pdf") {
+            const url = URL.createObjectURL(file);
+            setPdfFile(url);
+        }
+    };
+
+    const handleDragOver = (e: React.DragEvent) => {
+        e.preventDefault();
+    };
 
     useEffect(() => {
         const socket = io();
@@ -60,7 +83,7 @@ export default function RoomPage() {
                         onClick={() => setViewMode("both")}
                         className={`px-4 py-1.5 text-xs font-medium rounded-sm transition-colors ${viewMode === 'both' ? 'bg-zinc-800 text-white' : 'text-zinc-400 hover:text-white'}`}
                     >
-                        Both
+                        Text
                     </button>
                     <button
                         onClick={() => setViewMode("canvas")}
@@ -72,7 +95,7 @@ export default function RoomPage() {
 
                 <div className="flex items-center gap-4 min-w-50 justify-end">
                     <div className="hidden md:flex items-center gap-1.5 px-2.5 py-1.5 bg-zinc-800/50 border border-zinc-700/50 rounded text-xs text-zinc-400 font-medium">
-                        Ctrl K
+                        Ctrl + Shift + K
                     </div>
                     <button onClick={() => setIsAlloyOpen(true)} className="flex items-center gap-1.5 bg-[#2EFF85] hover:bg-[#25dd72] text-[#0A0A0A] px-2.5 py-1.5 rounded text-xs font-medium transition-colors">
                         <Sparkles className="w-3.5 h-3.5" />
@@ -98,56 +121,106 @@ export default function RoomPage() {
                 </div>
 
                 {/* Left Toolbar */}
-                <div className="absolute left-4 top-4 flex flex-col gap-2 z-10 w-11">
-                    {/* Top block */}
-                    <div className="flex flex-col gap-1 bg-zinc-900/90 border border-zinc-800 rounded-xl p-1 shadow-xl backdrop-blur-sm">
-                        <button className="w-9 h-9 flex items-center justify-center rounded-lg hover:bg-zinc-800 text-zinc-400 transition-colors group relative">
-                            <Plus className="w-4 h-4" />
-                            <span className="absolute right-1 bottom-1 text-[8px] text-zinc-600 group-hover:text-zinc-400">/</span>
-                        </button>
-                        <button className="w-9 h-9 flex items-center justify-center rounded-lg hover:bg-zinc-800 text-zinc-400 transition-colors group relative">
-                            <Wand2 className="w-4 h-4" />
-                            <span className="absolute right-1 bottom-0.5 text-[7px] text-zinc-600 group-hover:text-zinc-400 tracking-tighter">CTRL J</span>
-                        </button>
-                    </div>
+                {viewMode !== 'document' && (
+                    <div className="absolute left-4 top-4 flex flex-col gap-2 z-10 w-11">
+                        {/* Top block */}
+                        <div className="flex flex-col gap-1 bg-zinc-900/90 border border-zinc-800 rounded-xl p-1 shadow-xl backdrop-blur-sm">
+                            <button className="w-9 h-9 flex items-center justify-center rounded-lg hover:bg-zinc-800 text-zinc-400 transition-colors group relative">
+                                <Plus className="w-4 h-4" />
+                                <span className="absolute right-1 bottom-1 text-[8px] text-zinc-600 group-hover:text-zinc-400">/</span>
+                            </button>
+                            <button className="w-9 h-9 flex items-center justify-center rounded-lg hover:bg-zinc-800 text-zinc-400 transition-colors group relative">
+                                <Wand2 className="w-4 h-4" />
+                                <span className="absolute right-1 bottom-0.5 text-[7px] text-zinc-600 group-hover:text-zinc-400 tracking-tighter">CTRL J</span>
+                            </button>
+                        </div>
 
-                    {/* Tools block */}
-                    <div className="flex flex-col gap-1 bg-zinc-900/90 border border-zinc-800 rounded-xl p-1 shadow-xl backdrop-blur-sm">
-                        <ToolButton icon={MousePointer2} label="V" active={activeTool === 'pointer'} onClick={() => setActiveTool('pointer')} />
-                        <ToolButton icon={Square} label="R" active={activeTool === 'square'} onClick={() => setActiveTool('square')} />
-                        <ToolButton icon={Circle} label="O" active={activeTool === 'circle'} onClick={() => setActiveTool('circle')} />
-                        <ToolButton icon={ArrowUpRight} label="A" active={activeTool === 'arrow'} onClick={() => setActiveTool('arrow')} />
-                        <ToolButton icon={Slash} label="L" active={activeTool === 'line'} onClick={() => setActiveTool('line')} className="rotate-90" />
-                        <ToolButton icon={PenLine} label="D" active={activeTool === 'draw'} onClick={() => setActiveTool('draw')} />
-                        <ToolButton icon={Type} label="T" active={activeTool === 'text'} onClick={() => setActiveTool('text')} />
-                        <ToolButton icon={ImageIcon} label="I" active={activeTool === 'image'} onClick={() => setActiveTool('image')} />
-                    </div>
+                        {/* Tools block */}
+                        <div className="flex flex-col gap-1 bg-zinc-900/90 border border-zinc-800 rounded-xl p-1 shadow-xl backdrop-blur-sm">
+                            <ToolButton icon={MousePointer2} label="V" active={activeTool === 'pointer'} onClick={() => setActiveTool('pointer')} />
+                            <ToolButton icon={Square} label="R" active={activeTool === 'square'} onClick={() => setActiveTool('square')} />
+                            <ToolButton icon={Circle} label="O" active={activeTool === 'circle'} onClick={() => setActiveTool('circle')} />
+                            <ToolButton icon={ArrowUpRight} label="A" active={activeTool === 'arrow'} onClick={() => setActiveTool('arrow')} />
+                            <ToolButton icon={Slash} label="L" active={activeTool === 'line'} onClick={() => setActiveTool('line')} className="rotate-90" />
+                            <ToolButton icon={PenLine} label="D" active={activeTool === 'draw'} onClick={() => setActiveTool('draw')} />
+                            <ToolButton icon={Type} label="T" active={activeTool === 'text'} onClick={() => setActiveTool('text')} />
+                            <ToolButton icon={ImageIcon} label="I" active={activeTool === 'image'} onClick={() => setActiveTool('image')} />
+                        </div>
 
-                    {/* Bottom block */}
-                    <div className="flex flex-col gap-1 bg-zinc-900/90 border border-zinc-800 rounded-xl p-1 shadow-xl backdrop-blur-sm">
-                        <ToolButton icon={Frame} label="F" active={activeTool === 'frame'} onClick={() => setActiveTool('frame')} />
+                        {/* Bottom block */}
+                        <div className="flex flex-col gap-1 bg-zinc-900/90 border border-zinc-800 rounded-xl p-1 shadow-xl backdrop-blur-sm">
+                            <ToolButton icon={Frame} label="F" active={activeTool === 'frame'} onClick={() => setActiveTool('frame')} />
+                        </div>
                     </div>
-                </div>
+                )}
 
                 {/* Canvas Area */}
                 <div className="flex-1 w-full h-full relative overflow-hidden z-5">
                     {/* Drawing Canvas - visible when canvas mode */}
-                    {viewMode !== 'document' && (
+                    <div className={`absolute inset-0 transition-opacity duration-300 ${viewMode === 'document' ? 'opacity-0 pointer-events-none z-0' : 'opacity-100 z-10'}`}>
                         <DrawingCanvas
                             activeTool={activeTool as DrawingTool}
                             socket={socketRef.current || undefined}
                             roomId={roomId}
                         />
+                    </div>
+
+                    {/* Document PDF Viewer */}
+                    {viewMode === 'document' && (
+                        <div
+                            className="absolute inset-0 z-10 p-8 flex items-center justify-center bg-[#121212]/80 backdrop-blur-sm"
+                            onDrop={handleDrop}
+                            onDragOver={handleDragOver}
+                        >
+                            {!pdfFile ? (
+                                <div
+                                    className="flex flex-col items-center justify-center w-full h-full max-w-2xl max-h-[600px] border-2 border-dashed border-zinc-700 hover:border-[#2EFF85] rounded-3xl bg-zinc-900/50 transition-colors cursor-pointer group"
+                                    onClick={() => fileInputRef.current?.click()}
+                                >
+                                    <div className="w-16 h-16 rounded-full bg-zinc-800 flex items-center justify-center mb-4 group-hover:bg-[#2EFF85]/20 group-hover:text-[#2EFF85] transition-colors">
+                                        <Plus className="w-8 h-8 text-zinc-400 group-hover:text-[#2EFF85]" />
+                                    </div>
+                                    <h3 className="text-xl font-medium text-zinc-200 mb-2">Upload Document</h3>
+                                    <p className="text-zinc-500 text-sm">Drag and drop your PDF here, or click to browse</p>
+                                    <input
+                                        type="file"
+                                        ref={fileInputRef}
+                                        className="hidden"
+                                        accept="application/pdf"
+                                        onChange={handleFileChange}
+                                    />
+                                </div>
+                            ) : (
+                                <div className="w-full h-full relative flex flex-col bg-zinc-900 rounded-xl overflow-hidden border border-zinc-800 shadow-2xl">
+                                    <div className="flex items-center justify-between px-4 py-2 border-b border-zinc-800 bg-[#1A1A1A]">
+                                        <span className="text-sm font-medium text-zinc-300">Document Preview</span>
+                                        <button
+                                            onClick={() => setPdfFile(null)}
+                                            className="text-xs px-3 py-1 rounded bg-zinc-800 hover:bg-zinc-700 text-zinc-300 transition-colors"
+                                        >
+                                            Remove
+                                        </button>
+                                    </div>
+                                    <iframe
+                                        src={pdfFile}
+                                        className="w-full h-full border-0 bg-zinc-900"
+                                        title="PDF Preview"
+                                    />
+                                </div>
+                            )}
+                        </div>
                     )}
 
                     {/* The textarea overlaid invisibly or if viewMode includes document */}
-                    <textarea
-                        value={notes}
-                        onChange={handleChange}
-                        className={`absolute inset-0 w-full h-full p-20 bg-transparent border-0 outline-none resize-none placeholder:text-zinc-600/50 leading-relaxed text-[#2EFF85] tracking-wide z-0 ${viewMode === 'canvas' ? 'opacity-0 pointer-events-none' : 'opacity-100'} transition-opacity duration-300`}
-                        placeholder="Type to add notes, or use the canvas tools..."
-                        style={{ caretColor: '#2EFF85' }}
-                    />
+                    {viewMode !== 'document' && (
+                        <textarea
+                            value={notes}
+                            onChange={handleChange}
+                            className={`absolute inset-0 w-full h-full p-20 bg-transparent border-0 outline-none resize-none placeholder:text-zinc-600/50 leading-relaxed text-[#2EFF85] tracking-wide z-0 ${viewMode === 'canvas' ? 'opacity-0 pointer-events-none' : 'opacity-100'} transition-opacity duration-300`}
+                            placeholder="Type to add notes, or use the canvas tools..."
+                            style={{ caretColor: '#2EFF85' }}
+                        />
+                    )}
                 </div>
 
                 {/* Right Top Zoom Control */}
