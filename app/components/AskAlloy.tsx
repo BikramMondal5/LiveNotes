@@ -3,6 +3,8 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { X, Send, Sparkles } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
+import ModelClient, { isUnexpected } from "@azure-rest/ai-inference";
+import { AzureKeyCredential } from "@azure/core-auth";
 
 // API configuration - Get keys dynamically from env vars
 const getApiKey = (provider: string) => {
@@ -233,6 +235,33 @@ const AskAlloy: React.FC<AskAlloyProps> = ({ defaultOpen = false, isOpen: contro
 
                 const data = await response.json();
                 aiResponseContent = data.choices?.[0]?.message?.content || 'No response from Groq.';
+            } else if (provider === 'gpt4o') {
+                const client = ModelClient(
+                    "https://models.github.ai/inference",
+                    new AzureKeyCredential(API_KEY)
+                );
+
+                const response = await client.path("/chat/completions").post({
+                    body: {
+                        messages: [
+                            { role: "system", content: systemPrompt },
+                            ...messages.concat(userMessage).map(m => ({
+                                role: m.sender === 'user' ? 'user' : 'assistant',
+                                content: m.content
+                            }))
+                        ],
+                        temperature: 1.0,
+                        top_p: 1.0,
+                        max_tokens: 1000,
+                        model: "openai/gpt-4o"
+                    }
+                });
+
+                if (isUnexpected(response)) {
+                    throw new Error(`GPT-4o API Error: ${response.body?.error?.message || 'Unknown'}`);
+                }
+
+                aiResponseContent = response.body.choices[0].message.content || 'No response from GPT-4o.';
             } else {
                 // Mock delay simulation for other unconfigured models
                 await new Promise(resolve => setTimeout(resolve, 1500));
