@@ -262,6 +262,31 @@ const AskAlloy: React.FC<AskAlloyProps> = ({ defaultOpen = false, isOpen: contro
                 }
 
                 aiResponseContent = response.body.choices[0].message.content || 'No response from GPT-4o.';
+            } else if (provider === 'nova') {
+                const response = await fetch(API_URLS.nova, {
+                    method: "POST",
+                    headers: {
+                        Authorization: `Bearer ${API_KEY}`,
+                        "Content-Type": "application/json"
+                    },
+                    body: JSON.stringify({
+                        model: "nova-fast",
+                        messages: [
+                            { role: "system", content: systemPrompt },
+                            ...messages.concat(userMessage).map(m => ({
+                                role: m.sender === 'user' ? 'user' : 'assistant',
+                                content: m.content
+                            }))
+                        ]
+                    })
+                });
+
+                if (!response.ok) {
+                    throw new Error(`Nova API Error: ${response.status}`);
+                }
+
+                const data = await response.json();
+                aiResponseContent = data.choices?.[0]?.message?.content || 'No response from Amazon Nova Micro.';
             } else {
                 // Mock delay simulation for other unconfigured models
                 await new Promise(resolve => setTimeout(resolve, 1500));
