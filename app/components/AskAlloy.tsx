@@ -544,7 +544,7 @@ const AskAlloy: React.FC<AskAlloyProps> = ({ defaultOpen = false, isOpen: contro
                                     </AnimatePresence>
                                 </div>
 
-                                <div className="flex flex-col justify-between bg-[#1A1A1A] rounded-3xl border border-white/10 p-3 focus-within:border-[#2EFF85]/50 focus-within:ring-1 focus-within:ring-[#2EFF85]/30 focus-within:shadow-[0_0_15px_rgba(46,255,133,0.1)] transition-all duration-300 relative">
+                                <div className="flex flex-col justify-between bg-[#1A1A1A] rounded-3xl border border-white/10 p-3 focus-within:border-[#2EFF85] focus-within:shadow-[0_0_15px_rgba(46,255,133,0.3),0_0_40px_rgba(46,255,133,0.15),0_0_80px_rgba(46,255,133,0.1),inset_0_1px_1px_rgba(255,255,255,0.15),inset_0_-10px_30px_rgba(46,255,133,0.15)] transition-all duration-300 relative">
                                     <textarea
                                         ref={inputRef}
                                         value={inputValue}
@@ -556,11 +556,11 @@ const AskAlloy: React.FC<AskAlloyProps> = ({ defaultOpen = false, isOpen: contro
                                             }
                                         }}
                                         placeholder="Ask about your notes, ideas, or documents..."
-                                        className="w-full bg-transparent border-0 text-white placeholder:text-gray-500 focus:outline-none text-sm px-2 pt-1 pb-1 min-h-9 resize-none leading-relaxed no-scrollbar"
+                                        className="w-full bg-transparent border-0 text-white placeholder:text-gray-500 focus:outline-none text-sm px-2 pt-0 pb-0 min-h-6 resize-none leading-relaxed no-scrollbar"
                                         style={{ overflowY: 'hidden', maxHeight: '160px' }}
                                     />
 
-                                    <div className="flex items-center justify-between w-full mt-0.5">
+                                    <div className="flex items-center justify-between w-full mt-0">
                                         {/* Model Selector Button */}
                                         <button
                                             onClick={() => setShowModels(!showModels)}
