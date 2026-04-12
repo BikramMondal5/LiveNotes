@@ -3,7 +3,7 @@
 import { useEffect, useState, useRef } from "react";
 import { useParams } from "next/navigation";
 import { io, Socket } from "socket.io-client";
-import { Plus, Wand2, MousePointer2, Square, Circle, ArrowUpRight, Slash, PenLine, Type, Image as ImageIcon, Frame, HelpingHand, Settings, ChevronDown, MoreHorizontal, Sparkles } from "lucide-react";
+import { Plus, Wand2, MousePointer2, Square, Circle, ArrowUpRight, Slash, PenLine, Type, Image as ImageIcon, Frame, HelpingHand, Settings, ChevronDown, MoreHorizontal, Sparkles, Search, Home, Briefcase, FileText, ChevronRight, Rocket } from "lucide-react";
 import DotGrid from "../../components/DotGrid";
 import DrawingCanvas from "../../components/DrawingCanvas";
 import AskAlloy from "../../components/AskAlloy";
@@ -63,31 +63,31 @@ export default function RoomPage() {
     return (
         <div className="h-screen w-full bg-[#121212] flex flex-col overflow-hidden font-sans text-zinc-300">
             {/* Top Navigation */}
-            <header className="flex h-14 w-full items-center justify-between border-b border-zinc-800/50 bg-[#1A1A1A] px-4 shrink-0">
+            <header className="flex h-14 w-full items-center justify-between border-b border-white/5 bg-linear-to-b from-[#111111] to-[#09090B] px-4 shrink-0">
                 <div className="flex items-center gap-4 min-w-50">
                     <div className="flex -space-x-1">
                         <div className="w-4 h-4 rounded-sm bg-red-500 transform -skew-x-12 translate-x-1" />
                         <div className="w-4 h-4 rounded-sm bg-blue-500 transform -skew-x-12" />
                     </div>
-                    <span className="text-sm font-medium text-zinc-100">Untitled File</span>
+                    <span className="text-sm font-medium text-white">Untitled File</span>
                 </div>
 
-                <div className="flex items-center bg-zinc-900 rounded-md p-1 border border-zinc-800">
+                <div className="flex items-center bg-zinc-900/50 rounded-md p-1 border border-white/5">
                     <button
                         onClick={() => setViewMode("document")}
-                        className={`px-4 py-1.5 text-xs font-medium rounded-sm transition-colors ${viewMode === 'document' ? 'bg-zinc-800 text-white' : 'text-zinc-400 hover:text-white'}`}
+                        className={`px-4 py-1.5 text-xs font-medium rounded-sm transition-colors ${viewMode === 'document' ? 'bg-[#2EFF85]/10 text-[#2EFF85]' : 'text-zinc-400 hover:text-[#2EFF85]'}`}
                     >
                         Document
                     </button>
                     <button
                         onClick={() => setViewMode("both")}
-                        className={`px-4 py-1.5 text-xs font-medium rounded-sm transition-colors ${viewMode === 'both' ? 'bg-zinc-800 text-white' : 'text-zinc-400 hover:text-white'}`}
+                        className={`px-4 py-1.5 text-xs font-medium rounded-sm transition-colors ${viewMode === 'both' ? 'bg-[#2EFF85]/10 text-[#2EFF85]' : 'text-zinc-400 hover:text-[#2EFF85]'}`}
                     >
                         Text
                     </button>
                     <button
                         onClick={() => setViewMode("canvas")}
-                        className={`px-4 py-1.5 text-xs font-medium rounded-sm transition-colors ${viewMode === 'canvas' ? 'bg-zinc-800 text-white' : 'text-zinc-400 hover:text-white'}`}
+                        className={`px-4 py-1.5 text-xs font-medium rounded-sm transition-colors ${viewMode === 'canvas' ? 'bg-[#2EFF85]/10 text-[#2EFF85]' : 'text-zinc-400 hover:text-[#2EFF85]'}`}
                     >
                         Canvas
                     </button>
@@ -168,7 +168,7 @@ export default function RoomPage() {
                     {/* Document PDF Viewer */}
                     {viewMode === 'document' && (
                         <div
-                            className="absolute inset-0 z-10 p-8 flex items-center justify-center bg-[#121212]/80 backdrop-blur-sm"
+                            className={`absolute inset-0 z-10 flex ${!pdfFile ? 'p-8 items-center justify-center bg-[#121212]/80 backdrop-blur-sm' : 'bg-[#09090B]'}`}
                             onDrop={handleDrop}
                             onDragOver={handleDragOver}
                         >
@@ -191,21 +191,109 @@ export default function RoomPage() {
                                     />
                                 </div>
                             ) : (
-                                <div className="w-full h-full relative flex flex-col bg-zinc-900 rounded-xl overflow-hidden border border-zinc-800 shadow-2xl">
-                                    <div className="flex items-center justify-between px-4 py-2 border-b border-zinc-800 bg-[#1A1A1A]">
-                                        <span className="text-sm font-medium text-zinc-300">Document Preview</span>
-                                        <button
-                                            onClick={() => setPdfFile(null)}
-                                            className="text-xs px-3 py-1 rounded bg-zinc-800 hover:bg-zinc-700 text-zinc-300 transition-colors"
-                                        >
-                                            Remove
-                                        </button>
+                                <div className="w-full h-full flex flex-row overflow-hidden bg-[#09090B]">
+                                    {/* Sidebar */}
+                                    <div className="hidden md:flex flex-col w-[260px] h-full border-r border-zinc-800/50 bg-[#09090B] shrink-0">
+                                        {/* Header / Search */}
+                                        <div className="p-4">
+                                            <div className="flex items-center justify-between mb-4">
+                                                <div className="flex items-center gap-2">
+                                                    <div className="w-6 h-6 rounded bg-[#2EFF85]/20 flex items-center justify-center">
+                                                        <Sparkles className="w-4 h-4 text-[#2EFF85]" />
+                                                    </div>
+                                                    <span className="font-semibold text-zinc-200">Ask Elloy PDF</span>
+                                                </div>
+                                            </div>
+                                            <div className="relative">
+                                                <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-zinc-500" />
+                                                <input
+                                                    type="text"
+                                                    placeholder="Search"
+                                                    className="w-full bg-zinc-900 border border-zinc-800 rounded-lg py-2 pl-9 pr-4 text-sm text-zinc-200 focus:outline-none focus:border-[#2EFF85]/50 transition-colors placeholder:text-zinc-600"
+                                                />
+                                            </div>
+                                        </div>
+
+                                        {/* Navigation */}
+                                        <div className="px-3 pb-4 space-y-1 border-b border-zinc-800/50">
+                                            <button className="w-full flex items-center justify-between px-3 py-2 rounded-lg text-zinc-300 hover:bg-zinc-800/50 hover:text-[#2EFF85] transition-colors group">
+                                                <div className="flex items-center gap-3">
+                                                    <Home className="w-4 h-4 text-zinc-400 group-hover:text-[#2EFF85]" />
+                                                    <span className="text-sm font-medium">Home</span>
+                                                </div>
+                                            </button>
+                                            <button className="w-full flex items-center justify-between px-3 py-2 rounded-lg text-zinc-300 hover:bg-zinc-800/50 hover:text-[#2EFF85] transition-colors group">
+                                                <div className="flex items-center gap-3">
+                                                    <Briefcase className="w-4 h-4 text-zinc-400 group-hover:text-[#2EFF85]" />
+                                                    <span className="text-sm font-medium">PDF tools</span>
+                                                </div>
+                                                <ChevronRight className="w-4 h-4 text-zinc-600 group-hover:text-[#2EFF85]" />
+                                            </button>
+                                        </div>
+
+                                        {/* Recent */}
+                                        <div className="flex-1 overflow-y-auto px-3 py-4 no-scrollbar">
+                                            <h4 className="text-xs font-semibold text-zinc-500 px-3 mb-3">Recent</h4>
+                                            <div className="space-y-1">
+                                                {/* File Item 1 */}
+                                                <div className="w-full flex items-start gap-3 px-3 py-2.5 rounded-lg bg-[#2EFF85]/5 border border-[#2EFF85]/10 cursor-pointer">
+                                                    <FileText className="w-5 h-5 text-[#2EFF85] shrink-0 mt-0.5" />
+                                                    <div className="flex flex-col text-left overflow-hidden min-w-0">
+                                                        <span className="text-sm text-zinc-200 truncate font-medium">...Assignments of All Mod...</span>
+                                                        <div className="flex items-center justify-between mt-1 text-xs text-zinc-500">
+                                                            <span className="truncate">10.07 MB</span>
+                                                            <span className="ml-2 shrink-0">06/02/2025</span>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                {/* File Item 2 */}
+                                                <div className="w-full flex items-start gap-3 px-3 py-2.5 rounded-lg hover:bg-zinc-800/30 cursor-pointer transition-colors group border border-transparent">
+                                                    <FileText className="w-5 h-5 text-red-400 shrink-0 mt-0.5" />
+                                                    <div className="flex flex-col text-left overflow-hidden min-w-0 w-full">
+                                                        <span className="text-sm text-zinc-400 group-hover:text-zinc-200 truncate font-medium">(Example) Attention Is All...</span>
+                                                        <div className="flex items-center justify-between mt-1 text-xs text-zinc-600">
+                                                            <span className="truncate">2.2 MB</span>
+                                                            <span className="ml-2 shrink-0">01/07/2023</span>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        {/* Bottom Promo */}
+                                        <div className="p-4 border-t border-zinc-800/50 bg-[#09090B]">
+                                            <div className="bg-zinc-900 rounded-xl p-4 border border-zinc-800 text-center relative overflow-hidden">
+                                                <Rocket className="w-8 h-8 text-[#2EFF85] mx-auto mb-2 drop-shadow-[0_0_8px_rgba(46,255,133,0.5)]" />
+                                                <h5 className="text-sm font-semibold text-white mb-3 relative z-10">Chat PDFs with GPT-4o</h5>
+                                                <button className="w-full bg-[#2EFF85]/10 text-[#2EFF85] hover:bg-[#2EFF85]/20 text-xs font-medium py-2 rounded-lg transition-colors border border-[#2EFF85]/20">
+                                                    Start Free Trial
+                                                </button>
+                                            </div>
+                                        </div>
                                     </div>
-                                    <iframe
-                                        src={pdfFile}
-                                        className="w-full h-full border-0 bg-zinc-900"
-                                        title="PDF Preview"
-                                    />
+
+                                    {/* Main Iframe Content */}
+                                    <div className="flex-1 flex flex-col min-w-0 bg-[#09090B] relative z-10">
+                                        <div className="flex items-center justify-between px-4 py-2 border-b border-white/5 bg-linear-to-b from-[#111111] to-[#09090B] shrink-0">
+                                            <span className="text-sm font-medium text-white">Document Preview</span>
+                                            <button
+                                                onClick={() => setPdfFile(null)}
+                                                className="text-xs px-3 py-1 rounded bg-[#111111] hover:bg-[#2EFF85]/10 text-zinc-400 hover:text-[#2EFF85] transition-colors border border-white/5 hover:border-[#2EFF85]/20"
+                                            >
+                                                Remove
+                                            </button>
+                                        </div>
+                                        <iframe
+                                            src={pdfFile}
+                                            className="w-full h-full border-0 bg-[#09090B]"
+                                            title="PDF Preview"
+                                        />
+                                    </div>
+
+                                    {/* Ask Elloy Right Sidebar */}
+                                    <div className="hidden lg:flex flex-col h-full shrink-0 z-20">
+                                        <AskAlloy isOpen={true} onOpenChange={() => { }} showFloatingButton={false} inline={true} />
+                                    </div>
                                 </div>
                             )}
                         </div>

@@ -72,9 +72,10 @@ interface AskAlloyProps {
     isOpen?: boolean;
     onOpenChange?: (isOpen: boolean) => void;
     showFloatingButton?: boolean;
+    inline?: boolean;
 }
 
-const AskAlloy: React.FC<AskAlloyProps> = ({ defaultOpen = false, isOpen: controlledIsOpen, onOpenChange, showFloatingButton = true }) => {
+const AskAlloy: React.FC<AskAlloyProps> = ({ defaultOpen = false, isOpen: controlledIsOpen, onOpenChange, showFloatingButton = true, inline = false }) => {
     const [internalIsOpen, setInternalIsOpen] = useState(defaultOpen);
     const isOpen = controlledIsOpen !== undefined ? controlledIsOpen : internalIsOpen;
 
@@ -468,37 +469,41 @@ const AskAlloy: React.FC<AskAlloyProps> = ({ defaultOpen = false, isOpen: contro
 
             {isOpen && (
                 <>
-                    <div
-                        className="fixed inset-0 bg-black/60 backdrop-blur-sm z-40 transition-opacity duration-300"
-                        onClick={() => setIsOpen(false)}
-                        style={{ animation: 'fadeIn 0.3s ease-out' }}
-                    />
+                    {!inline && (
+                        <div
+                            className="fixed inset-0 bg-black/60 backdrop-blur-sm z-40 transition-opacity duration-300"
+                            onClick={() => setIsOpen(false)}
+                            style={{ animation: 'fadeIn 0.3s ease-out' }}
+                        />
+                    )}
 
                     <div
-                        className="fixed top-0 right-0 h-full w-full md:w-[40%] lg:w-[35%] bg-gradient-to-b from-[#0a0a0a] to-[#0f172a] z-50 shadow-2xl border-l border-white/10 noise-bg"
+                        className={inline ? "flex flex-col w-[380px] xl:w-[480px] h-full border-l border-zinc-800/50 bg-gradient-to-b from-[#0a0a0a] to-[#0f172a] shrink-0 noise-bg z-20" : "fixed top-0 right-0 h-full w-full md:w-[40%] lg:w-[35%] bg-gradient-to-b from-[#0a0a0a] to-[#0f172a] z-50 shadow-2xl border-l border-white/10 noise-bg"}
                         style={{
-                            animation: isOpen ? 'slideIn 0.3s ease-out' : 'slideOut 0.3s ease-in',
+                            animation: !inline ? (isOpen ? 'slideIn 0.3s ease-out' : 'slideOut 0.3s ease-in') : 'none',
                             backdropFilter: 'blur(20px)'
                         }}
                     >
                         <div className="flex flex-col h-full">
-                            <div className="flex items-center justify-between p-6 border-b border-white/10 bg-black/20">
+                            <div className="flex items-center justify-between p-6 border-b border-white/10 bg-black/20 shrink-0">
                                 <div className="flex items-center gap-4">
                                     <div className="relative">
                                         <Sparkles className="w-8 h-8 text-[#00C753]" />
                                         <div className="absolute -bottom-0.5 -right-0.5 w-3 h-3 bg-[#00C753] rounded-full border-2 border-[#0a0a0a] animate-pulse" />
                                     </div>
                                     <div>
-                                        <h2 className="text-xl font-bold text-white">Ask Elloy</h2>
-                                        <p className="text-sm text-gray-400">Your intelligent assistant for notes, ideas, and collaboration</p>
+                                        <h2 className={inline ? "text-base font-bold text-white leading-tight" : "text-xl font-bold text-white"}>Ask Elloy</h2>
+                                        <p className={inline ? "text-[10px] text-gray-400" : "text-sm text-gray-400"}>Your intelligent assistant for notes, ideas, and collaboration</p>
                                     </div>
                                 </div>
-                                <button
-                                    onClick={() => setIsOpen(false)}
-                                    className="text-gray-400 hover:text-white hover:bg-white/10 rounded-full transition-colors p-2"
-                                >
-                                    <X className="w-5 h-5" />
-                                </button>
+                                {!inline && (
+                                    <button
+                                        onClick={() => setIsOpen(false)}
+                                        className="text-gray-400 hover:text-white hover:bg-white/10 rounded-full transition-colors p-2"
+                                    >
+                                        <X className="w-5 h-5" />
+                                    </button>
+                                )}
                             </div>
 
                             <div className="flex-1 overflow-y-auto p-6 no-scrollbar">
