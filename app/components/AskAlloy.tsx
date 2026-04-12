@@ -392,10 +392,8 @@ const AskAlloy: React.FC<AskAlloyProps> = ({ defaultOpen = false, isOpen: contro
                             <div className="flex items-center justify-between p-6 border-b border-white/10 bg-black/20">
                                 <div className="flex items-center gap-4">
                                     <div className="relative">
-                                        <div className="w-12 h-12 bg-[#00C753] rounded-full flex items-center justify-center shadow-lg">
-                                            <Sparkles className="w-6 h-6 text-white" />
-                                        </div>
-                                        <div className="absolute -bottom-1 -right-1 w-4 h-4 bg-green-500 rounded-full border-2 border-[#0a0a0a] animate-pulse" />
+                                        <Sparkles className="w-8 h-8 text-[#00C753]" />
+                                        <div className="absolute -bottom-0.5 -right-0.5 w-3 h-3 bg-[#00C753] rounded-full border-2 border-[#0a0a0a] animate-pulse" />
                                     </div>
                                     <div>
                                         <h2 className="text-xl font-bold text-white">Ask Elloy</h2>
@@ -463,13 +461,13 @@ const AskAlloy: React.FC<AskAlloyProps> = ({ defaultOpen = false, isOpen: contro
                                                     }}
                                                 >
                                                     <div
-                                                        className={`max-w-[80%] rounded-2xl px-4 py-3 ${message.sender === 'user'
-                                                            ? 'bg-gray-800 text-white'
-                                                            : 'bg-[#2EFF85] text-[#09090B]'
+                                                        className={`max-w-[80%] rounded-2xl px-4 py-3 shadow-lg ${message.sender === 'user'
+                                                            ? 'bg-[#2EFF85] text-[#09090B]'
+                                                            : 'bg-[#1A1A1A] text-gray-100 border border-white/5 shadow-[0_4px_12px_rgba(0,0,0,0.5)]'
                                                             }`}
                                                     >
                                                         <p className="text-sm leading-relaxed">{message.content}</p>
-                                                        <span className="text-xs text-gray-500 mt-1 block">
+                                                        <span className={`text-xs mt-1.5 block ${message.sender === 'user' ? 'text-[#09090B]/50' : 'text-gray-500'}`}>
                                                             {formatTime(message.timestamp)}
                                                         </span>
                                                     </div>
@@ -477,18 +475,18 @@ const AskAlloy: React.FC<AskAlloyProps> = ({ defaultOpen = false, isOpen: contro
                                             ))}
                                             {isTyping && (
                                                 <div className="flex justify-start">
-                                                    <div className="bg-gradient-to-br from-green-500/10 to-emerald-600/10 border border-green-500/30 rounded-2xl px-4 py-3">
-                                                        <div className="flex gap-1">
+                                                    <div className="bg-[#1A1A1A] border border-white/5 rounded-2xl px-4 py-4 shadow-[0_4px_12px_rgba(0,0,0,0.5)]">
+                                                        <div className="flex gap-1.5">
                                                             <div
-                                                                className="w-2 h-2 bg-green-500 rounded-full"
+                                                                className="w-1.5 h-1.5 bg-gray-400 rounded-full"
                                                                 style={{ animation: 'pulse 1.4s ease-in-out infinite' }}
                                                             />
                                                             <div
-                                                                className="w-2 h-2 bg-green-500 rounded-full"
+                                                                className="w-1.5 h-1.5 bg-gray-400 rounded-full"
                                                                 style={{ animation: 'pulse 1.4s ease-in-out 0.2s infinite' }}
                                                             />
                                                             <div
-                                                                className="w-2 h-2 bg-green-500 rounded-full"
+                                                                className="w-1.5 h-1.5 bg-gray-400 rounded-full"
                                                                 style={{ animation: 'pulse 1.4s ease-in-out 0.4s infinite' }}
                                                             />
                                                         </div>
@@ -558,7 +556,7 @@ const AskAlloy: React.FC<AskAlloyProps> = ({ defaultOpen = false, isOpen: contro
                                             }
                                         }}
                                         placeholder="Ask about your notes, ideas, or documents..."
-                                        className="w-full bg-transparent border-0 text-white placeholder:text-gray-500 focus:outline-none text-sm px-2 pt-1 pb-1 min-h-10 resize-none leading-relaxed no-scrollbar"
+                                        className="w-full bg-transparent border-0 text-white placeholder:text-gray-500 focus:outline-none text-sm px-2 pt-1 pb-1 min-h-9 resize-none leading-relaxed no-scrollbar"
                                         style={{ overflowY: 'hidden', maxHeight: '160px' }}
                                     />
 
