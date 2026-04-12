@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useRef, useEffect } from 'react';
-import { X, Send } from 'lucide-react';
+import { X, Send, Sparkles } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
 // API configuration - Get keys dynamically from env vars
@@ -27,7 +27,7 @@ const getApiKey = (provider: string) => {
 
 // Map each provider strictly to their API endpoint
 const API_URLS: Record<string, string> = {
-    gemini: "https://generativelanguage.googleapis.com/v1/models/gemini-2.5-flash:generateContent",
+    gemini: "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent",
     groq: "https://api.groq.com/openai/v1/chat/completions",
     anthropic: "https://gen.pollinations.ai/v1/chat/completions",
     openai: "https://gen.pollinations.ai/v1/chat/completions",
@@ -112,24 +112,24 @@ const AskAlloy: React.FC<AskAlloyProps> = ({ defaultOpen = false, isOpen: contro
     const [showModels, setShowModels] = useState(false);
     const [selectedModel, setSelectedModel] = useState("gemini-2.5-flash");
     const scrollRef = useRef<HTMLDivElement>(null);
-    const inputRef = useRef<HTMLInputElement>(null);
+    const inputRef = useRef<HTMLTextAreaElement>(null);
 
     const suggestionChips = [
         {
-            title: "Generate Code",
-            description: "Write a React component with hooks"
+            title: "Generate Ideas",
+            description: "Brainstorm concepts and creative solutions"
         },
         {
-            title: "Fix a Bug",
-            description: "Debug and optimize my TypeScript code"
+            title: "Refine Content",
+            description: "Improve writing style and clarity"
         },
         {
-            title: "Explain Concepts",
-            description: "Clarify how machine learning works"
+            title: "Explain Clearly",
+            description: "Break down complex topics simply"
         },
         {
-            title: "Design UI",
-            description: "Create a modern dashboard layout"
+            title: "Summarize Notes",
+            description: "Extract key points from long texts"
         }
     ];
 
@@ -144,6 +144,18 @@ const AskAlloy: React.FC<AskAlloyProps> = ({ defaultOpen = false, isOpen: contro
             scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
         }
     }, [messages, isTyping]);
+
+    // Auto-resize textarea
+    useEffect(() => {
+        if (inputRef.current) {
+            inputRef.current.style.height = 'auto'; // Reset to calculate true height
+            const scrollHeight = inputRef.current.scrollHeight;
+            const maxHeight = 160; // Max height before scrolling
+
+            inputRef.current.style.height = Math.min(scrollHeight, maxHeight) + 'px';
+            inputRef.current.style.overflowY = scrollHeight > maxHeight ? 'auto' : 'hidden';
+        }
+    }, [inputValue]);
 
     const handleSend = async () => {
         if (!inputValue.trim()) return;
@@ -171,8 +183,60 @@ const AskAlloy: React.FC<AskAlloyProps> = ({ defaultOpen = false, isOpen: contro
 
             let aiResponseContent = "I'm here to help! Model: " + selectedModel;
 
-            // For now, use demo response. In production, call actual API
-            // TODO: Implement actual API calls based on provider
+            const systemPrompt = process.env.NEXT_PUBLIC_SYSTEM_PROMPT || "You are a helpful, friendly, and concise AI assistant for a notes and ideas app.";
+
+            if (provider === 'gemini') {
+                const response = await fetch(`${API_URLS.gemini}?key=${API_KEY}`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        systemInstruction: {
+                            parts: [{ text: systemPrompt }]
+                        },
+                        contents: messages.concat(userMessage).map(m => ({
+                            role: m.sender === 'user' ? 'user' : 'model',
+                            parts: [{ text: m.content }]
+                        }))
+                    })
+                });
+
+                if (!response.ok) {
+                    const errorData = await response.json().catch(() => ({}));
+                    console.error("Gemini Error:", errorData);
+                    throw new Error(`Gemini API Error: ${response.status} - ${errorData.error?.message || 'Unknown'}`);
+                }
+
+                const data = await response.json();
+                aiResponseContent = data.candidates?.[0]?.content?.parts?.[0]?.text || 'No response from Gemini.';
+            } else if (provider === 'groq') {
+                const response = await fetch(API_URLS.groq, {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${API_KEY}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        model: 'llama-3.3-70b-versatile',
+                        messages: [
+                            { role: 'system', content: systemPrompt },
+                            ...messages.concat(userMessage).map(m => ({
+                                role: m.sender === 'user' ? 'user' : 'assistant',
+                                content: m.content
+                            }))
+                        ]
+                    })
+                });
+
+                if (!response.ok) {
+                    throw new Error(`Groq API Error: ${response.status}`);
+                }
+
+                const data = await response.json();
+                aiResponseContent = data.choices?.[0]?.message?.content || 'No response from Groq.';
+            } else {
+                // Mock delay simulation for other unconfigured models
+                await new Promise(resolve => setTimeout(resolve, 1500));
+            }
 
             const aiMessage: Message = {
                 id: (Date.now() + 1).toString(),
@@ -181,10 +245,8 @@ const AskAlloy: React.FC<AskAlloyProps> = ({ defaultOpen = false, isOpen: contro
                 timestamp: new Date()
             };
 
-            setTimeout(() => {
-                setMessages(prev => [...prev, aiMessage]);
-                setIsTyping(false);
-            }, 1500);
+            setMessages(prev => [...prev, aiMessage]);
+            setIsTyping(false);
 
         } catch (error) {
             console.error("Error fetching model response:", error);
@@ -283,6 +345,17 @@ const AskAlloy: React.FC<AskAlloyProps> = ({ defaultOpen = false, isOpen: contro
             linear-gradient(90deg, rgba(255, 255, 255, 0.02) 1px, transparent 1px);
           background-size: 50px 50px;
         }
+
+        /* Hide scrollbar for Chrome, Safari and Opera */
+        .no-scrollbar::-webkit-scrollbar {
+          display: none;
+        }
+        
+        /* Hide scrollbar for IE, Edge and Firefox */
+        .no-scrollbar {
+          -ms-overflow-style: none;  /* IE and Edge */
+          scrollbar-width: none;  /* Firefox */
+        }
       `}</style>
 
             {!isOpen && showFloatingButton && (
@@ -294,8 +367,8 @@ const AskAlloy: React.FC<AskAlloyProps> = ({ defaultOpen = false, isOpen: contro
                     }}
                 >
                     <div className="flex items-center gap-2">
-                        <img src="/Elloy-logo.png" alt="Elloy" className="w-5 h-5" />
-                        Ask Alloy
+                        <Sparkles className="w-5 h-5 text-white" />
+                        Ask Elloy
                     </div>
                 </button>
             )}
@@ -319,14 +392,14 @@ const AskAlloy: React.FC<AskAlloyProps> = ({ defaultOpen = false, isOpen: contro
                             <div className="flex items-center justify-between p-6 border-b border-white/10 bg-black/20">
                                 <div className="flex items-center gap-4">
                                     <div className="relative">
-                                        <div className="w-12 h-12 bg-[#00C753] rounded-full flex items-center justify-center">
-                                            <img src="/Elloy-logo.png" alt="Elloy" className="w-6 h-6" />
+                                        <div className="w-12 h-12 bg-[#00C753] rounded-full flex items-center justify-center shadow-lg">
+                                            <Sparkles className="w-6 h-6 text-white" />
                                         </div>
                                         <div className="absolute -bottom-1 -right-1 w-4 h-4 bg-green-500 rounded-full border-2 border-[#0a0a0a] animate-pulse" />
                                     </div>
                                     <div>
-                                        <h2 className="text-xl font-bold text-white">Ask Alloy</h2>
-                                        <p className="text-sm text-gray-400">Your AI assistant for coding, ideas, and workflows</p>
+                                        <h2 className="text-xl font-bold text-white">Ask Elloy</h2>
+                                        <p className="text-sm text-gray-400">Your intelligent assistant for notes, ideas, and collaboration</p>
                                     </div>
                                 </div>
                                 <button
@@ -337,19 +410,19 @@ const AskAlloy: React.FC<AskAlloyProps> = ({ defaultOpen = false, isOpen: contro
                                 </button>
                             </div>
 
-                            <div className="flex-1 overflow-y-auto p-6">
+                            <div className="flex-1 overflow-y-auto p-6 no-scrollbar">
                                 <div ref={scrollRef} className="space-y-4">
                                     {messages.length === 0 ? (
                                         <div className="flex flex-col items-center justify-center h-full min-h-[400px] text-center space-y-6">
                                             <div className="relative flex items-center justify-center">
-                                                <div className="w-24 h-24 bg-[#00C753] rounded-full flex items-center justify-center">
+                                                <div className="w-24 h-24 bg-[#00C753] rounded-full flex items-center justify-center shadow-lg">
                                                     <img src="/Elloy-logo.png" alt="Elloy" className="w-20 h-20" />
                                                 </div>
                                                 <div className="absolute inset-0 bg-[#00C753]/20 rounded-full blur-xl" />
                                             </div>
                                             <div className="space-y-2">
-                                                <h3 className="text-xl font-semibold text-white">What can I help you with today?</h3>
-                                                <p className="text-gray-400 text-sm">Choose a suggestion or ask anything</p>
+                                                <h3 className="text-xl font-semibold text-white">Ask anything about your notes or ideas</h3>
+                                                <p className="text-gray-400 text-sm">Get instant help, generate ideas, or understand content faster</p>
                                             </div>
                                             <div className="grid grid-cols-2 gap-4 w-full max-w-md mx-auto">
                                                 {suggestionChips.map((chip, index) => (
@@ -392,7 +465,7 @@ const AskAlloy: React.FC<AskAlloyProps> = ({ defaultOpen = false, isOpen: contro
                                                     <div
                                                         className={`max-w-[80%] rounded-2xl px-4 py-3 ${message.sender === 'user'
                                                             ? 'bg-gray-800 text-white'
-                                                            : 'bg-gradient-to-br from-green-500/10 to-emerald-600/10 text-white border border-green-500/30'
+                                                            : 'bg-[#2EFF85] text-[#09090B]'
                                                             }`}
                                                     >
                                                         <p className="text-sm leading-relaxed">{message.content}</p>
@@ -473,43 +546,52 @@ const AskAlloy: React.FC<AskAlloyProps> = ({ defaultOpen = false, isOpen: contro
                                     </AnimatePresence>
                                 </div>
 
-                                <div className="flex items-center gap-2 bg-white/5 rounded-2xl border border-white/10 p-2 focus-within:border-green-500/50 transition-colors relative">
-                                    {/* Model Selector Button */}
-                                    <button
-                                        onClick={() => setShowModels(!showModels)}
-                                        title="Select Model"
-                                        className={`flex items-center gap-2 pl-1 pr-3 py-0.5 rounded-full border transition-colors shrink-0
-                                            ${showModels ? 'bg-[#2a2a2a] border-purple-500/60 text-purple-300' : 'bg-[#2a2a2a] border-[#444] text-gray-300 hover:border-purple-500/40 hover:text-gray-100'}`}
-                                    >
-                                        {(() => {
-                                            const currentModelObj = AVAILABLE_MODELS.find(m => m.name === selectedModel);
-                                            return currentModelObj ? (
-                                                <div className="w-6 h-6 rounded-full overflow-hidden shrink-0 border border-white/20">
-                                                    <img src={currentModelObj.icon} alt={selectedModel} className="w-full h-full object-cover" />
-                                                </div>
-                                            ) : null;
-                                        })()}
-                                        <span className="text-xs font-medium whitespace-nowrap">{selectedModel.split(' ')[0]}</span>
-                                        <svg className="w-3 h-3 text-gray-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                                        </svg>
-                                    </button>
-
-                                    <input
+                                <div className="flex flex-col justify-between bg-[#1A1A1A] rounded-3xl border border-white/10 p-3 focus-within:border-[#2EFF85]/50 focus-within:ring-1 focus-within:ring-[#2EFF85]/30 focus-within:shadow-[0_0_15px_rgba(46,255,133,0.1)] transition-all duration-300 relative">
+                                    <textarea
                                         ref={inputRef}
                                         value={inputValue}
                                         onChange={(e) => setInputValue(e.target.value)}
-                                        onKeyDown={handleKeyDown}
-                                        placeholder="Ask anything..."
-                                        className="flex-1 bg-transparent border-0 text-white placeholder:text-gray-500 focus:outline-none text-sm py-2 px-2 h-12"
+                                        onKeyDown={(e) => {
+                                            if (e.key === 'Enter' && !e.shiftKey) {
+                                                e.preventDefault();
+                                                handleSend();
+                                            }
+                                        }}
+                                        placeholder="Ask about your notes, ideas, or documents..."
+                                        className="w-full bg-transparent border-0 text-white placeholder:text-gray-500 focus:outline-none text-sm px-2 pt-1 pb-1 min-h-10 resize-none leading-relaxed no-scrollbar"
+                                        style={{ overflowY: 'hidden', maxHeight: '160px' }}
                                     />
-                                    <button
-                                        onClick={handleSend}
-                                        disabled={!inputValue.trim()}
-                                        className="bg-[#00C753] hover:bg-[#00a344] text-white rounded-full w-10 h-10 p-0 shrink-0 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-300 flex items-center justify-center"
-                                    >
-                                        <Send className="w-5 h-5" />
-                                    </button>
+
+                                    <div className="flex items-center justify-between w-full mt-0.5">
+                                        {/* Model Selector Button */}
+                                        <button
+                                            onClick={() => setShowModels(!showModels)}
+                                            title="Select Model"
+                                            className={`flex items-center gap-2 pl-1 pr-3 py-1.5 h-10 rounded-full border transition-colors shrink-0
+                                                ${showModels ? 'bg-[#2a2a2a] border-[#2EFF85]/60 text-[#2EFF85]' : 'bg-[#2a2a2a] border-[#444] text-gray-300 hover:border-[#2EFF85]/40 hover:text-gray-100'}`}
+                                        >
+                                            {(() => {
+                                                const currentModelObj = AVAILABLE_MODELS.find(m => m.name === selectedModel);
+                                                return currentModelObj ? (
+                                                    <div className="w-7 h-7 rounded-full overflow-hidden shrink-0 border border-white/20">
+                                                        <img src={currentModelObj.icon} alt={selectedModel} className="w-full h-full object-cover" />
+                                                    </div>
+                                                ) : null;
+                                            })()}
+                                            <span className="text-xs font-semibold whitespace-nowrap">{selectedModel.split(' ')[0]}</span>
+                                            <svg className="w-3.5 h-3.5 text-gray-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                                            </svg>
+                                        </button>
+
+                                        <button
+                                            onClick={handleSend}
+                                            disabled={!inputValue.trim()}
+                                            className="bg-[#2EFF85] hover:bg-[#28e075] text-[#0A0A0A] rounded-full w-10 h-10 p-0 shrink-0 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-300 flex items-center justify-center shadow-[0_0_10px_rgba(46,255,133,0.2)]"
+                                        >
+                                            <Send className="w-5 h-5 ml-0.5" />
+                                        </button>
+                                    </div>
                                 </div>
                             </div>
                         </div>
