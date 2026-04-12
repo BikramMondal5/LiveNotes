@@ -287,6 +287,31 @@ const AskAlloy: React.FC<AskAlloyProps> = ({ defaultOpen = false, isOpen: contro
 
                 const data = await response.json();
                 aiResponseContent = data.choices?.[0]?.message?.content || 'No response from Amazon Nova Micro.';
+            } else if (provider === 'mistral') {
+                const response = await fetch(API_URLS.mistral, {
+                    method: "POST",
+                    headers: {
+                        Authorization: `Bearer ${API_KEY}`,
+                        "Content-Type": "application/json"
+                    },
+                    body: JSON.stringify({
+                        model: "mistral",
+                        messages: [
+                            { role: "system", content: systemPrompt },
+                            ...messages.concat(userMessage).map(m => ({
+                                role: m.sender === 'user' ? 'user' : 'assistant',
+                                content: m.content
+                            }))
+                        ]
+                    })
+                });
+
+                if (!response.ok) {
+                    throw new Error(`Mistral API Error: ${response.status}`);
+                }
+
+                const data = await response.json();
+                aiResponseContent = data.choices?.[0]?.message?.content || 'No response from Mistral.';
             } else {
                 // Mock delay simulation for other unconfigured models
                 await new Promise(resolve => setTimeout(resolve, 1500));
