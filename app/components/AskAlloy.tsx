@@ -486,7 +486,7 @@ const AskAlloy: React.FC<AskAlloyProps> = ({ defaultOpen = false, isOpen: contro
                 </button>
             )}
 
-            {isOpen && (
+            {(isOpen || inline) && (
                 <>
                     {!inline && (
                         <div

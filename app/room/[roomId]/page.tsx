@@ -214,7 +214,7 @@ export default function RoomPage() {
                     <div className="hidden md:flex items-center gap-1.5 px-2.5 py-1.5 bg-zinc-800/50 border border-zinc-700/50 rounded text-xs text-zinc-400 font-medium">
                         Ctrl + Shift + K
                     </div>
-                    <button onClick={() => setIsAlloyOpen(true)} className="flex items-center gap-1.5 bg-[#2EFF85] hover:bg-[#25dd72] text-[#0A0A0A] px-2.5 py-1.5 rounded text-xs font-medium transition-colors">
+                    <button onClick={() => setIsAlloyOpen(!isAlloyOpen)} className="flex items-center gap-1.5 bg-[#2EFF85] hover:bg-[#25dd72] text-[#0A0A0A] px-2.5 py-1.5 rounded text-xs font-medium transition-colors">
                         <Sparkles className="w-3.5 h-3.5" />
                         Ask Elloy
                     </button>
@@ -460,7 +460,7 @@ export default function RoomPage() {
                 {/* Mounted adjacent to the canvas so it acts as an inline sidebar pushing content */}
                 <div className={`h-full shrink-0 z-20 transition-all duration-300 ease-in-out ${isAlloyOpen ? 'w-[380px] xl:w-[480px] border-l border-zinc-800/50' : 'w-0 overflow-hidden'}`}>
                     <AskAlloy
-                        isOpen={true}
+                        isOpen={isAlloyOpen} 
                         onOpenChange={setIsAlloyOpen}
                         showFloatingButton={false}
                         inline={true}
