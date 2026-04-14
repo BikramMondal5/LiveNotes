@@ -74,10 +74,11 @@ interface AskAlloyProps {
     onOpenChange?: (isOpen: boolean) => void;
     showFloatingButton?: boolean;
     inline?: boolean;
-    externalQuery?: { text: string; image?: string; timestamp: number } | null;
+    stagedImage?: string | null;
+    onClearStagedImage?: () => void;
 }
 
-const AskAlloy: React.FC<AskAlloyProps> = ({ defaultOpen = false, isOpen: controlledIsOpen, onOpenChange, showFloatingButton = true, inline = false, externalQuery }) => {
+const AskAlloy: React.FC<AskAlloyProps> = ({ defaultOpen = false, isOpen: controlledIsOpen, onOpenChange, showFloatingButton = true, inline = false, stagedImage, onClearStagedImage }) => {
     const [internalIsOpen, setInternalIsOpen] = useState(defaultOpen);
     const isOpen = controlledIsOpen !== undefined ? controlledIsOpen : internalIsOpen;
 
@@ -150,23 +151,15 @@ const AskAlloy: React.FC<AskAlloyProps> = ({ defaultOpen = false, isOpen: contro
         }
     }, [inputValue]);
 
-    useEffect(() => {
-        if (externalQuery) {
-            if (!isOpen) {
-                setIsOpen(true);
-            }
-            handleSend(externalQuery.text, externalQuery.image);
-        }
-    }, [externalQuery?.timestamp]);
-
     const handleSend = async (overrideText?: string, overrideImage?: string) => {
         const textToSend = overrideText !== undefined ? overrideText : inputValue;
-        if (!textToSend.trim() && !overrideImage) return;
+        const imageToSend = overrideImage || stagedImage || undefined;
+        if (!textToSend.trim() && !imageToSend) return;
 
         const userMessage: Message = {
             id: Date.now().toString(),
             content: textToSend,
-            image: overrideImage,
+            image: imageToSend,
             sender: 'user',
             timestamp: new Date()
         };
@@ -174,6 +167,9 @@ const AskAlloy: React.FC<AskAlloyProps> = ({ defaultOpen = false, isOpen: contro
         setMessages(prev => [...prev, userMessage]);
         if (overrideText === undefined) {
             setInputValue('');
+            if (stagedImage && onClearStagedImage) {
+                onClearStagedImage();
+            }
         }
         setIsTyping(true);
 
@@ -679,6 +675,19 @@ const AskAlloy: React.FC<AskAlloyProps> = ({ defaultOpen = false, isOpen: contro
                                 </div>
 
                                 <div className="flex flex-col justify-between bg-[#1A1A1A] rounded-3xl border border-white/10 p-3 focus-within:border-[#2EFF85] focus-within:shadow-[0_0_10px_rgba(46,255,133,0.2),0_0_20px_rgba(46,255,133,0.1),0_0_30px_rgba(46,255,133,0.05),inset_0_1px_1px_rgba(255,255,255,0.1),inset_0_-5px_15px_rgba(46,255,133,0.1)] transition-all duration-300 relative">
+                                    {stagedImage && (
+                                        <div className="relative mb-2 shrink-0 self-start">
+                                            <div className="relative rounded-xl overflow-hidden border border-white/10 bg-black/50 p-1 flex items-center justify-center max-w-[200px]">
+                                                <img src={stagedImage} alt="Staged attachment" className="rounded-lg object-contain max-h-[120px]" />
+                                            </div>
+                                            <button
+                                                onClick={onClearStagedImage}
+                                                className="absolute -top-2 -right-2 w-6 h-6 bg-red-500 hover:bg-red-600 text-white rounded-full flex items-center justify-center shadow-lg transition-colors border-2 border-[#1A1A1A]"
+                                            >
+                                                <X className="w-3.5 h-3.5" />
+                                            </button>
+                                        </div>
+                                    )}
                                     <textarea
                                         ref={inputRef}
                                         value={inputValue}
@@ -718,7 +727,7 @@ const AskAlloy: React.FC<AskAlloyProps> = ({ defaultOpen = false, isOpen: contro
 
                                         <button
                                             onClick={() => handleSend()}
-                                            disabled={!inputValue.trim()}
+                                            disabled={!inputValue.trim() && !stagedImage}
                                             className="bg-[#2EFF85] hover:bg-[#28e075] text-[#0A0A0A] rounded-xl w-10 h-10 p-0 shrink-0 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-300 flex items-center justify-center shadow-[0_0_10px_rgba(46,255,133,0.2)]"
                                         >
                                             <Send className="w-5 h-5 ml-0.5" />

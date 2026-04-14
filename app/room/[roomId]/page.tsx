@@ -29,8 +29,6 @@ export default function RoomPage() {
     const [screenshotRect, setScreenshotRect] = useState<{ x: number, y: number, w: number, h: number } | null>(null);
     const [screenshotStart, setScreenshotStart] = useState<{ x: number, y: number } | null>(null);
     const [screenshotPreview, setScreenshotPreview] = useState<string | null>(null);
-    const [screenshotQuery, setScreenshotQuery] = useState("");
-    const [externalQuery, setExternalQuery] = useState<{ text: string, image?: string, timestamp: number } | null>(null);
     const [fullScreenCanvas, setFullScreenCanvas] = useState<HTMLCanvasElement | null>(null);
 
     const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -154,6 +152,7 @@ export default function RoomPage() {
                 if (ctx) {
                     ctx.drawImage(fullScreenCanvas, x, y, w, h, 0, 0, w, h);
                     setScreenshotPreview(croppedCanvas.toDataURL("image/png"));
+                    setIsAlloyOpen(true);
                 }
             }
         } catch (err) {
@@ -165,20 +164,6 @@ export default function RoomPage() {
         setFullScreenCanvas(null);
     };
 
-    const handleAskElloyScreenshot = () => {
-        if (screenshotPreview && screenshotQuery.trim()) {
-            setExternalQuery({
-                text: screenshotQuery,
-                image: screenshotPreview,
-                timestamp: Date.now()
-            });
-            setScreenshotPreview(null);
-            setScreenshotQuery("");
-            setIsAlloyOpen(true);
-        }
-    };
-
-    // Close screenshot mode on escape
     useEffect(() => {
         const handleKeyDown = (e: KeyboardEvent) => {
             if (e.key === 'Escape' && isScreenshotMode) {
@@ -444,11 +429,6 @@ export default function RoomPage() {
                                     </>
                                 )}
                             </div>
-
-                            {/* Ask Elloy Right Sidebar */}
-                            <div className="hidden lg:flex flex-col h-full shrink-0 z-20">
-                                <AskAlloy isOpen={true} onOpenChange={() => { }} showFloatingButton={false} inline={true} externalQuery={externalQuery} />
-                            </div>
                         </div>
                     )}
 
@@ -462,18 +442,31 @@ export default function RoomPage() {
                             style={{ caretColor: '#2EFF85' }}
                         />
                     )}
+
+                    {/* Right Top Zoom Control */}
+                    <div className="absolute top-4 right-4 flex items-center gap-1 text-xs font-semibold text-zinc-400 hover:text-zinc-200 cursor-pointer transition-colors z-30 px-2 py-1 rounded hover:bg-zinc-800">
+                        100% <ChevronDown className="w-3 h-3 ml-0.5" />
+                    </div>
+
+                    {/* Bottom Right Help */}
+                    <div className="absolute bottom-6 right-6 z-30">
+                        <button className="w-8 h-8 flex items-center justify-center rounded-full bg-zinc-800/80 hover:bg-zinc-700 text-zinc-400 hover:text-zinc-200 border border-zinc-700/50 backdrop-blur-sm transition-all shadow-lg">
+                            <span className="font-semibold text-sm">?</span>
+                        </button>
+                    </div>
                 </div>
 
-                {/* Right Top Zoom Control */}
-                <div className="absolute top-4 right-4 flex items-center gap-1 text-xs font-semibold text-zinc-400 hover:text-zinc-200 cursor-pointer transition-colors z-30 px-2 py-1 rounded hover:bg-zinc-800">
-                    100% <ChevronDown className="w-3 h-3 ml-0.5" />
-                </div>
-
-                {/* Bottom Right Help */}
-                <div className="absolute bottom-6 right-6 z-30">
-                    <button className="w-8 h-8 flex items-center justify-center rounded-full bg-zinc-800/80 hover:bg-zinc-700 text-zinc-400 hover:text-zinc-200 border border-zinc-700/50 backdrop-blur-sm transition-all shadow-lg">
-                        <span className="font-semibold text-sm">?</span>
-                    </button>
+                {/* THE UNIFIED ASK ELLOY CHAT SYSTEM */}
+                {/* Mounted adjacent to the canvas so it acts as an inline sidebar pushing content */}
+                <div className={`h-full shrink-0 z-20 transition-all duration-300 ease-in-out ${isAlloyOpen ? 'w-[380px] xl:w-[480px] border-l border-zinc-800/50' : 'w-0 overflow-hidden'}`}>
+                    <AskAlloy 
+                        isOpen={true} 
+                        onOpenChange={setIsAlloyOpen} 
+                        showFloatingButton={false} 
+                        inline={true} 
+                        stagedImage={screenshotPreview} 
+                        onClearStagedImage={() => setScreenshotPreview(null)} 
+                    />
                 </div>
 
             </div>
@@ -525,9 +518,6 @@ export default function RoomPage() {
                 </div>
             )}
 
-            {/* Chat Assistant Sidebar */}
-            <AskAlloy isOpen={isAlloyOpen} onOpenChange={setIsAlloyOpen} showFloatingButton={false} externalQuery={externalQuery} />
-
             {/* Screenshot Mode Overlay */}
             {isScreenshotMode && (
                 <div
@@ -547,53 +537,6 @@ export default function RoomPage() {
                             }}
                         />
                     )}
-                </div>
-            )}
-
-            {/* Screenshot Preview Modal */}
-            {screenshotPreview && (
-                <div className="fixed inset-0 z-[210] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-in fade-in duration-200">
-                    <div className="bg-[#18181A] border border-[#2EFF85]/20 rounded-2xl w-full max-w-lg shadow-2xl overflow-hidden animate-in zoom-in-95 duration-200 flex flex-col">
-                        <div className="flex items-center justify-between p-4 border-b border-white/5">
-                            <h2 className="text-lg font-semibold text-white tracking-tight flex items-center gap-2">
-                                <Scan className="w-5 h-5 text-[#2EFF85]" />
-                                Ask Elloy about Screenshot
-                            </h2>
-                            <button
-                                onClick={() => setScreenshotPreview(null)}
-                                className="p-1.5 rounded-lg text-zinc-400 hover:text-white hover:bg-white/10 transition-colors"
-                            >
-                                <X className="w-5 h-5" />
-                            </button>
-                        </div>
-                        <div className="p-5 flex flex-col gap-4">
-                            <div className="relative rounded-lg overflow-hidden border border-white/10 bg-black/50 max-h-[300px] flex items-center justify-center p-2">
-                                <img src={screenshotPreview} alt="Screenshot preview" className="max-h-[280px] object-contain rounded" />
-                            </div>
-                            <textarea
-                                value={screenshotQuery}
-                                onChange={e => setScreenshotQuery(e.target.value)}
-                                placeholder="Ask something about this screenshot..."
-                                className="w-full bg-zinc-900 border border-zinc-800 rounded-xl py-3 px-4 text-sm text-zinc-200 focus:outline-none focus:border-[#2EFF85]/50 transition-colors placeholder:text-zinc-600 resize-none min-h-[100px] shadow-inner"
-                            />
-                            <div className="flex justify-end gap-3 mt-2">
-                                <button
-                                    onClick={() => setScreenshotPreview(null)}
-                                    className="px-4 py-2 rounded-lg text-sm font-medium text-zinc-300 hover:bg-zinc-800 transition-colors"
-                                >
-                                    Cancel
-                                </button>
-                                <button
-                                    onClick={handleAskElloyScreenshot}
-                                    disabled={!screenshotQuery.trim()}
-                                    className="flex items-center gap-2 bg-[#2EFF85] hover:bg-[#25dd72] text-[#0A0A0A] px-5 py-2 rounded-lg text-sm font-semibold transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-[0_0_15px_rgba(46,255,133,0.3)] hover:shadow-[0_0_20px_rgba(46,255,133,0.4)]"
-                                >
-                                    <Sparkles className="w-4 h-4" />
-                                    Ask Elloy
-                                </button>
-                            </div>
-                        </div>
-                    </div>
                 </div>
             )}
         </div>
