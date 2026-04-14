@@ -20,7 +20,9 @@
 
 </div>
 
-<img src="./public/screenshot.png" alt="Preview Image" height="300" width="600" />
+<div align="center">
+    <img src="./public/screenshot.png" alt="Preview Image" height="500" width="100%" />
+</div>
 
 
 LiveNotes is a collaborative platform that allows users to share and edit notes in real-time with friends and colleagues. Whether you're brainstorming ideas, managing tasks, or sharing quick notes, LiveNotes makes collaboration seamless and efficient.
