@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useEffect, useRef, useState, useCallback } from 'react';
-import { Canvas, Rect, Circle, Line, Path, IText } from 'fabric';
+import { Canvas, Rect, Circle, Line, Path, IText, FabricImage, PencilBrush } from 'fabric';
 import { Socket } from 'socket.io-client';
 
 export type DrawingTool = 'pointer' | 'rect' | 'circle' | 'arrow' | 'line' | 'pencil' | 'text' | 'image';
@@ -19,6 +19,58 @@ const DrawingCanvas: React.FC<DrawingCanvasProps> = ({ activeTool, socket, roomI
     const startPointRef = useRef<{ x: number; y: number }>({ x: 0, y: 0 });
     const pointsRef = useRef<{ x: number; y: number }[]>([]);
     const previewObjectRef = useRef<any>(null);
+
+    const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (!file || !fabricCanvasRef.current) return;
+
+        const reader = new FileReader();
+        reader.onload = (f) => {
+            const data = f.target?.result as string;
+            // Create a fabric image object from URL
+            FabricImage.fromURL(data).then((img) => {
+                // Scale down if image is too large
+                const canvas = fabricCanvasRef.current;
+                if (!canvas) return;
+
+                if (img.width && img.height) {
+                    const maxWidth = canvas.width ? canvas.width * 0.8 : 800;
+                    const maxHeight = canvas.height ? canvas.height * 0.8 : 600;
+
+                    if (img.width > maxWidth || img.height > maxHeight) {
+                        const scale = Math.min(maxWidth / img.width, maxHeight / img.height);
+                        img.scaleX = scale;
+                        img.scaleY = scale;
+                    }
+                }
+
+                // Center image
+                if (canvas.width && canvas.height && img.width && img.height) {
+                    img.set({
+                        left: (canvas.width - img.width * img.scaleX) / 2,
+                        top: (canvas.height - img.height * img.scaleY) / 2,
+                    });
+                } else {
+                    img.set({ left: 100, top: 100 });
+                }
+
+                img.set({
+                    hasControls: true,
+                    hasBorders: true,
+                    selectable: true,
+                });
+
+                canvas.add(img);
+                canvas.setActiveObject(img);
+                canvas.renderAll();
+                emitElement(img);
+            });
+        };
+        reader.readAsDataURL(file);
+
+        // Reset the input value so user can upload the same image again if needed
+        e.target.value = '';
+    };
 
     // Initialize Fabric Canvas
     useEffect(() => {
@@ -84,6 +136,18 @@ const DrawingCanvas: React.FC<DrawingCanvasProps> = ({ activeTool, socket, roomI
     useEffect(() => {
         if (!fabricCanvasRef.current) return;
 
+        const canvas = fabricCanvasRef.current;
+        const isPencil = activeTool === 'pencil';
+
+        canvas.isDrawingMode = isPencil;
+        if (isPencil) {
+            if (!canvas.freeDrawingBrush) {
+                canvas.freeDrawingBrush = new PencilBrush(canvas);
+            }
+            canvas.freeDrawingBrush.color = '#2EFF85';
+            canvas.freeDrawingBrush.width = 4;
+        }
+
         const cursorMap: Record<DrawingTool, string> = {
             pointer: 'default',
             rect: 'crosshair',
@@ -95,7 +159,7 @@ const DrawingCanvas: React.FC<DrawingCanvasProps> = ({ activeTool, socket, roomI
             image: 'copy',
         };
 
-        fabricCanvasRef.current.defaultCursor = cursorMap[activeTool] || 'default';
+        canvas.defaultCursor = cursorMap[activeTool] || 'default';
     }, [activeTool]);
 
     const emitElement = useCallback(
@@ -165,7 +229,8 @@ const DrawingCanvas: React.FC<DrawingCanvasProps> = ({ activeTool, socket, roomI
             }
 
             if (activeTool === 'pencil') {
-                pointsRef.current = [{ x: pointer.x, y: pointer.y }];
+                // Native Fabric drawing mode handles this
+                return;
             }
 
             setIsDrawing(true);
@@ -177,7 +242,7 @@ const DrawingCanvas: React.FC<DrawingCanvasProps> = ({ activeTool, socket, roomI
             const pointer = canvas.getScenePoint(e);
 
             if (activeTool === 'pencil') {
-                pointsRef.current.push({ x: pointer.x, y: pointer.y });
+                return;
             } else if (activeTool === 'rect') {
                 const width = Math.abs(pointer.x - startPointRef.current.x);
                 const height = Math.abs(pointer.y - startPointRef.current.y);
@@ -293,23 +358,8 @@ const DrawingCanvas: React.FC<DrawingCanvasProps> = ({ activeTool, socket, roomI
         const onMouseUp = (e: any) => {
             const pointer = canvas.getScenePoint(e);
 
-            if (activeTool === 'pencil' && pointsRef.current.length > 2) {
-                const pathData = pointsRef.current.reduce((acc, point, idx) => {
-                    return acc + (idx === 0 ? `M ${point.x} ${point.y}` : ` L ${point.x} ${point.y}`);
-                }, '');
-
-                const path = new Path(pathData, {
-                    stroke: '#2EFF85',
-                    strokeWidth: 2,
-                    fill: null,
-                    strokeUniform: true,
-                    hasControls: true,
-                    hasBorders: true,
-                    selectable: true,
-                });
-
-                canvas.add(path);
-                emitElement(path);
+            if (activeTool === 'pencil') {
+                return;
             } else {
                 if (previewObjectRef.current) {
                     const preview = previewObjectRef.current;
@@ -329,14 +379,29 @@ const DrawingCanvas: React.FC<DrawingCanvasProps> = ({ activeTool, socket, roomI
             pointsRef.current = [];
         };
 
+        const onPathCreated = (e: any) => {
+            if (activeTool === 'pencil') {
+                const path = e.path;
+                path.set({
+                    strokeUniform: true,
+                    selectable: true,
+                    hasControls: true,
+                    hasBorders: true,
+                });
+                emitElement(path);
+            }
+        };
+
         canvas.on('mouse:down', onMouseDown);
         canvas.on('mouse:move', onMouseMove);
         canvas.on('mouse:up', onMouseUp);
+        canvas.on('path:created', onPathCreated);
 
         return () => {
             canvas.off('mouse:down', onMouseDown);
             canvas.off('mouse:move', onMouseMove);
             canvas.off('mouse:up', onMouseUp);
+            canvas.off('path:created', onPathCreated);
         };
     }, [activeTool, emitElement, isDrawing]);
 
@@ -357,11 +422,20 @@ const DrawingCanvas: React.FC<DrawingCanvasProps> = ({ activeTool, socket, roomI
     }, [socket]);
 
     return (
-        <canvas
-            ref={canvasRef}
-            className="w-full h-full"
-            style={{ display: 'block' }}
-        />
+        <>
+            <canvas
+                ref={canvasRef}
+                className="w-full h-full"
+                style={{ display: 'block' }}
+            />
+            <input
+                type="file"
+                id="canvas-image-upload"
+                accept="image/*"
+                className="hidden"
+                onChange={handleImageUpload}
+            />
+        </>
     );
 };
 

@@ -143,9 +143,13 @@ export default function RoomPage() {
                             <ToolButton icon={Circle} label="O" active={activeTool === 'circle'} onClick={() => setActiveTool('circle')} />
                             <ToolButton icon={ArrowUpRight} label="A" active={activeTool === 'arrow'} onClick={() => setActiveTool('arrow')} />
                             <ToolButton icon={Slash} label="L" active={activeTool === 'line'} onClick={() => setActiveTool('line')} className="rotate-90" />
-                            <ToolButton icon={PenLine} label="D" active={activeTool === 'draw'} onClick={() => setActiveTool('draw')} />
+                            <ToolButton icon={PenLine} label="D" active={activeTool === 'pencil'} onClick={() => setActiveTool('pencil')} />
                             <ToolButton icon={Type} label="T" active={activeTool === 'text'} onClick={() => setActiveTool('text')} />
-                            <ToolButton icon={ImageIcon} label="I" active={activeTool === 'image'} onClick={() => setActiveTool('image')} />
+                            <ToolButton icon={ImageIcon} label="I" active={activeTool === 'image'} onClick={() => {
+                                setActiveTool('image');
+                                const fileInput = document.getElementById('canvas-image-upload');
+                                if (fileInput) fileInput.click();
+                            }} />
                         </div>
 
                         {/* Bottom block */}
