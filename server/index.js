@@ -36,7 +36,7 @@ io.on('connection', (socket) => {
     socket.on('edit-notes', ({ roomId, notes }) => {
         // Update in-memory storage
         roomNotes[roomId] = notes;
-        
+
         // Broadcast to everyone else in the room
         socket.to(roomId).emit('update-notes', notes);
     });
