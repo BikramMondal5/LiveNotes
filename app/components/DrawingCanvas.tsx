@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useEffect, useRef, useState, useCallback } from 'react';
-import { Canvas, Rect, Circle, Line, Path, IText, FabricImage, PencilBrush } from 'fabric';
+import { Canvas, Rect, Circle, Line, Path, IText, FabricImage, PencilBrush, util } from 'fabric';
 import { Socket } from 'socket.io-client';
 
 export type DrawingTool = 'pointer' | 'rect' | 'circle' | 'arrow' | 'line' | 'pencil' | 'text' | 'image';
@@ -102,35 +102,46 @@ const DrawingCanvas: React.FC<DrawingCanvasProps> = ({ activeTool, socket, roomI
             }
         };
 
-        // Handle delete keypress for removing selected objects
+        window.addEventListener('resize', handleResize);
+
+        return () => {
+            window.removeEventListener('resize', handleResize);
+            canvas.dispose();
+        };
+    }, []);
+
+    // Handle delete keyboard interactions dynamically 
+    useEffect(() => {
+        if (!fabricCanvasRef.current) return;
+        const canvas = fabricCanvasRef.current;
+
         const handleKeyDown = (e: KeyboardEvent) => {
             if (e.key === 'Delete' || e.key === 'Backspace') {
                 const activeObjects = canvas.getActiveObjects();
                 if (activeObjects.length > 0) {
-                    // Prevent deletion if an inner text input is active or if user is currently typing in an IText
                     const isEditing = activeObjects.some((obj: any) => obj.isEditing);
                     const activeElement = document.activeElement;
                     const isInputFocused = activeElement?.tagName === 'INPUT' || activeElement?.tagName === 'TEXTAREA';
 
                     if (!isEditing && !isInputFocused) {
-                        activeObjects.forEach(obj => canvas.remove(obj));
+                        activeObjects.forEach((obj: any) => {
+                            if (obj.id && socket && roomId) {
+                                socket.emit('delete-shape', { roomId, id: obj.id });
+                            }
+                            canvas.remove(obj);
+                        });
                         canvas.discardActiveObject();
                         canvas.renderAll();
-                        // For a collaborative feature, we would also emit a delete event here
                     }
                 }
             }
         };
 
-        window.addEventListener('resize', handleResize);
         window.addEventListener('keydown', handleKeyDown);
-
         return () => {
-            window.removeEventListener('resize', handleResize);
             window.removeEventListener('keydown', handleKeyDown);
-            canvas.dispose();
         };
-    }, []);
+    }, [socket, roomId]);
 
     // Set canvas cursor based on tool
     useEffect(() => {
@@ -164,10 +175,18 @@ const DrawingCanvas: React.FC<DrawingCanvasProps> = ({ activeTool, socket, roomI
 
     const emitElement = useCallback(
         (element: any) => {
+            if (!element.id) {
+                element.id = Math.random().toString(36).substring(2, 9) + Date.now().toString(36);
+            }
             if (socket && roomId) {
+                const data = element.toJSON();
+                // Ensure id is part of the serialization if needed, or stick it directly onto the payload.
+                data.id = element.id;
+
                 socket.emit('draw', {
                     roomId,
                     element: {
+                        id: element.id,
                         type: element.type,
                         left: element.left,
                         top: element.top,
@@ -176,13 +195,31 @@ const DrawingCanvas: React.FC<DrawingCanvasProps> = ({ activeTool, socket, roomI
                         fill: element.fill,
                         stroke: element.stroke,
                         strokeWidth: element.strokeWidth,
-                        data: element.toJSON(),
+                        data: data,
                     },
                 });
             }
         },
         [socket, roomId]
     );
+
+    // Track when user modifies anything
+    useEffect(() => {
+        if (!fabricCanvasRef.current) return;
+        const canvas = fabricCanvasRef.current;
+
+        const onObjectModified = (e: any) => {
+            if (e.target) {
+                emitElement(e.target);
+            }
+        };
+
+        canvas.on('object:modified', onObjectModified);
+
+        return () => {
+            canvas.off('object:modified', onObjectModified);
+        };
+    }, [emitElement]);
 
     // Attach event listeners only once on mount, never detach/reattach
     useEffect(() => {
@@ -407,19 +444,78 @@ const DrawingCanvas: React.FC<DrawingCanvasProps> = ({ activeTool, socket, roomI
 
     // Listen for incoming drawings
     useEffect(() => {
-        if (!socket || !fabricCanvasRef.current) return;
+        if (!socket || !roomId || !fabricCanvasRef.current) return;
+
+        const canvas = fabricCanvasRef.current;
 
         const handleIncomingDraw = (data: any) => {
-            // Reconstruct fabric object from data and add to canvas
-            console.log('Incoming draw:', data);
+            const { element } = data;
+
+            // Find if this object already exists
+            const existingObjects = canvas.getObjects() as any[];
+            const existingObj = existingObjects.find(o => o.id === element.id || (o as any).data?.id === element.id);
+
+            // Basic object reconstruction
+            util.enlivenObjects([element.data]).then((enlivenedObjects: any) => {
+                if (enlivenedObjects && enlivenedObjects.length > 0) {
+                    const obj = enlivenedObjects[0];
+                    obj.id = element.id;  // preserve id
+                    obj.set({
+                        hasControls: true,
+                        hasBorders: true,
+                        selectable: true,
+                    });
+
+                    if (existingObj) {
+                        // Replace existing object with updated one
+                        canvas.remove(existingObj);
+                    }
+
+                    canvas.add(obj);
+                    canvas.renderAll();
+                }
+            });
         };
 
+        const handleCanvasData = (shapes: any[]) => {
+            canvas.clear();
+            const shapeDatas = shapes.map(s => s.data);
+            util.enlivenObjects(shapeDatas).then((enlivenedObjects: any) => {
+                enlivenedObjects.forEach((obj: any, index: number) => {
+                    obj.id = shapes[index].id; // preserve id from server
+                    obj.set({
+                        hasControls: true,
+                        hasBorders: true,
+                        selectable: true,
+                    });
+                    canvas.add(obj);
+                });
+                canvas.renderAll();
+            });
+        };
+
+        const handleIncomingDelete = (id: string) => {
+            const existingObjects = canvas.getObjects() as any[];
+            const existingObj = existingObjects.find(o => o.id === id || (o as any).data?.id === id);
+
+            if (existingObj) {
+                canvas.remove(existingObj);
+                canvas.renderAll();
+            }
+        };
+
+        socket.emit('get-canvas', roomId);
+
         socket.on('draw', handleIncomingDraw);
+        socket.on('canvas-data', handleCanvasData);
+        socket.on('delete-shape', handleIncomingDelete);
 
         return () => {
             socket.off('draw', handleIncomingDraw);
+            socket.off('canvas-data', handleCanvasData);
+            socket.off('delete-shape', handleIncomingDelete);
         };
-    }, [socket]);
+    }, [socket, roomId]);
 
     return (
         <>

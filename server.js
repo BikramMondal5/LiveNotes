@@ -21,6 +21,7 @@ app.prepare().then(() => {
 
     // Simple in-memory storage for notes per room
     const roomNotes = {};
+    const roomShapes = {};
 
     io.on("connection", (socket) => {
         console.log("Client connected:", socket.id);
@@ -33,6 +34,36 @@ app.prepare().then(() => {
             if (roomNotes[roomId]) {
                 socket.emit("update-notes", roomNotes[roomId]);
             }
+        });
+
+        socket.on("get-canvas", (roomId) => {
+            if (roomShapes[roomId]) {
+                socket.emit("canvas-data", roomShapes[roomId]);
+            }
+        });
+
+        socket.on("draw", (data) => {
+            if (!roomShapes[data.roomId]) {
+                roomShapes[data.roomId] = [];
+            }
+
+            // Find existing shape by ID and update it, to avoid duplications on server state
+            const shapeIndex = roomShapes[data.roomId].findIndex((shape) => shape.id === data.element.id);
+
+            if (shapeIndex > -1) {
+                roomShapes[data.roomId][shapeIndex] = data.element;
+            } else {
+                roomShapes[data.roomId].push(data.element);
+            }
+
+            socket.to(data.roomId).emit("draw", data);
+        });
+
+        socket.on("delete-shape", ({ roomId, id }) => {
+            if (roomShapes[roomId]) {
+                roomShapes[roomId] = roomShapes[roomId].filter(shape => shape.id !== id);
+            }
+            socket.to(roomId).emit("delete-shape", id);
         });
 
         socket.on("edit-notes", ({ roomId, notes }) => {

@@ -13,7 +13,7 @@ import type { DrawingTool } from "../../components/DrawingCanvas";
 export default function RoomPage() {
     const { roomId } = useParams() as { roomId: string };
     const [notes, setNotes] = useState("");
-    const socketRef = useRef<Socket | null>(null);
+    const [socket, setSocket] = useState<Socket | null>(null);
     const [activeTool, setActiveTool] = useState("rect");
     const [viewMode, setViewMode] = useState("canvas"); // document | both | canvas
     const [isAlloyOpen, setIsAlloyOpen] = useState(false);
@@ -66,22 +66,22 @@ export default function RoomPage() {
     useEffect(() => {
         // Use the Render backend URL if provided, otherwise default to same-origin
         const socketUrl = process.env.NEXT_PUBLIC_WS_URL;
-        const socket = socketUrl ? io(socketUrl) : io();
-        socketRef.current = socket;
-        socket.emit("join-room", roomId);
-        socket.on("update-notes", (newNotes: string) => {
+        const newSocket = socketUrl ? io(socketUrl) : io();
+        setSocket(newSocket);
+        newSocket.emit("join-room", roomId);
+        newSocket.on("update-notes", (newNotes: string) => {
             setNotes(newNotes);
         });
         return () => {
-            socket.disconnect();
+            newSocket.disconnect();
         };
     }, [roomId]);
 
     const handleChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
         const value = e.target.value;
         setNotes(value);
-        if (socketRef.current) {
-            socketRef.current.emit("edit-notes", { roomId, notes: value });
+        if (socket) {
+            socket.emit("edit-notes", { roomId, notes: value });
         }
     };
 
@@ -312,7 +312,7 @@ export default function RoomPage() {
                     <div className={`absolute inset-0 transition-opacity duration-300 ${viewMode === 'document' ? 'opacity-0 pointer-events-none z-0' : 'opacity-100 z-10'}`}>
                         <DrawingCanvas
                             activeTool={activeTool as DrawingTool}
-                            socket={socketRef.current || undefined}
+                            socket={socket || undefined}
                             roomId={roomId}
                         />
                     </div>
