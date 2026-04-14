@@ -3,7 +3,7 @@
 import { useEffect, useState, useRef } from "react";
 import { useParams } from "next/navigation";
 import { io, Socket } from "socket.io-client";
-import { Plus, Wand2, MousePointer2, Square, Circle, ArrowUpRight, Slash, PenLine, Type, Image as ImageIcon, Frame, HelpingHand, Settings, ChevronDown, MoreHorizontal, Sparkles, Search, Home, Briefcase, FileText, ChevronRight, Rocket } from "lucide-react";
+import { Plus, Wand2, MousePointer2, Square, Circle, ArrowUpRight, Slash, PenLine, Type, Image as ImageIcon, Frame, HelpingHand, Settings, ChevronDown, MoreHorizontal, Sparkles, Search, Home, Briefcase, FileText, ChevronRight, Rocket, Share, X, Copy, Check } from "lucide-react";
 import DotGrid from "../../components/DotGrid";
 import DrawingCanvas from "../../components/DrawingCanvas";
 import AskAlloy from "../../components/AskAlloy";
@@ -16,6 +16,8 @@ export default function RoomPage() {
     const [activeTool, setActiveTool] = useState("rect");
     const [viewMode, setViewMode] = useState("canvas"); // document | both | canvas
     const [isAlloyOpen, setIsAlloyOpen] = useState(false);
+    const [isShareModalOpen, setIsShareModalOpen] = useState(false);
+    const [isCopied, setIsCopied] = useState(false);
     const [pdfFile, setPdfFile] = useState<string | null>(null);
     const [activeDocView, setActiveDocView] = useState<"home" | "preview">("home");
     const fileInputRef = useRef<HTMLInputElement>(null);
@@ -154,7 +156,7 @@ export default function RoomPage() {
 
                         {/* Bottom block */}
                         <div className="flex flex-col gap-1 bg-zinc-900/90 border border-zinc-800 rounded-xl p-1 shadow-xl backdrop-blur-sm">
-                            <ToolButton icon={Frame} label="F" active={activeTool === 'frame'} onClick={() => setActiveTool('frame')} />
+                            <ToolButton icon={Share} label="Share" active={isShareModalOpen} onClick={() => setIsShareModalOpen(true)} />
                         </div>
                     </div>
                 )}
@@ -331,6 +333,52 @@ export default function RoomPage() {
                 </div>
 
             </div>
+
+            {/* Share Modal */}
+            {isShareModalOpen && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-in fade-in duration-200">
+                    <div className="bg-[#18181A] border border-white/10 rounded-2xl w-full max-w-md shadow-2xl overflow-hidden animate-in zoom-in-95 duration-200">
+                        <div className="flex items-center justify-between p-5 border-b border-white/5">
+                            <h2 className="text-lg font-semibold text-white tracking-tight flex items-center gap-2">
+                                <Share className="w-5 h-5 text-[#2EFF85]" />
+                                Share with Friends
+                            </h2>
+                            <button
+                                onClick={() => setIsShareModalOpen(false)}
+                                className="p-1.5 rounded-lg text-zinc-400 hover:text-white hover:bg-white/10 transition-colors"
+                            >
+                                <X className="w-5 h-5" />
+                            </button>
+                        </div>
+                        <div className="p-5">
+                            <p className="text-sm text-zinc-400 mb-4 leading-relaxed">
+                                Anyone with this link will be able to join this room and collaborate with you in real-time.
+                            </p>
+
+                            <div className="flex items-center gap-2 bg-black/40 border border-white/10 p-1.5 rounded-xl">
+                                <div className="flex-1 px-3 py-1.5 text-sm text-zinc-300 truncate font-mono select-all">
+                                    {(process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:3000") + "/room/" + roomId}
+                                </div>
+                                <button
+                                    onClick={() => {
+                                        const url = (process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:3000") + "/room/" + roomId;
+                                        navigator.clipboard.writeText(url);
+                                        setIsCopied(true);
+                                        setTimeout(() => setIsCopied(false), 2000);
+                                    }}
+                                    className={`shrink-0 flex items-center gap-1.5 px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${isCopied
+                                            ? "bg-[#2EFF85]/20 text-[#2EFF85] border border-[#2EFF85]/30"
+                                            : "bg-white/10 text-white hover:bg-white/15 border border-transparent"
+                                        }`}
+                                >
+                                    {isCopied ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
+                                    {isCopied ? "Copied!" : "Copy"}
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )}
 
             {/* Chat Assistant Sidebar */}
             <AskAlloy isOpen={isAlloyOpen} onOpenChange={setIsAlloyOpen} showFloatingButton={false} />
