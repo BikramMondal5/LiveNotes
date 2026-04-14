@@ -64,7 +64,9 @@ export default function RoomPage() {
     };
 
     useEffect(() => {
-        const socket = io();
+        // Use the Render backend URL if provided, otherwise default to same-origin
+        const socketUrl = process.env.NEXT_PUBLIC_WS_URL;
+        const socket = socketUrl ? io(socketUrl) : io();
         socketRef.current = socket;
         socket.emit("join-room", roomId);
         socket.on("update-notes", (newNotes: string) => {

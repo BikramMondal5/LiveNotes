@@ -12,7 +12,12 @@ const handler = app.getRequestHandler();
 
 app.prepare().then(() => {
     const httpServer = createServer(handler);
-    const io = new Server(httpServer);
+    const io = new Server(httpServer, {
+        cors: {
+            origin: "*", // allow Vercel frontend to connect
+            methods: ["GET", "POST"]
+        }
+    });
 
     // Simple in-memory storage for notes per room
     const roomNotes = {};
