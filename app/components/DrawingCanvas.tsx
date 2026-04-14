@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useEffect, useRef, useState, useCallback } from 'react';
-import { Canvas, Rect, Circle, Line, Path, Text as FabricText } from 'fabric';
+import { Canvas, Rect, Circle, Line, Path, IText } from 'fabric';
 import { Socket } from 'socket.io-client';
 
 export type DrawingTool = 'pointer' | 'rect' | 'circle' | 'arrow' | 'line' | 'pencil' | 'text' | 'image';
@@ -50,10 +50,32 @@ const DrawingCanvas: React.FC<DrawingCanvasProps> = ({ activeTool, socket, roomI
             }
         };
 
+        // Handle delete keypress for removing selected objects
+        const handleKeyDown = (e: KeyboardEvent) => {
+            if (e.key === 'Delete' || e.key === 'Backspace') {
+                const activeObjects = canvas.getActiveObjects();
+                if (activeObjects.length > 0) {
+                    // Prevent deletion if an inner text input is active or if user is currently typing in an IText
+                    const isEditing = activeObjects.some((obj: any) => obj.isEditing);
+                    const activeElement = document.activeElement;
+                    const isInputFocused = activeElement?.tagName === 'INPUT' || activeElement?.tagName === 'TEXTAREA';
+
+                    if (!isEditing && !isInputFocused) {
+                        activeObjects.forEach(obj => canvas.remove(obj));
+                        canvas.discardActiveObject();
+                        canvas.renderAll();
+                        // For a collaborative feature, we would also emit a delete event here
+                    }
+                }
+            }
+        };
+
         window.addEventListener('resize', handleResize);
+        window.addEventListener('keydown', handleKeyDown);
 
         return () => {
             window.removeEventListener('resize', handleResize);
+            window.removeEventListener('keydown', handleKeyDown);
             canvas.dispose();
         };
     }, []);
@@ -116,6 +138,29 @@ const DrawingCanvas: React.FC<DrawingCanvasProps> = ({ activeTool, socket, roomI
 
             // If the user clicked on an existing object, allow them to move/interact rather than drawing a new one
             if (e.target) {
+                return;
+            }
+
+            if (activeTool === 'text') {
+                const textNode = new IText('Type something...', {
+                    left: pointer.x,
+                    top: pointer.y,
+                    fontSize: 20,
+                    fill: '#2EFF85',
+                    fontFamily: 'sans-serif',
+                    hasControls: true,
+                    hasBorders: true,
+                    selectable: true,
+                });
+
+                canvas.add(textNode);
+                canvas.setActiveObject(textNode);
+                textNode.enterEditing();
+                textNode.selectAll();
+                canvas.renderAll();
+                emitElement(textNode);
+
+                // Return early so we don't start drawing lines/shapes
                 return;
             }
 
@@ -256,40 +301,14 @@ const DrawingCanvas: React.FC<DrawingCanvasProps> = ({ activeTool, socket, roomI
             pointsRef.current = [];
         };
 
-        const onCanvasClick = (e: any) => {
-            if (activeTool !== 'text') return;
-
-            const pointer = canvas?.getScenePoint(e);
-            if (!pointer) return;
-
-            const text = prompt('Enter text:');
-            if (text) {
-                const fabricText = new FabricText(text, {
-                    left: pointer.x,
-                    top: pointer.y,
-                    fontSize: 16,
-                    fill: '#2EFF85',
-                    hasControls: true,
-                    hasBorders: true,
-                    selectable: true,
-                });
-
-                canvas?.add(fabricText);
-                canvas?.renderAll();
-                emitElement(fabricText);
-            }
-        };
-
         canvas.on('mouse:down', onMouseDown);
         canvas.on('mouse:move', onMouseMove);
         canvas.on('mouse:up', onMouseUp);
-        canvas.on('mouse:dblclick', onCanvasClick);
 
         return () => {
             canvas.off('mouse:down', onMouseDown);
             canvas.off('mouse:move', onMouseMove);
             canvas.off('mouse:up', onMouseUp);
-            canvas.off('mouse:dblclick', onCanvasClick);
         };
     }, [activeTool, emitElement, isDrawing]);
 
