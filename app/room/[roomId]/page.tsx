@@ -3,7 +3,7 @@
 import { useEffect, useState, useRef } from "react";
 import { useParams } from "next/navigation";
 import { io, Socket } from "socket.io-client";
-import { Plus, Wand2, MousePointer2, Square, Circle, ArrowUpRight, Slash, PenLine, Type, Image as ImageIcon, Frame, HelpingHand, Settings, ChevronDown, MoreHorizontal, Sparkles, Search, Home, Briefcase, FileText, ChevronRight, Rocket, Share, X, Copy, Check } from "lucide-react";
+import { Plus, Wand2, MousePointer2, Square, Circle, ArrowUpRight, Slash, PenLine, Type, Image as ImageIcon, Frame, HelpingHand, Settings, ChevronDown, MoreHorizontal, Sparkles, Search, Home, Briefcase, FileText, ChevronRight, Rocket, Share, X, Copy, Check, Scan } from "lucide-react";
 import DotGrid from "../../components/DotGrid";
 import DrawingCanvas from "../../components/DrawingCanvas";
 import AskAlloy from "../../components/AskAlloy";
@@ -22,6 +22,16 @@ export default function RoomPage() {
     const [pdfFile, setPdfFile] = useState<string | null>(null);
     const [activeDocView, setActiveDocView] = useState<"home" | "preview">("home");
     const fileInputRef = useRef<HTMLInputElement>(null);
+
+    // Screenshot feature states
+    const [isScreenshotMode, setIsScreenshotMode] = useState(false);
+    const [isPdfToolsOpen, setIsPdfToolsOpen] = useState(false);
+    const [screenshotRect, setScreenshotRect] = useState<{ x: number, y: number, w: number, h: number } | null>(null);
+    const [screenshotStart, setScreenshotStart] = useState<{ x: number, y: number } | null>(null);
+    const [screenshotPreview, setScreenshotPreview] = useState<string | null>(null);
+    const [screenshotQuery, setScreenshotQuery] = useState("");
+    const [externalQuery, setExternalQuery] = useState<{ text: string, image?: string, timestamp: number } | null>(null);
+    const [fullScreenCanvas, setFullScreenCanvas] = useState<HTMLCanvasElement | null>(null);
 
     const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
@@ -65,6 +75,122 @@ export default function RoomPage() {
             socketRef.current.emit("edit-notes", { roomId, notes: value });
         }
     };
+
+    const startScreenCapture = async () => {
+        setIsPdfToolsOpen(false);
+        try {
+            const stream = await navigator.mediaDevices.getDisplayMedia({
+                video: { displaySurface: "browser" } as any
+            });
+
+            const video = document.createElement("video");
+            video.srcObject = stream;
+
+            await new Promise((resolve) => {
+                video.onloadedmetadata = () => {
+                    video.play().then(resolve);
+                };
+            });
+
+            const canvas = document.createElement("canvas");
+            canvas.width = video.videoWidth;
+            canvas.height = video.videoHeight;
+
+            const ctx = canvas.getContext("2d");
+            if (ctx) {
+                ctx.drawImage(video, 0, 0);
+            }
+
+            stream.getTracks().forEach(track => track.stop());
+
+            setFullScreenCanvas(canvas);
+            setIsScreenshotMode(true);
+        } catch (err) {
+            console.error("Screen capture failed:", err);
+            setIsScreenshotMode(false);
+            setFullScreenCanvas(null);
+        }
+    };
+
+    const handleScreenshotStart = (e: React.MouseEvent) => {
+        setScreenshotStart({ x: e.clientX, y: e.clientY });
+        setScreenshotRect({ x: e.clientX, y: e.clientY, w: 0, h: 0 });
+    };
+
+    const handleScreenshotMove = (e: React.MouseEvent) => {
+        if (!screenshotStart) return;
+        const w = e.clientX - screenshotStart.x;
+        const h = e.clientY - screenshotStart.y;
+        setScreenshotRect({ x: screenshotStart.x, y: screenshotStart.y, w, h });
+    };
+
+    const handleScreenshotEnd = async () => {
+        if (!screenshotRect || (screenshotRect.w === 0 && screenshotRect.h === 0)) {
+            setIsScreenshotMode(false);
+            setScreenshotRect(null);
+            setScreenshotStart(null);
+            setFullScreenCanvas(null);
+            return;
+        }
+
+        // Hide overlay just before capture
+        setIsScreenshotMode(false);
+
+        try {
+            if (fullScreenCanvas) {
+                const scaleX = fullScreenCanvas.width / window.innerWidth;
+                const scaleY = fullScreenCanvas.height / window.innerHeight;
+
+                const x = Math.min(screenshotRect.x, screenshotRect.x + screenshotRect.w) * scaleX;
+                const y = Math.min(screenshotRect.y, screenshotRect.y + screenshotRect.h) * scaleY;
+                const w = Math.max(10, Math.abs(screenshotRect.w)) * scaleX;
+                const h = Math.max(10, Math.abs(screenshotRect.h)) * scaleY;
+
+                const croppedCanvas = document.createElement("canvas");
+                croppedCanvas.width = w;
+                croppedCanvas.height = h;
+                const ctx = croppedCanvas.getContext("2d");
+
+                if (ctx) {
+                    ctx.drawImage(fullScreenCanvas, x, y, w, h, 0, 0, w, h);
+                    setScreenshotPreview(croppedCanvas.toDataURL("image/png"));
+                }
+            }
+        } catch (err) {
+            console.error("Screenshot capture failed:", err);
+        }
+
+        setScreenshotRect(null);
+        setScreenshotStart(null);
+        setFullScreenCanvas(null);
+    };
+
+    const handleAskElloyScreenshot = () => {
+        if (screenshotPreview && screenshotQuery.trim()) {
+            setExternalQuery({
+                text: screenshotQuery,
+                image: screenshotPreview,
+                timestamp: Date.now()
+            });
+            setScreenshotPreview(null);
+            setScreenshotQuery("");
+            setIsAlloyOpen(true);
+        }
+    };
+
+    // Close screenshot mode on escape
+    useEffect(() => {
+        const handleKeyDown = (e: KeyboardEvent) => {
+            if (e.key === 'Escape' && isScreenshotMode) {
+                setIsScreenshotMode(false);
+                setScreenshotRect(null);
+                setScreenshotStart(null);
+                setFullScreenCanvas(null);
+            }
+        };
+        window.addEventListener('keydown', handleKeyDown);
+        return () => window.removeEventListener('keydown', handleKeyDown);
+    }, [isScreenshotMode]);
 
     return (
         <div className="h-screen w-full bg-[#121212] flex flex-col overflow-hidden font-sans text-zinc-300">
@@ -206,13 +332,30 @@ export default function RoomPage() {
                                             <span className="text-sm font-medium">Home</span>
                                         </div>
                                     </button>
-                                    <button onClick={() => { if (pdfFile) setActiveDocView("preview"); }} className={`w-full flex items-center justify-between px-3 py-2 rounded-lg transition-colors group ${activeDocView === 'preview' ? 'bg-zinc-800/50 text-[#2EFF85]' : 'text-zinc-300 hover:bg-zinc-800/50 hover:text-[#2EFF85]'}`}>
-                                        <div className="flex items-center gap-3">
-                                            <Briefcase className={`w-4 h-4 ${activeDocView === 'preview' ? 'text-[#2EFF85]' : 'text-zinc-400 group-hover:text-[#2EFF85]'}`} />
-                                            <span className="text-sm font-medium">PDF tools</span>
-                                        </div>
-                                        <ChevronRight className={`w-4 h-4 ${activeDocView === 'preview' ? 'text-[#2EFF85]' : 'text-zinc-600 group-hover:text-[#2EFF85]'}`} />
-                                    </button>
+                                    <div className="space-y-1">
+                                        <button onClick={() => setIsPdfToolsOpen(!isPdfToolsOpen)} className={`w-full flex items-center justify-between px-3 py-2 rounded-lg transition-colors group ${isPdfToolsOpen ? 'bg-zinc-800/50 text-[#2EFF85]' : 'text-zinc-300 hover:bg-zinc-800/50 hover:text-[#2EFF85]'}`}>
+                                            <div className="flex items-center gap-3">
+                                                <Briefcase className={`w-4 h-4 ${isPdfToolsOpen ? 'text-[#2EFF85]' : 'text-zinc-400 group-hover:text-[#2EFF85]'}`} />
+                                                <span className="text-sm font-medium">PDF tools</span>
+                                            </div>
+                                            <ChevronDown className={`w-4 h-4 transition-transform ${isPdfToolsOpen ? 'text-[#2EFF85] rotate-180' : 'text-zinc-600 group-hover:text-[#2EFF85]'}`} />
+                                        </button>
+
+                                        {isPdfToolsOpen && (
+                                            <div className="pl-9 pr-2 py-1 space-y-1 animate-in slide-in-from-top-2 duration-200">
+                                                <button
+                                                    onClick={startScreenCapture}
+                                                    className="w-full flex items-center justify-between px-3 py-2 rounded-lg transition-colors group text-zinc-400 hover:bg-zinc-800/50 hover:text-[#2EFF85]"
+                                                >
+                                                    <div className="flex items-center gap-3">
+                                                        <Scan className="w-4 h-4" />
+                                                        <span className="text-sm font-medium">Screenshot & Ask Elloy</span>
+                                                    </div>
+                                                </button>
+                                                {/* More PDF tools can go here */}
+                                            </div>
+                                        )}
+                                    </div>
                                 </div>
 
                                 {/* Recent */}
@@ -304,7 +447,7 @@ export default function RoomPage() {
 
                             {/* Ask Elloy Right Sidebar */}
                             <div className="hidden lg:flex flex-col h-full shrink-0 z-20">
-                                <AskAlloy isOpen={true} onOpenChange={() => { }} showFloatingButton={false} inline={true} />
+                                <AskAlloy isOpen={true} onOpenChange={() => { }} showFloatingButton={false} inline={true} externalQuery={externalQuery} />
                             </div>
                         </div>
                     )}
@@ -383,7 +526,76 @@ export default function RoomPage() {
             )}
 
             {/* Chat Assistant Sidebar */}
-            <AskAlloy isOpen={isAlloyOpen} onOpenChange={setIsAlloyOpen} showFloatingButton={false} />
+            <AskAlloy isOpen={isAlloyOpen} onOpenChange={setIsAlloyOpen} showFloatingButton={false} externalQuery={externalQuery} />
+
+            {/* Screenshot Mode Overlay */}
+            {isScreenshotMode && (
+                <div
+                    className="fixed inset-0 z-[200] cursor-crosshair bg-black/40 screenshot-overlay select-none"
+                    onMouseDown={handleScreenshotStart}
+                    onMouseMove={handleScreenshotMove}
+                    onMouseUp={handleScreenshotEnd}
+                >
+                    {screenshotStart && screenshotRect && (
+                        <div
+                            className="absolute border-2 border-[#2EFF85] bg-[#2EFF85]/10 pointer-events-none"
+                            style={{
+                                left: Math.min(screenshotRect.x, screenshotRect.x + screenshotRect.w),
+                                top: Math.min(screenshotRect.y, screenshotRect.y + screenshotRect.h),
+                                width: Math.abs(screenshotRect.w),
+                                height: Math.abs(screenshotRect.h),
+                            }}
+                        />
+                    )}
+                </div>
+            )}
+
+            {/* Screenshot Preview Modal */}
+            {screenshotPreview && (
+                <div className="fixed inset-0 z-[210] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-in fade-in duration-200">
+                    <div className="bg-[#18181A] border border-[#2EFF85]/20 rounded-2xl w-full max-w-lg shadow-2xl overflow-hidden animate-in zoom-in-95 duration-200 flex flex-col">
+                        <div className="flex items-center justify-between p-4 border-b border-white/5">
+                            <h2 className="text-lg font-semibold text-white tracking-tight flex items-center gap-2">
+                                <Scan className="w-5 h-5 text-[#2EFF85]" />
+                                Ask Elloy about Screenshot
+                            </h2>
+                            <button
+                                onClick={() => setScreenshotPreview(null)}
+                                className="p-1.5 rounded-lg text-zinc-400 hover:text-white hover:bg-white/10 transition-colors"
+                            >
+                                <X className="w-5 h-5" />
+                            </button>
+                        </div>
+                        <div className="p-5 flex flex-col gap-4">
+                            <div className="relative rounded-lg overflow-hidden border border-white/10 bg-black/50 max-h-[300px] flex items-center justify-center p-2">
+                                <img src={screenshotPreview} alt="Screenshot preview" className="max-h-[280px] object-contain rounded" />
+                            </div>
+                            <textarea
+                                value={screenshotQuery}
+                                onChange={e => setScreenshotQuery(e.target.value)}
+                                placeholder="Ask something about this screenshot..."
+                                className="w-full bg-zinc-900 border border-zinc-800 rounded-xl py-3 px-4 text-sm text-zinc-200 focus:outline-none focus:border-[#2EFF85]/50 transition-colors placeholder:text-zinc-600 resize-none min-h-[100px] shadow-inner"
+                            />
+                            <div className="flex justify-end gap-3 mt-2">
+                                <button
+                                    onClick={() => setScreenshotPreview(null)}
+                                    className="px-4 py-2 rounded-lg text-sm font-medium text-zinc-300 hover:bg-zinc-800 transition-colors"
+                                >
+                                    Cancel
+                                </button>
+                                <button
+                                    onClick={handleAskElloyScreenshot}
+                                    disabled={!screenshotQuery.trim()}
+                                    className="flex items-center gap-2 bg-[#2EFF85] hover:bg-[#25dd72] text-[#0A0A0A] px-5 py-2 rounded-lg text-sm font-semibold transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-[0_0_15px_rgba(46,255,133,0.3)] hover:shadow-[0_0_20px_rgba(46,255,133,0.4)]"
+                                >
+                                    <Sparkles className="w-4 h-4" />
+                                    Ask Elloy
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 }

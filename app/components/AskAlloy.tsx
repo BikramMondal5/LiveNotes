@@ -63,6 +63,7 @@ const AVAILABLE_MODELS = MODEL_CATEGORIES.flatMap(cat => cat.models);
 interface Message {
     id: string;
     content: string;
+    image?: string;
     sender: 'user' | 'ai';
     timestamp: Date;
 }
@@ -73,9 +74,10 @@ interface AskAlloyProps {
     onOpenChange?: (isOpen: boolean) => void;
     showFloatingButton?: boolean;
     inline?: boolean;
+    externalQuery?: { text: string; image?: string; timestamp: number } | null;
 }
 
-const AskAlloy: React.FC<AskAlloyProps> = ({ defaultOpen = false, isOpen: controlledIsOpen, onOpenChange, showFloatingButton = true, inline = false }) => {
+const AskAlloy: React.FC<AskAlloyProps> = ({ defaultOpen = false, isOpen: controlledIsOpen, onOpenChange, showFloatingButton = true, inline = false, externalQuery }) => {
     const [internalIsOpen, setInternalIsOpen] = useState(defaultOpen);
     const isOpen = controlledIsOpen !== undefined ? controlledIsOpen : internalIsOpen;
 
@@ -148,18 +150,31 @@ const AskAlloy: React.FC<AskAlloyProps> = ({ defaultOpen = false, isOpen: contro
         }
     }, [inputValue]);
 
-    const handleSend = async () => {
-        if (!inputValue.trim()) return;
+    useEffect(() => {
+        if (externalQuery) {
+            if (!isOpen) {
+                setIsOpen(true);
+            }
+            handleSend(externalQuery.text, externalQuery.image);
+        }
+    }, [externalQuery?.timestamp]);
+
+    const handleSend = async (overrideText?: string, overrideImage?: string) => {
+        const textToSend = overrideText !== undefined ? overrideText : inputValue;
+        if (!textToSend.trim() && !overrideImage) return;
 
         const userMessage: Message = {
             id: Date.now().toString(),
-            content: inputValue,
+            content: textToSend,
+            image: overrideImage,
             sender: 'user',
             timestamp: new Date()
         };
 
         setMessages(prev => [...prev, userMessage]);
-        setInputValue('');
+        if (overrideText === undefined) {
+            setInputValue('');
+        }
         setIsTyping(true);
 
         try {
@@ -184,10 +199,18 @@ const AskAlloy: React.FC<AskAlloyProps> = ({ defaultOpen = false, isOpen: contro
                         systemInstruction: {
                             parts: [{ text: systemPrompt }]
                         },
-                        contents: messages.concat(userMessage).map(m => ({
-                            role: m.sender === 'user' ? 'user' : 'model',
-                            parts: [{ text: m.content }]
-                        }))
+                        contents: messages.concat(userMessage).map(m => {
+                            const parts: any[] = [{ text: m.content }];
+                            if (m.image) {
+                                const mimeType = m.image.split(';')[0].split(':')[1];
+                                const base64Data = m.image.split(',')[1];
+                                parts.push({ inlineData: { mimeType, data: base64Data } });
+                            }
+                            return {
+                                role: m.sender === 'user' ? 'user' : 'model',
+                                parts
+                            };
+                        })
                     })
                 });
 
@@ -564,6 +587,11 @@ const AskAlloy: React.FC<AskAlloyProps> = ({ defaultOpen = false, isOpen: contro
                                                             : 'bg-[#1A1A1A] text-gray-100 border border-white/5 shadow-[0_4px_12px_rgba(0,0,0,0.5)]'
                                                             }`}
                                                     >
+                                                        {message.image && (
+                                                            <div className="mb-2 max-w-full rounded-md overflow-hidden border border-black/10 shadow-[0_2px_8px_rgba(0,0,0,0.2)] bg-black/10 flex justify-center">
+                                                                <img src={message.image} alt="User attachment" className="max-w-full h-[140px] object-contain rounded" />
+                                                            </div>
+                                                        )}
                                                         {message.sender === 'ai' ? (
                                                             <div className="text-sm leading-relaxed prose prose-invert prose-p:leading-relaxed max-w-none break-words">
                                                                 <ReactMarkdown>
@@ -689,7 +717,7 @@ const AskAlloy: React.FC<AskAlloyProps> = ({ defaultOpen = false, isOpen: contro
                                         </button>
 
                                         <button
-                                            onClick={handleSend}
+                                            onClick={() => handleSend()}
                                             disabled={!inputValue.trim()}
                                             className="bg-[#2EFF85] hover:bg-[#28e075] text-[#0A0A0A] rounded-xl w-10 h-10 p-0 shrink-0 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-300 flex items-center justify-center shadow-[0_0_10px_rgba(46,255,133,0.2)]"
                                         >
