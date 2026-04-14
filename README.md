@@ -9,12 +9,13 @@
 
   <p>
     <a href="https://opensource.org/licenses/MIT">
-  <img src="https://img.shields.io/badge/License-MIT-yellow.svg" alt="License">
-  <a href="https://opensource.org/licenses/MIT">
-  <img src="https://img.shields.io/badge/Socket.io-blue" alt="License">
-  <a href="https://opensource.org/licenses/MIT">
-  <img src="https://img.shields.io/badge/Gemini-AI Powered-blue" alt="License"></a>
-  
+      <img src="https://img.shields.io/badge/License-MIT-yellow.svg" alt="License">
+    </a>
+    <a href="https://opensource.org/licenses/MIT">
+      <img src="https://img.shields.io/badge/Socket.io-blue" alt="License">
+    </a>
+    <a href="https://opensource.org/licenses/MIT">
+    <img src="https://img.shields.io/badge/Gemini-AI Powered-blue" alt="License"></a>
   </p>
   <br /><br />
 
