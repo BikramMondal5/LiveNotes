@@ -313,7 +313,7 @@ const AskAlloy: React.FC<AskAlloyProps> = ({ defaultOpen = false, isOpen: contro
                     )}
 
                     <div
-                        className={inline ? "flex flex-col w-[380px] xl:w-[480px] h-full border-l border-zinc-800/50 bg-gradient-to-b from-[#0a0a0a] to-[#0f172a] shrink-0 noise-bg z-20" : "fixed top-0 right-0 h-full w-full md:w-[40%] lg:w-[35%] bg-gradient-to-b from-[#0a0a0a] to-[#0f172a] z-50 shadow-2xl border-l border-white/10 noise-bg"}
+                        className={inline ? "flex flex-col w-95 xl:w-120 h-full border-l border-zinc-800/50 bg-linear-to-b from-[#0a0a0a] to-[#0f172a] shrink-0 noise-bg z-20" : "fixed top-0 right-0 h-full w-full md:w-[40%] lg:w-[35%] bg-linear-to-b from-[#0a0a0a] to-[#0f172a] z-50 shadow-2xl border-l border-white/10 noise-bg"}
                         style={{
                             animation: !inline ? (isOpen ? 'slideIn 0.3s ease-out' : 'slideOut 0.3s ease-in') : 'none',
                             backdropFilter: 'blur(20px)'
@@ -341,10 +341,10 @@ const AskAlloy: React.FC<AskAlloyProps> = ({ defaultOpen = false, isOpen: contro
                                 )}
                             </div>
 
-                            <div className="flex-1 overflow-y-auto p-6 no-scrollbar">
-                                <div ref={scrollRef} className="space-y-4">
+                            <div className="flex-1 overflow-y-auto p-4 no-scrollbar">
+                                <div ref={scrollRef} className="flex flex-col">
                                     {messages.length === 0 ? (
-                                        <div className="flex flex-col items-center justify-center h-full min-h-[400px] text-center space-y-6">
+                                        <div className="flex flex-col items-center justify-center h-full min-h-100 text-center space-y-6">
                                             <div className="relative flex items-center justify-center">
                                                 <div className="w-24 h-24 bg-[#00C753] rounded-full flex items-center justify-center shadow-lg">
                                                     <img src="/Elloy-logo.png" alt="Elloy" className="w-20 h-20" />
@@ -368,7 +368,7 @@ const AskAlloy: React.FC<AskAlloyProps> = ({ defaultOpen = false, isOpen: contro
                                                         }}
                                                     >
                                                         {/* Glow effect on hover */}
-                                                        <div className="absolute inset-0 bg-gradient-to-br from-green-500/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 rounded-xl" />
+                                                        <div className="absolute inset-0 bg-linear-to-br from-green-500/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 rounded-xl" />
 
                                                         {/* Card content */}
                                                         <div className="relative z-10 text-left">
@@ -385,43 +385,55 @@ const AskAlloy: React.FC<AskAlloyProps> = ({ defaultOpen = false, isOpen: contro
                                         </div>
                                     ) : (
                                         <>
-                                            {messages.map((message, index) => (
-                                                <div
-                                                    key={message.id}
-                                                    className={`flex ${message.sender === 'user' ? 'justify-end' : 'justify-start'}`}
-                                                    style={{
-                                                        animation: `fadeIn 0.3s ease-out ${index * 0.1}s both`
-                                                    }}
-                                                >
+                                            {messages.map((message, index) => {
+                                                const previousMessage = messages[index - 1];
+                                                const groupedWithPrevious = previousMessage?.sender === message.sender;
+
+                                                return (
                                                     <div
-                                                        className={`max-w-[80%] rounded-2xl px-4 py-3 shadow-lg ${message.sender === 'user'
-                                                            ? 'bg-[#2EFF85] text-[#09090B]'
-                                                            : 'bg-[#1A1A1A] text-gray-100 border border-white/5 shadow-[0_4px_12px_rgba(0,0,0,0.5)]'
-                                                            }`}
+                                                        key={message.id}
+                                                        className={`flex ${message.sender === 'user' ? 'justify-end' : 'justify-start'} ${index === 0 ? 'mt-0' : groupedWithPrevious ? 'mt-1.5' : 'mt-3'}`}
+                                                        style={{
+                                                            animation: `fadeIn 0.3s ease-out ${Math.min(index, 4) * 0.06}s both`
+                                                        }}
                                                     >
-                                                        {message.image && (
-                                                            <div className="mb-2 max-w-full rounded-md overflow-hidden border border-black/10 shadow-[0_2px_8px_rgba(0,0,0,0.2)] bg-black/10 flex justify-center">
-                                                                <img src={message.image} alt="User attachment" className="max-w-full h-[140px] object-contain rounded" />
+                                                        <div className={`flex flex-col w-fit max-w-[85%] sm:max-w-[75%] md:max-w-[65%] mb-[8px] ${message.sender === 'user' ? 'self-end' : 'self-start'}`}>
+                                                            {message.image && (
+                                                                <div
+                                                                    className={`group relative transition-all duration-300 hover:scale-[1.02] w-full ${message.sender === 'user' ? 'shadow-[0_20px_60px_rgba(46,255,133,0.35)]' : 'shadow-[0_8px_30px_rgba(0,0,0,0.5)]'}`}
+                                                                >
+                                                                    <img src={message.image} alt="User attachment" className="block w-full max-h-[300px] object-contain rounded-[10px] m-0 p-0" />
+                                                                </div>
+                                                            )}
+                                                            <div
+                                                                className={`px-[14px] py-[10px] transition-all duration-300 w-full ${message.image ? 'mt-[8px]' : ''} ${message.sender === 'user'
+                                                                    ? 'rounded-[18px] bg-[#2EFF85] text-[#09090B]'
+                                                                    : 'rounded-[16px] bg-[#18181B] text-[#E4E4E7] border border-white/6 shadow-[0_8px_24px_rgba(0,0,0,0.30)] hover:shadow-[0_10px_28px_rgba(0,0,0,0.34)]'
+                                                                    }`}
+                                                                style={{ animation: 'slideUpFade 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards' }}
+                                                            >
+                                                                {message.sender === 'ai' ? (
+                                                                    <div className="text-[14px] leading-[1.5] prose prose-invert prose-p:leading-[1.5] prose-p:my-1 max-w-none wrap-break-word font-medium">
+                                                                        <ReactMarkdown>
+                                                                            {message.content}
+                                                                        </ReactMarkdown>
+                                                                    </div>
+                                                                ) : (
+                                                                    <p className="text-[14px] leading-[1.5] whitespace-pre-wrap wrap-break-word font-medium">{message.content}</p>
+                                                                )}
+                                                                <div className="mt-[4px] flex justify-end">
+                                                                    <span className={`text-[11px] opacity-60 ${message.sender === 'user' ? 'text-[#09090B]' : 'text-[#E4E4E7]'}`}>
+                                                                        {formatTime(message.timestamp)}
+                                                                    </span>
+                                                                </div>
                                                             </div>
-                                                        )}
-                                                        {message.sender === 'ai' ? (
-                                                            <div className="text-sm leading-relaxed prose prose-invert prose-p:leading-relaxed max-w-none break-words">
-                                                                <ReactMarkdown>
-                                                                    {message.content}
-                                                                </ReactMarkdown>
-                                                            </div>
-                                                        ) : (
-                                                            <p className="text-sm leading-relaxed whitespace-pre-wrap">{message.content}</p>
-                                                        )}
-                                                        <span className={`text-xs mt-1.5 block ${message.sender === 'user' ? 'text-[#09090B]/50' : 'text-gray-500'}`}>
-                                                            {formatTime(message.timestamp)}
-                                                        </span>
+                                                        </div>
                                                     </div>
-                                                </div>
-                                            ))}
+                                                );
+                                            })}
                                             {isTyping && (
-                                                <div className="flex justify-start">
-                                                    <div className="bg-[#1A1A1A] border border-white/5 rounded-2xl px-4 py-4 shadow-[0_4px_12px_rgba(0,0,0,0.5)]">
+                                                <div className="flex justify-start mt-3" style={{ animation: 'fadeIn 0.25s ease-out both' }}>
+                                                    <div className="bg-[#18181B] border border-white/6 rounded-[16px] px-4 py-4 shadow-[0_8px_24px_rgba(0,0,0,0.30)]">
                                                         <div className="flex gap-1.5">
                                                             <div
                                                                 className="w-1.5 h-1.5 bg-gray-400 rounded-full"
@@ -493,8 +505,8 @@ const AskAlloy: React.FC<AskAlloyProps> = ({ defaultOpen = false, isOpen: contro
                                 <div className="flex flex-col justify-between bg-[#1A1A1A] rounded-3xl border border-white/10 p-3 focus-within:border-[#2EFF85] focus-within:shadow-[0_0_10px_rgba(46,255,133,0.2),0_0_20px_rgba(46,255,133,0.1),0_0_30px_rgba(46,255,133,0.05),inset_0_1px_1px_rgba(255,255,255,0.1),inset_0_-5px_15px_rgba(46,255,133,0.1)] transition-all duration-300 relative">
                                     {stagedImage && (
                                         <div className="relative mb-2 shrink-0 self-start">
-                                            <div className="relative rounded-xl overflow-hidden border border-white/10 bg-black/50 p-1 flex items-center justify-center max-w-[200px]">
-                                                <img src={stagedImage} alt="Staged attachment" className="rounded-lg object-contain max-h-[120px]" />
+                                            <div className="relative rounded-xl overflow-hidden border border-white/10 bg-black/50 p-1 flex items-center justify-center max-w-50">
+                                                <img src={stagedImage} alt="Staged attachment" className="rounded-lg object-contain max-h-30" />
                                             </div>
                                             <button
                                                 onClick={onClearStagedImage}
