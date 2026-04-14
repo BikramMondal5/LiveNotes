@@ -11,13 +11,13 @@
     <a href="https://opensource.org/licenses/MIT">
       <img src="https://img.shields.io/badge/License-MIT-yellow.svg" alt="License">
     </a>
-    <a href="https://opensource.org/licenses/MIT">
-      <img src="https://img.shields.io/badge/Socket.io-blue" alt="License">
+    <a href="https://socket.io/">
+      <img src="https://img.shields.io/badge/Socket.io-blue" alt="socket.io">
     </a>
-    <a href="https://opensource.org/licenses/MIT">
-    <img src="https://img.shields.io/badge/Gemini-AI Powered-blue" alt="License"></a>
+    <a href="https://aistudio.google.com/">
+    <img src="https://img.shields.io/badge/Gemini-AI Powered-blue" alt="Google gemini"></a>
   </p>
-  <br /><br />
+  <br />
 
 </div>
 
