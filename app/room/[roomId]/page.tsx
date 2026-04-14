@@ -196,11 +196,28 @@ export default function RoomPage() {
             {/* Top Navigation */}
             <header className="flex h-14 w-full items-center justify-between border-b border-white/5 bg-linear-to-b from-[#111111] to-[#09090B] px-4 shrink-0">
                 <div className="flex items-center gap-4 min-w-50">
-                    <div className="flex -space-x-1">
-                        <div className="w-4 h-4 rounded-sm bg-red-500 transform -skew-x-12 translate-x-1" />
-                        <div className="w-4 h-4 rounded-sm bg-blue-500 transform -skew-x-12" />
+                    <div className="flex items-center">
+                        <img src="/logo.png" alt="LiveNotes Logo" className="w-7 h-7 object-cover rounded-full" />
                     </div>
-                    <span className="text-sm font-medium text-white">Untitled File</span>
+
+                    <div className="flex items-center bg-[#1C1C1C] rounded-[8px] pl-3 h-8">
+                        <span className="text-xs text-zinc-300 truncate max-w-[150px]">/room/{roomId}</span>
+                        <button
+                            onClick={() => {
+                                const url = (process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:3000") + "/room/" + roomId;
+                                navigator.clipboard.writeText(url);
+                                setIsCopied(true);
+                                setTimeout(() => setIsCopied(false), 2000);
+                            }}
+                            className={`ml-3 shrink-0 flex items-center gap-1.5 px-3 h-full rounded-[8px] text-xs font-medium transition-all duration-200 ${isCopied
+                                ? "bg-[#2EFF85]/20 text-[#2EFF85]"
+                                : "bg-[#262626] hover:bg-[#333333] text-zinc-300"
+                                }`}
+                        >
+                            {isCopied ? <Check className="w-3.5 h-3.5" /> : <Copy className="w-3.5 h-3.5" />}
+                            {isCopied ? "Copied!" : "Copy"}
+                        </button>
+                    </div>
                 </div>
 
                 <div className="flex items-center bg-zinc-900/50 rounded-md p-1 border border-white/5">
@@ -553,14 +570,14 @@ export default function RoomPage() {
             {/* Screenshot Mode Overlay */}
             {isScreenshotMode && (
                 <div
-                    className="fixed inset-0 z-[200] cursor-crosshair bg-black/40 screenshot-overlay select-none"
+                    className="fixed inset-0 z-200 cursor-crosshair bg-black/60 screenshot-overlay select-none"
                     onMouseDown={handleScreenshotStart}
                     onMouseMove={handleScreenshotMove}
                     onMouseUp={handleScreenshotEnd}
                 >
                     {screenshotStart && screenshotRect && (
                         <div
-                            className="absolute border-2 border-[#2EFF85] bg-[#2EFF85]/10 pointer-events-none"
+                            className="absolute border border-dashed border-[#2EFF85] bg-[#2EFF85]/8 pointer-events-none"
                             style={{
                                 left: Math.min(screenshotRect.x, screenshotRect.x + screenshotRect.w),
                                 top: Math.min(screenshotRect.y, screenshotRect.y + screenshotRect.h),

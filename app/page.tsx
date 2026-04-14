@@ -95,21 +95,7 @@ const LiveNotesHero = () => {
             <nav className="relative z-20 w-full px-6 py-6">
                 <div className="max-w-7xl mx-auto flex items-center justify-between">
                     <div className="flex items-center gap-3">
-                        <div className="w-8 h-8 rounded-lg bg-[#2EFF85] flex items-center justify-center">
-                            <svg
-                                className="w-5 h-5 text-[#09090B]"
-                                fill="none"
-                                stroke="currentColor"
-                                viewBox="0 0 24 24"
-                            >
-                                <path
-                                    strokeLinecap="round"
-                                    strokeLinejoin="round"
-                                    strokeWidth={2.5}
-                                    d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
-                                />
-                            </svg>
-                        </div>
+                        <img src="/logo.png" alt="LiveNotes Logo" className="w-10 h-10 object-cover rounded-full" />
                         <span className="text-xl font-bold text-white">LiveNotes</span>
                     </div>
 
@@ -121,7 +107,9 @@ const LiveNotesHero = () => {
                             About
                         </a>
                         <a
-                            href="#"
+                            href="https://github.com/BikramMondal5"
+                            target="_blank"
+                            rel="noopener noreferrer"
                             className="text-sm text-[#A1A1AA] hover:text-[#2EFF85] transition-colors flex items-center gap-2"
                         >
                             <svg viewBox="0 0 24 24" className="h-4 w-4" fill="currentColor">
@@ -179,7 +167,7 @@ const LiveNotesHero = () => {
                                     onBlur={() => setIsFocused(false)}
                                     onKeyPress={handleKeyPress}
                                     placeholder="Enter your name or room code..."
-                                    className="flex-1 bg-transparent text-white placeholder:text-[#A1A1AA] px-6 py-4 outline-none text-base md:text-lg"
+                                    className="flex-1 bg-transparent text-white placeholder:text-[#A1A1AA] px-6 py-4 outline-none text-base md:text-lg font-['Times_New_Roman',_Times,_serif]"
                                 />
                                 <motion.button
                                     onClick={handleJoinRoom}
