@@ -1,6 +1,6 @@
 # 📝✨ LiveNotes – Real-Time Note Sharing
 
-![Preview Image](screenshot.png)
+![Preview Image](./public/screenshot.png)
 LiveNotes is a collaborative platform that allows users to share and edit notes in real-time with friends and colleagues. Whether you're brainstorming ideas, managing tasks, or sharing quick notes, LiveNotes makes collaboration seamless and efficient.
 
 ## 🌟 Features
