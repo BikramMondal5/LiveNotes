@@ -459,13 +459,13 @@ export default function RoomPage() {
                 {/* THE UNIFIED ASK ELLOY CHAT SYSTEM */}
                 {/* Mounted adjacent to the canvas so it acts as an inline sidebar pushing content */}
                 <div className={`h-full shrink-0 z-20 transition-all duration-300 ease-in-out ${isAlloyOpen ? 'w-[380px] xl:w-[480px] border-l border-zinc-800/50' : 'w-0 overflow-hidden'}`}>
-                    <AskAlloy 
-                        isOpen={true} 
-                        onOpenChange={setIsAlloyOpen} 
-                        showFloatingButton={false} 
-                        inline={true} 
-                        stagedImage={screenshotPreview} 
-                        onClearStagedImage={() => setScreenshotPreview(null)} 
+                    <AskAlloy
+                        isOpen={true}
+                        onOpenChange={setIsAlloyOpen}
+                        showFloatingButton={false}
+                        inline={true}
+                        stagedImage={screenshotPreview}
+                        onClearStagedImage={() => setScreenshotPreview(null)}
                     />
                 </div>
 
