@@ -324,9 +324,7 @@ export default function RoomPage() {
                                 <div className="p-4">
                                     <div className="flex items-center justify-between mb-4">
                                         <div className="flex items-center gap-2">
-                                            <div className="w-6 h-6 rounded bg-[#2EFF85]/20 flex items-center justify-center">
-                                                <Sparkles className="w-4 h-4 text-[#2EFF85]" />
-                                            </div>
+                                            <img src="/pdfs.png" alt="PDF Logo" className="w-6 h-6 object-contain" />
                                             <span className="font-semibold text-zinc-200">Ask Elloy PDF</span>
                                         </div>
                                     </div>
