@@ -114,6 +114,11 @@ const DrawingCanvas: React.FC<DrawingCanvasProps> = ({ activeTool, socket, roomI
                 return;
             }
 
+            // If the user clicked on an existing object, allow them to move/interact rather than drawing a new one
+            if (e.target) {
+                return;
+            }
+
             if (activeTool === 'pencil') {
                 pointsRef.current = [{ x: pointer.x, y: pointer.y }];
             }

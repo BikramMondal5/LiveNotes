@@ -125,16 +125,14 @@ export default function RoomPage() {
 
                 {/* Left Toolbar */}
                 {viewMode !== 'document' && (
-                    <div className="absolute left-4 top-4 flex flex-col gap-2 z-10 w-11">
+                    <div className="absolute left-4 top-4 flex flex-col gap-2 z-30 w-11">
                         {/* Top block */}
                         <div className="flex flex-col gap-1 bg-zinc-900/90 border border-zinc-800 rounded-xl p-1 shadow-xl backdrop-blur-sm">
                             <button className="w-9 h-9 flex items-center justify-center rounded-lg hover:bg-zinc-800 text-zinc-400 transition-colors group relative">
                                 <Plus className="w-4 h-4" />
-                                <span className="absolute right-1 bottom-1 text-[8px] text-zinc-600 group-hover:text-zinc-400">/</span>
                             </button>
                             <button className="w-9 h-9 flex items-center justify-center rounded-lg hover:bg-zinc-800 text-zinc-400 transition-colors group relative">
                                 <Wand2 className="w-4 h-4" />
-                                <span className="absolute right-1 bottom-0.5 text-[7px] text-zinc-600 group-hover:text-zinc-400 tracking-tighter">CTRL J</span>
                             </button>
                         </div>
 
@@ -309,7 +307,7 @@ export default function RoomPage() {
                         <textarea
                             value={notes}
                             onChange={handleChange}
-                            className={`absolute inset-0 w-full h-full p-20 bg-transparent border-0 outline-none resize-none placeholder:text-zinc-600/50 leading-relaxed text-[#2EFF85] tracking-wide z-0 ${viewMode === 'canvas' ? 'opacity-0 pointer-events-none' : 'opacity-100'} transition-opacity duration-300`}
+                            className={`absolute inset-0 w-full h-full pt-12 px-20 pb-20 bg-transparent border-0 outline-none resize-none placeholder:text-zinc-600/50 leading-relaxed text-[#2EFF85] tracking-wide ${viewMode === 'canvas' ? 'opacity-0 pointer-events-none z-0' : 'opacity-100 z-20'} transition-opacity duration-300`}
                             placeholder="Type to add notes, or use the canvas tools..."
                             style={{ caretColor: '#2EFF85' }}
                         />
@@ -317,12 +315,12 @@ export default function RoomPage() {
                 </div>
 
                 {/* Right Top Zoom Control */}
-                <div className="absolute top-4 right-4 flex items-center gap-1 text-xs font-semibold text-zinc-400 hover:text-zinc-200 cursor-pointer transition-colors z-10 px-2 py-1 rounded hover:bg-zinc-800">
+                <div className="absolute top-4 right-4 flex items-center gap-1 text-xs font-semibold text-zinc-400 hover:text-zinc-200 cursor-pointer transition-colors z-30 px-2 py-1 rounded hover:bg-zinc-800">
                     100% <ChevronDown className="w-3 h-3 ml-0.5" />
                 </div>
 
                 {/* Bottom Right Help */}
-                <div className="absolute bottom-6 right-6 z-10">
+                <div className="absolute bottom-6 right-6 z-30">
                     <button className="w-8 h-8 flex items-center justify-center rounded-full bg-zinc-800/80 hover:bg-zinc-700 text-zinc-400 hover:text-zinc-200 border border-zinc-700/50 backdrop-blur-sm transition-all shadow-lg">
                         <span className="font-semibold text-sm">?</span>
                     </button>
@@ -344,7 +342,6 @@ function ToolButton({ icon: Icon, label, active, onClick, className = "" }: { ic
             className={`w-9 h-9 flex items-center justify-center rounded-lg transition-colors group relative ${active ? 'bg-zinc-800 text-zinc-100' : 'text-zinc-400 hover:bg-zinc-800/60 hover:text-zinc-300'}`}
         >
             <Icon className={`w-4 h-4 ${className}`} />
-            <span className="absolute right-1 bottom-1 text-[8px] font-medium opacity-50 text-zinc-500 group-hover:opacity-100">{label}</span>
         </button>
     );
 }
