@@ -7,6 +7,7 @@ import { Plus, Wand2, MousePointer2, Square, Circle, ArrowUpRight, Slash, PenLin
 import DotGrid from "../../components/DotGrid";
 import DrawingCanvas from "../../components/DrawingCanvas";
 import AskAlloy from "../../components/AskAlloy";
+import { ConfettiButton } from "@/components/ui/confetti";
 import type { DrawingTool } from "../../components/DrawingCanvas";
 
 export default function RoomPage() {
@@ -359,7 +360,8 @@ export default function RoomPage() {
                                 <div className="flex-1 px-3 py-1.5 text-sm text-zinc-300 truncate font-mono select-all">
                                     {(process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:3000") + "/room/" + roomId}
                                 </div>
-                                <button
+                                <ConfettiButton
+                                    options={{ particleCount: 250, spread: 120, colors: ['#2EFF85', '#FFFFFF', '#10B981'] }}
                                     onClick={() => {
                                         const url = (process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:3000") + "/room/" + roomId;
                                         navigator.clipboard.writeText(url);
@@ -367,13 +369,13 @@ export default function RoomPage() {
                                         setTimeout(() => setIsCopied(false), 2000);
                                     }}
                                     className={`shrink-0 flex items-center gap-1.5 px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${isCopied
-                                            ? "bg-[#2EFF85]/20 text-[#2EFF85] border border-[#2EFF85]/30"
-                                            : "bg-white/10 text-white hover:bg-white/15 border border-transparent"
+                                        ? "bg-[#2EFF85]/20 text-[#2EFF85] border border-[#2EFF85]/30"
+                                        : "bg-white/10 text-white hover:bg-white/15 border border-transparent"
                                         }`}
                                 >
                                     {isCopied ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
                                     {isCopied ? "Copied!" : "Copy"}
-                                </button>
+                                </ConfettiButton>
                             </div>
                         </div>
                     </div>
