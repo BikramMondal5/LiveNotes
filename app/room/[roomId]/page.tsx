@@ -13,7 +13,7 @@ export default function RoomPage() {
     const { roomId } = useParams() as { roomId: string };
     const [notes, setNotes] = useState("");
     const socketRef = useRef<Socket | null>(null);
-    const [activeTool, setActiveTool] = useState("square");
+    const [activeTool, setActiveTool] = useState("rect");
     const [viewMode, setViewMode] = useState("canvas"); // document | both | canvas
     const [isAlloyOpen, setIsAlloyOpen] = useState(false);
     const [pdfFile, setPdfFile] = useState<string | null>(null);
@@ -139,7 +139,7 @@ export default function RoomPage() {
                         {/* Tools block */}
                         <div className="flex flex-col gap-1 bg-zinc-900/90 border border-zinc-800 rounded-xl p-1 shadow-xl backdrop-blur-sm">
                             <ToolButton icon={MousePointer2} label="V" active={activeTool === 'pointer'} onClick={() => setActiveTool('pointer')} />
-                            <ToolButton icon={Square} label="R" active={activeTool === 'square'} onClick={() => setActiveTool('square')} />
+                            <ToolButton icon={Square} label="R" active={activeTool === 'rect'} onClick={() => setActiveTool('rect')} />
                             <ToolButton icon={Circle} label="O" active={activeTool === 'circle'} onClick={() => setActiveTool('circle')} />
                             <ToolButton icon={ArrowUpRight} label="A" active={activeTool === 'arrow'} onClick={() => setActiveTool('arrow')} />
                             <ToolButton icon={Slash} label="L" active={activeTool === 'line'} onClick={() => setActiveTool('line')} className="rotate-90" />

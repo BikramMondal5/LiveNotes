@@ -244,20 +244,48 @@ const DrawingCanvas: React.FC<DrawingCanvasProps> = ({ activeTool, socket, roomI
                     canvas.remove(previewObjectRef.current);
                 }
 
-                const line = new Line(
-                    [startPointRef.current.x, startPointRef.current.y, pointer.x, pointer.y],
-                    {
+                if (activeTool === 'arrow') {
+                    const dx = pointer.x - startPointRef.current.x;
+                    const dy = pointer.y - startPointRef.current.y;
+                    const angle = Math.atan2(dy, dx);
+                    const headlen = 15; // length of head in pixels
+
+                    const x2 = pointer.x;
+                    const y2 = pointer.y;
+                    const x1 = startPointRef.current.x;
+                    const y1 = startPointRef.current.y;
+
+                    const pathData = `M ${x1} ${y1} L ${x2} ${y2} M ${x2} ${y2} L ${x2 - headlen * Math.cos(angle - Math.PI / 6)} ${y2 - headlen * Math.sin(angle - Math.PI / 6)} M ${x2} ${y2} L ${x2 - headlen * Math.cos(angle + Math.PI / 6)} ${y2 - headlen * Math.sin(angle + Math.PI / 6)}`;
+
+                    const arrow = new Path(pathData, {
                         stroke: '#2EFF85',
                         strokeWidth: 2,
+                        fill: null,
                         strokeUniform: true,
                         hasControls: false,
                         hasBorders: false,
                         selectable: false,
-                    }
-                );
+                    });
 
-                canvas.add(line);
-                previewObjectRef.current = line;
+                    canvas.add(arrow);
+                    previewObjectRef.current = arrow;
+                } else {
+                    const line = new Line(
+                        [startPointRef.current.x, startPointRef.current.y, pointer.x, pointer.y],
+                        {
+                            stroke: '#2EFF85',
+                            strokeWidth: 2,
+                            strokeUniform: true,
+                            hasControls: false,
+                            hasBorders: false,
+                            selectable: false,
+                        }
+                    );
+
+                    canvas.add(line);
+                    previewObjectRef.current = line;
+                }
+
                 canvas.renderAll();
             }
         };
