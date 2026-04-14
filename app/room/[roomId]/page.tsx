@@ -3,7 +3,7 @@
 import { useEffect, useState, useRef } from "react";
 import { useParams } from "next/navigation";
 import { io, Socket } from "socket.io-client";
-import { Plus, Wand2, MousePointer2, Square, Circle, ArrowUpRight, Slash, PenLine, Type, Image as ImageIcon, Frame, HelpingHand, Settings, ChevronDown, MoreHorizontal, Sparkles, Search, Home, Briefcase, FileText, ChevronRight, Rocket, Share, X, Copy, Check, Scan } from "lucide-react";
+import { Plus, Wand2, MousePointer2, Square, Circle, ArrowUpRight, Slash, PenLine, Type, Image as ImageIcon, Frame, HelpingHand, Settings, ChevronDown, MoreHorizontal, Sparkles, Search, Home, Briefcase, FileText, ChevronRight, Rocket, Share, X, Copy, Check, Scan, Presentation, UserCheck, FileSearch, Receipt } from "lucide-react";
 import DotGrid from "../../components/DotGrid";
 import DrawingCanvas from "../../components/DrawingCanvas";
 import AskAlloy from "../../components/AskAlloy";
@@ -40,7 +40,7 @@ export default function RoomPage() {
 
             const size = (file.size / (1024 * 1024)).toFixed(2) + " MB";
             const dateStr = new Date().toLocaleDateString('en-GB', { day: '2-digit', month: '2-digit', year: 'numeric' });
-            
+
             setRecentFiles(prev => {
                 const filtered = prev.filter(f => f.name !== file.name);
                 return [{ id: Date.now().toString(), name: file.name, size, date: dateStr, url }, ...filtered];
@@ -175,16 +175,21 @@ export default function RoomPage() {
 
     useEffect(() => {
         const handleKeyDown = (e: KeyboardEvent) => {
-            if (e.key === 'Escape' && isScreenshotMode) {
-                setIsScreenshotMode(false);
-                setScreenshotRect(null);
-                setScreenshotStart(null);
-                setFullScreenCanvas(null);
+            if (e.key === 'Escape') {
+                if (isScreenshotMode) {
+                    setIsScreenshotMode(false);
+                    setScreenshotRect(null);
+                    setScreenshotStart(null);
+                    setFullScreenCanvas(null);
+                }
+                if (isPdfToolsOpen) {
+                    setIsPdfToolsOpen(false);
+                }
             }
         };
         window.addEventListener('keydown', handleKeyDown);
         return () => window.removeEventListener('keydown', handleKeyDown);
-    }, [isScreenshotMode]);
+    }, [isScreenshotMode, isPdfToolsOpen]);
 
     return (
         <div className="h-screen w-full bg-[#121212] flex flex-col overflow-hidden font-sans text-zinc-300">
@@ -326,28 +331,41 @@ export default function RoomPage() {
                                             <span className="text-sm font-medium">Home</span>
                                         </div>
                                     </button>
-                                    <div className="space-y-1">
+                                    <div className="space-y-1 relative">
                                         <button onClick={() => setIsPdfToolsOpen(!isPdfToolsOpen)} className={`w-full flex items-center justify-between px-3 py-2 rounded-lg transition-colors group ${isPdfToolsOpen ? 'bg-zinc-800/50 text-[#2EFF85]' : 'text-zinc-300 hover:bg-zinc-800/50 hover:text-[#2EFF85]'}`}>
                                             <div className="flex items-center gap-3">
                                                 <Briefcase className={`w-4 h-4 ${isPdfToolsOpen ? 'text-[#2EFF85]' : 'text-zinc-400 group-hover:text-[#2EFF85]'}`} />
                                                 <span className="text-sm font-medium">PDF tools</span>
                                             </div>
-                                            <ChevronDown className={`w-4 h-4 transition-transform ${isPdfToolsOpen ? 'text-[#2EFF85] rotate-180' : 'text-zinc-600 group-hover:text-[#2EFF85]'}`} />
+                                            <ChevronRight className={`w-4 h-4 transition-transform ${isPdfToolsOpen ? 'text-[#2EFF85] rotate-90' : 'text-zinc-600 group-hover:text-[#2EFF85]'}`} />
                                         </button>
 
                                         {isPdfToolsOpen && (
-                                            <div className="pl-9 pr-2 py-1 space-y-1 animate-in slide-in-from-top-2 duration-200">
-                                                <button
-                                                    onClick={startScreenCapture}
-                                                    className="w-full flex items-center justify-between px-3 py-2 rounded-lg transition-colors group text-zinc-400 hover:bg-zinc-800/50 hover:text-[#2EFF85]"
+                                            <>
+                                                {/* Click outside backdrop */}
+                                                <div className="fixed inset-0 z-40" onClick={() => setIsPdfToolsOpen(false)} />
+
+                                                {/* Floating Modal */}
+                                                <div
+                                                    className="absolute left-[calc(100%+12px)] top-0 z-50 w-[280px] p-3 flex flex-col gap-1 shadow-[0_10px_40px_rgba(0,0,0,0.6)] animate-in fade-in zoom-in-95 slide-in-from-bottom-2 duration-200 ease-out"
+                                                    style={{
+                                                        backgroundColor: '#0F1115',
+                                                        border: '1px solid rgba(255,255,255,0.08)',
+                                                        borderRadius: '16px'
+                                                    }}
                                                 >
-                                                    <div className="flex items-center gap-3">
-                                                        <Scan className="w-4 h-4" />
-                                                        <span className="text-sm font-medium">Screenshot & Ask Elloy</span>
+                                                    <div className="px-2 pb-2 mb-1 border-b border-white/5">
+                                                        <span className="text-[11px] font-semibold text-zinc-500 uppercase tracking-wider">Quick Actions</span>
                                                     </div>
-                                                </button>
-                                                {/* More PDF tools can go here */}
-                                            </div>
+
+                                                    <div className="flex flex-col gap-1 max-h-[360px] overflow-y-auto no-scrollbar">
+                                                        <button onClick={startScreenCapture} className="w-full flex items-center gap-3 px-3 py-2.5 rounded-[10px] text-zinc-300 font-medium text-sm transition-all hover:bg-[#2EFF85]/10 hover:text-[#2EFF85] active:scale-95 group">
+                                                            <Scan className="w-4 h-4 text-zinc-400 group-hover:text-[#2EFF85] transition-colors" />
+                                                            Screenshot & Ask Elloy
+                                                        </button>
+                                                    </div>
+                                                </div>
+                                            </>
                                         )}
                                     </div>
                                 </div>
@@ -362,7 +380,7 @@ export default function RoomPage() {
                                             </div>
                                         ) : (
                                             recentFiles.map((file, idx) => (
-                                                <div 
+                                                <div
                                                     key={file.id}
                                                     onClick={() => {
                                                         setPdfFile(file.url);
@@ -474,7 +492,7 @@ export default function RoomPage() {
                 {/* Mounted adjacent to the canvas so it acts as an inline sidebar pushing content */}
                 <div className={`h-full shrink-0 z-20 transition-all duration-300 ease-in-out ${isAlloyOpen ? 'w-[380px] xl:w-[480px] border-l border-zinc-800/50' : 'w-0 overflow-hidden'}`}>
                     <AskAlloy
-                        isOpen={isAlloyOpen} 
+                        isOpen={isAlloyOpen}
                         onOpenChange={setIsAlloyOpen}
                         showFloatingButton={false}
                         inline={true}
