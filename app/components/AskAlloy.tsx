@@ -323,8 +323,8 @@ const AskAlloy: React.FC<AskAlloyProps> = ({ defaultOpen = false, isOpen: contro
                             <div className="flex items-center justify-between p-6 border-b border-white/10 bg-black/20 shrink-0">
                                 <div className="flex items-center gap-4">
                                     <div className="relative">
-                                        <Sparkles className="w-8 h-8 text-[#00C753]" />
-                                        <div className="absolute -bottom-0.5 -right-0.5 w-3 h-3 bg-[#00C753] rounded-full border-2 border-[#0a0a0a] animate-pulse" />
+                                        <img src="/logo.png" alt="Logo" className="w-12 h-12 object-contain" />
+                                        <div className="absolute -bottom-0.5 -right-0.5 w-3 h-3 bg-[#00C753] rounded-full border-2 border-[#0a0a0a]" />
                                     </div>
                                     <div>
                                         <h2 className={inline ? "text-base font-bold text-white leading-tight" : "text-xl font-bold text-white"}>Ask Elloy</h2>

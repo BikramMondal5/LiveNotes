@@ -196,14 +196,14 @@ export default function RoomPage() {
     return (
         <div className="h-screen w-full bg-[#121212] flex flex-col overflow-hidden font-sans text-zinc-300">
             {/* Top Navigation */}
-            <header className="flex h-14 w-full items-center justify-between border-b border-white/5 bg-linear-to-b from-[#111111] to-[#09090B] px-4 shrink-0">
-                <div className="flex items-center gap-4 min-w-50">
+            <header className="flex flex-col sm:flex-row min-h-14 py-2 sm:py-0 w-full items-center justify-between border-b border-white/5 bg-linear-to-b from-[#111111] to-[#09090B] px-4 shrink-0 gap-2 sm:gap-0">
+                <div className="flex w-full sm:w-auto justify-between sm:justify-start items-center sm:gap-4 sm:min-w-50">
                     <div className="flex items-center">
-                        <img src="/logo.png" alt="LiveNotes Logo" className="w-7 h-7 object-cover rounded-full" />
+                        <img src="/logo.png" alt="LiveNotes Logo" className="w-9 h-9 object-cover rounded-full" />
                     </div>
 
-                    <div className="flex items-center bg-[#1C1C1C] rounded-[8px] pl-3 h-8">
-                        <span className="text-xs text-zinc-300 truncate max-w-[150px]">/room/{roomId}</span>
+                    <div className="flex items-center bg-[#1C1C1C] rounded-[8px] pl-3 h-8 max-w-[60%] sm:max-w-none">
+                        <span className="text-xs text-zinc-300 truncate max-w-[100px] sm:max-w-[150px]">/room/{roomId}</span>
                         <button
                             onClick={() => {
                                 const url = (process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:3000") + "/room/" + roomId;
@@ -217,39 +217,39 @@ export default function RoomPage() {
                                 }`}
                         >
                             {isCopied ? <Check className="w-3.5 h-3.5" /> : <Copy className="w-3.5 h-3.5" />}
-                            {isCopied ? "Copied!" : "Copy"}
+                            <span className="hidden sm:inline">{isCopied ? "Copied!" : "Copy"}</span>
                         </button>
                     </div>
                 </div>
 
-                <div className="flex items-center bg-zinc-900/50 rounded-md p-1 border border-white/5">
+                <div className="flex items-center bg-zinc-900/50 rounded-md p-1 border border-white/5 order-3 sm:order-2 w-full sm:w-auto justify-center">
                     <button
                         onClick={() => setViewMode("document")}
-                        className={`px-4 py-1.5 text-xs font-medium rounded-sm transition-colors ${viewMode === 'document' ? 'bg-[#2EFF85]/10 text-[#2EFF85]' : 'text-zinc-400 hover:text-[#2EFF85]'}`}
+                        className={`flex-1 sm:flex-none px-4 py-1.5 text-xs font-medium rounded-sm transition-colors ${viewMode === 'document' ? 'bg-[#2EFF85]/10 text-[#2EFF85]' : 'text-zinc-400 hover:text-[#2EFF85]'}`}
                     >
                         Document
                     </button>
                     <button
                         onClick={() => setViewMode("both")}
-                        className={`px-4 py-1.5 text-xs font-medium rounded-sm transition-colors ${viewMode === 'both' ? 'bg-[#2EFF85]/10 text-[#2EFF85]' : 'text-zinc-400 hover:text-[#2EFF85]'}`}
+                        className={`flex-1 sm:flex-none px-4 py-1.5 text-xs font-medium rounded-sm transition-colors ${viewMode === 'both' ? 'bg-[#2EFF85]/10 text-[#2EFF85]' : 'text-zinc-400 hover:text-[#2EFF85]'}`}
                     >
                         Text
                     </button>
                     <button
                         onClick={() => setViewMode("canvas")}
-                        className={`px-4 py-1.5 text-xs font-medium rounded-sm transition-colors ${viewMode === 'canvas' ? 'bg-[#2EFF85]/10 text-[#2EFF85]' : 'text-zinc-400 hover:text-[#2EFF85]'}`}
+                        className={`flex-1 sm:flex-none px-4 py-1.5 text-xs font-medium rounded-sm transition-colors ${viewMode === 'canvas' ? 'bg-[#2EFF85]/10 text-[#2EFF85]' : 'text-zinc-400 hover:text-[#2EFF85]'}`}
                     >
                         Canvas
                     </button>
                 </div>
 
-                <div className="flex items-center gap-4 min-w-50 justify-end">
-                    <div className="hidden md:flex items-center gap-1.5 px-2.5 py-1.5 bg-zinc-800/50 border border-zinc-700/50 rounded text-xs text-zinc-400 font-medium">
+                <div className="hidden sm:flex items-center gap-4 sm:min-w-50 justify-end order-2 sm:order-3 absolute right-4 top-3 sm:static">
+                    <div className="hidden lg:flex items-center gap-1.5 px-2.5 py-1.5 bg-zinc-800/50 border border-zinc-700/50 rounded text-xs text-zinc-400 font-medium">
                         Ctrl + Shift + K
                     </div>
                     <button onClick={() => setIsAlloyOpen(!isAlloyOpen)} className="flex items-center gap-1.5 bg-[#2EFF85] hover:bg-[#25dd72] text-[#0A0A0A] px-2.5 py-1.5 rounded text-xs font-medium transition-colors">
                         <Sparkles className="w-3.5 h-3.5" />
-                        Ask Elloy
+                        <span className="hidden sm:inline">Ask Elloy</span>
                     </button>
                 </div>
             </header>

@@ -66,7 +66,7 @@ export default function ChatAssistant({ isOpen, onClose }: ChatAssistantProps) {
             <div className="flex-1" onClick={onClose} />
 
             {/* Right Sidebar */}
-            <div className="w-96 bg-[#1A1A1A] border-l border-zinc-800 flex flex-col shadow-2xl">
+            <div className="w-full sm:w-96 bg-[#1A1A1A] border-l border-zinc-800 flex flex-col shadow-2xl">
                 {/* Header */}
                 <div className="flex items-center justify-between p-4 border-b border-zinc-800">
                     <div>
@@ -113,8 +113,8 @@ export default function ChatAssistant({ isOpen, onClose }: ChatAssistantProps) {
                             <div key={idx} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
                                 <div
                                     className={`max-w-xs px-3 py-2 rounded-lg text-sm ${msg.role === 'user'
-                                            ? 'bg-[#2EFF85] text-[#0A0A0A]'
-                                            : 'bg-zinc-800 text-zinc-100'
+                                        ? 'bg-[#2EFF85] text-[#0A0A0A]'
+                                        : 'bg-zinc-800 text-zinc-100'
                                         }`}
                                 >
                                     {msg.content}
@@ -131,8 +131,8 @@ export default function ChatAssistant({ isOpen, onClose }: ChatAssistantProps) {
                         <button
                             onClick={() => setActiveTab('think')}
                             className={`flex items-center gap-1.5 px-3 py-1.5 rounded text-xs font-medium transition-colors ${activeTab === 'think'
-                                    ? 'bg-[#2EFF85] text-[#0A0A0A]'
-                                    : 'bg-zinc-800 text-zinc-400 hover:text-white'
+                                ? 'bg-[#2EFF85] text-[#0A0A0A]'
+                                : 'bg-zinc-800 text-zinc-400 hover:text-white'
                                 }`}
                         >
                             <Brain className="w-3.5 h-3.5" />
@@ -141,8 +141,8 @@ export default function ChatAssistant({ isOpen, onClose }: ChatAssistantProps) {
                         <button
                             onClick={() => setActiveTab('search')}
                             className={`flex items-center gap-1.5 px-3 py-1.5 rounded text-xs font-medium transition-colors ${activeTab === 'search'
-                                    ? 'bg-[#2EFF85] text-[#0A0A0A]'
-                                    : 'bg-zinc-800 text-zinc-400 hover:text-white'
+                                ? 'bg-[#2EFF85] text-[#0A0A0A]'
+                                : 'bg-zinc-800 text-zinc-400 hover:text-white'
                                 }`}
                         >
                             <Search className="w-3.5 h-3.5" />
@@ -151,8 +151,8 @@ export default function ChatAssistant({ isOpen, onClose }: ChatAssistantProps) {
                         <button
                             onClick={() => setActiveTab('code')}
                             className={`flex items-center gap-1.5 px-3 py-1.5 rounded text-xs font-medium transition-colors ${activeTab === 'code'
-                                    ? 'bg-[#2EFF85] text-[#0A0A0A]'
-                                    : 'bg-zinc-800 text-zinc-400 hover:text-white'
+                                ? 'bg-[#2EFF85] text-[#0A0A0A]'
+                                : 'bg-zinc-800 text-zinc-400 hover:text-white'
                                 }`}
                         >
                             <Code className="w-3.5 h-3.5" />

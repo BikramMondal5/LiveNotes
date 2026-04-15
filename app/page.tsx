@@ -157,7 +157,7 @@ const LiveNotesHero = () => {
                                     }`}
                             />
 
-                            <div className="relative flex items-center gap-3 bg-[#111111] rounded-full p-2 border border-[#2EFF85]/20 transition-all duration-300 hover:border-[#2EFF85]/40">
+                            <div className="relative flex flex-col sm:flex-row items-stretch sm:items-center gap-3 bg-[#111111] rounded-3xl sm:rounded-full p-2 border border-[#2EFF85]/20 transition-all duration-300 hover:border-[#2EFF85]/40">
                                 <input
                                     ref={inputRef}
                                     type="text"
@@ -167,13 +167,13 @@ const LiveNotesHero = () => {
                                     onBlur={() => setIsFocused(false)}
                                     onKeyPress={handleKeyPress}
                                     placeholder="Enter your name or room code..."
-                                    className="flex-1 bg-transparent text-white placeholder:text-[#A1A1AA] px-6 py-4 outline-none text-base md:text-lg font-['Times_New_Roman',_Times,_serif]"
+                                    className="w-full sm:flex-1 bg-transparent text-white placeholder:text-[#A1A1AA] px-4 sm:px-6 py-3 sm:py-4 outline-none text-base md:text-lg font-['Times_New_Roman',Times,serif]"
                                 />
                                 <motion.button
                                     onClick={handleJoinRoom}
                                     whileHover={{ scale: 1.05 }}
                                     whileTap={{ scale: 0.95 }}
-                                    className="relative px-8 py-4 bg-[#2EFF85] text-[#09090B] font-semibold rounded-full text-base md:text-lg overflow-hidden group"
+                                    className="w-full sm:w-auto relative px-6 sm:px-8 py-3 sm:py-4 bg-[#2EFF85] text-[#09090B] font-semibold rounded-2xl sm:rounded-full text-base md:text-lg overflow-hidden group"
                                 >
                                     <span className="relative z-10">Join Room</span>
                                     <div className="absolute inset-0 bg-[#2EFF85] opacity-0 group-hover:opacity-100 blur-xl transition-opacity" />
