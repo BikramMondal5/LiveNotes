@@ -22,6 +22,28 @@ app.prepare().then(() => {
     // Simple in-memory storage for notes per room
     const roomNotes = {};
     const roomShapes = {};
+    const roomTimers = {};
+    const ROOM_EXPIRY_MS = 24 * 60 * 60 * 1000; // 24 hours in milliseconds
+
+    function ensureRoomTimer(roomId) {
+        if (!roomId) return;
+
+        // If a room hasn't been initialized with a timer, set one for 24 hrs
+        if (!roomTimers[roomId]) {
+            roomTimers[roomId] = setTimeout(() => {
+                // Delete room data
+                delete roomNotes[roomId];
+                delete roomShapes[roomId];
+                delete roomTimers[roomId];
+
+                // Broadcast the clearance so everyone still connected sees an empty room immediately
+                io.to(roomId).emit("update-notes", "");
+                io.to(roomId).emit("canvas-data", []);
+                console.log(`[Auto-Cleanup] Cleared data for room: ${roomId} after 24 hours`);
+            }, ROOM_EXPIRY_MS);
+            console.log(`[Timer set] Room ${roomId} will be cleared in 24 hours.`);
+        }
+    }
 
     io.on("connection", (socket) => {
         console.log("Client connected:", socket.id);
@@ -30,6 +52,8 @@ app.prepare().then(() => {
             socket.join(roomId);
             console.log(`Socket ${socket.id} joined room ${roomId}`);
 
+            ensureRoomTimer(roomId);
+
             // Send current note state if exists
             if (roomNotes[roomId]) {
                 socket.emit("update-notes", roomNotes[roomId]);
@@ -37,29 +61,34 @@ app.prepare().then(() => {
         });
 
         socket.on("get-canvas", (roomId) => {
+            ensureRoomTimer(roomId);
             if (roomShapes[roomId]) {
                 socket.emit("canvas-data", roomShapes[roomId]);
             }
         });
 
         socket.on("draw", (data) => {
-            if (!roomShapes[data.roomId]) {
-                roomShapes[data.roomId] = [];
+            const roomId = data.roomId;
+            ensureRoomTimer(roomId);
+
+            if (!roomShapes[roomId]) {
+                roomShapes[roomId] = [];
             }
 
             // Find existing shape by ID and update it, to avoid duplications on server state
-            const shapeIndex = roomShapes[data.roomId].findIndex((shape) => shape.id === data.element.id);
+            const shapeIndex = roomShapes[roomId].findIndex((shape) => shape.id === data.element.id);
 
             if (shapeIndex > -1) {
-                roomShapes[data.roomId][shapeIndex] = data.element;
+                roomShapes[roomId][shapeIndex] = data.element;
             } else {
-                roomShapes[data.roomId].push(data.element);
+                roomShapes[roomId].push(data.element);
             }
 
-            socket.to(data.roomId).emit("draw", data);
+            socket.to(roomId).emit("draw", data);
         });
 
         socket.on("delete-shape", ({ roomId, id }) => {
+            ensureRoomTimer(roomId);
             if (roomShapes[roomId]) {
                 roomShapes[roomId] = roomShapes[roomId].filter(shape => shape.id !== id);
             }
@@ -67,6 +96,7 @@ app.prepare().then(() => {
         });
 
         socket.on("edit-notes", ({ roomId, notes }) => {
+            ensureRoomTimer(roomId);
             roomNotes[roomId] = notes;
             // Broadcast to everyone else in the room
             socket.to(roomId).emit("update-notes", notes);
