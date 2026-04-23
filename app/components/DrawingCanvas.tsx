@@ -504,13 +504,23 @@ const DrawingCanvas: React.FC<DrawingCanvasProps> = ({ activeTool, socket, roomI
             }
         };
 
-        socket.emit('get-canvas', roomId);
+        const handleConnect = () => {
+            socket.emit('get-canvas', roomId);
+        };
+
+        socket.on('connect', handleConnect);
+
+        // Trigger immediately if already connected
+        if (socket.connected) {
+            socket.emit('get-canvas', roomId);
+        }
 
         socket.on('draw', handleIncomingDraw);
         socket.on('canvas-data', handleCanvasData);
         socket.on('delete-shape', handleIncomingDelete);
 
         return () => {
+            socket.off('connect', handleConnect);
             socket.off('draw', handleIncomingDraw);
             socket.off('canvas-data', handleCanvasData);
             socket.off('delete-shape', handleIncomingDelete);

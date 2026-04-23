@@ -68,10 +68,15 @@ export default function RoomPage() {
         const socketUrl = process.env.NEXT_PUBLIC_WS_URL;
         const newSocket = socketUrl ? io(socketUrl) : io();
         setSocket(newSocket);
-        newSocket.emit("join-room", roomId);
+
+        newSocket.on("connect", () => {
+            newSocket.emit("join-room", roomId);
+        });
+
         newSocket.on("update-notes", (newNotes: string) => {
             setNotes(newNotes);
         });
+
         return () => {
             newSocket.disconnect();
         };
