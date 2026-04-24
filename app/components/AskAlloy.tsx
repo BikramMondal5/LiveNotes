@@ -4,6 +4,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import { X, Send, Sparkles } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import ReactMarkdown from 'react-markdown';
+import { useRouter, usePathname } from 'next/navigation';
 
 const MODEL_CATEGORIES = [
     {
@@ -123,7 +124,18 @@ const AskAlloy: React.FC<AskAlloyProps> = ({ defaultOpen = false, isOpen: contro
         }
     }, [inputValue]);
 
+    const router = useRouter();
+    const pathname = usePathname();
+
     const handleSend = async (overrideText?: string, overrideImage?: string) => {
+        // Authenticate before allowing send
+        const isLoggedIn = localStorage.getItem("isLoggedIn") === "true";
+        if (!isLoggedIn) {
+            localStorage.setItem("lastRoom", pathname || "/");
+            router.push("/login");
+            return;
+        }
+
         const textToSend = overrideText !== undefined ? overrideText : inputValue;
         const imageToSend = overrideImage || stagedImage || undefined;
         if (!textToSend.trim() && !imageToSend) return;
@@ -313,18 +325,18 @@ const AskAlloy: React.FC<AskAlloyProps> = ({ defaultOpen = false, isOpen: contro
                     )}
 
                     <div
-                        className={inline ? "flex flex-col w-95 xl:w-120 h-full border-l border-zinc-800/50 bg-linear-to-b from-[#0a0a0a] to-[#0f172a] shrink-0 noise-bg z-20" : "fixed top-0 right-0 h-full w-full md:w-[40%] lg:w-[35%] bg-linear-to-b from-[#0a0a0a] to-[#0f172a] z-50 shadow-2xl border-l border-white/10 noise-bg"}
+                        className={inline ? "flex flex-col w-95 xl:w-120 h-full border-l border-zinc-800/50 bg-linear-to-b from-[#161618] to-[#0f172a] shrink-0 noise-bg z-20" : "fixed top-0 right-0 h-full w-full md:w-[40%] lg:w-[35%] bg-linear-to-b from-[#161618] to-[#0f172a] z-50 shadow-2xl border-l border-white/10 noise-bg"}
                         style={{
                             animation: !inline ? (isOpen ? 'slideIn 0.3s ease-out' : 'slideOut 0.3s ease-in') : 'none',
                             backdropFilter: 'blur(20px)'
                         }}
                     >
                         <div className="flex flex-col h-full">
-                            <div className="flex items-center justify-between p-6 border-b border-white/10 bg-black/20 shrink-0">
+                            <div className="flex items-center justify-between p-6 border-b border-white/10 bg-[#161618] shrink-0">
                                 <div className="flex items-center gap-4">
                                     <div className="relative">
                                         <img src="/logo.png" alt="Logo" className="w-12 h-12 object-contain" />
-                                        <div className="absolute -bottom-0.5 -right-0.5 w-3 h-3 bg-[#00C753] rounded-full border-2 border-[#0a0a0a]" />
+                                        <div className="absolute -bottom-0.5 -right-0.5 w-3 h-3 bg-[#00C753] rounded-full border-2 border-[#161618]" />
                                     </div>
                                     <div>
                                         <h2 className={inline ? "text-base font-bold text-white leading-tight" : "text-xl font-bold text-white"}>Ask Elloy</h2>
@@ -466,7 +478,7 @@ const AskAlloy: React.FC<AskAlloyProps> = ({ defaultOpen = false, isOpen: contro
                                                 animate={{ opacity: 1, y: 0, scale: 1 }}
                                                 exit={{ opacity: 0, scale: 0.9 }}
                                                 transition={{ duration: 0.2 }}
-                                                className="absolute bottom-12 left-2 z-50 w-64 bg-[#09090B] border border-white/10 rounded-[20px] shadow-2xl overflow-hidden shadow-black/50"
+                                                className="absolute bottom-12 left-2 z-50 w-64 bg-[#161618] border border-white/10 rounded-[20px] shadow-2xl overflow-hidden shadow-black/50"
                                             >
                                                 <div className="max-h-64 overflow-y-auto w-full py-2 no-scrollbar">
                                                     {MODEL_CATEGORIES.map(category => (
@@ -556,7 +568,7 @@ const AskAlloy: React.FC<AskAlloyProps> = ({ defaultOpen = false, isOpen: contro
                                         <button
                                             onClick={() => handleSend()}
                                             disabled={!inputValue.trim() && !stagedImage}
-                                            className="bg-[#2EFF85] hover:bg-[#28e075] text-[#0A0A0A] rounded-xl w-10 h-10 p-0 shrink-0 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-300 flex items-center justify-center shadow-[0_0_10px_rgba(46,255,133,0.2)]"
+                                            className="bg-[#2EFF85] hover:bg-[#28e075] text-[#161618] rounded-xl w-10 h-10 p-0 shrink-0 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-300 flex items-center justify-center shadow-[0_0_10px_rgba(46,255,133,0.2)]"
                                         >
                                             <Send className="w-5 h-5 ml-0.5" />
                                         </button>

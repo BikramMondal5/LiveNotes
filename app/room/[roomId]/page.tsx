@@ -199,9 +199,9 @@ export default function RoomPage() {
     }, [isScreenshotMode, isPdfToolsOpen]);
 
     return (
-        <div className="h-screen w-full bg-[#121212] flex flex-col overflow-hidden font-sans text-zinc-300">
+        <div className="h-screen w-full bg-[#161618] flex flex-col overflow-hidden font-sans text-zinc-300">
             {/* Top Navigation */}
-            <header className="flex flex-col sm:flex-row min-h-14 py-2 sm:py-0 w-full items-center justify-between border-b border-white/5 bg-linear-to-b from-[#111111] to-[#09090B] px-4 shrink-0 gap-2 sm:gap-0">
+            <header className="flex flex-col sm:flex-row min-h-14 py-2 sm:py-0 w-full items-center justify-between border-b border-white/5 bg-[#161618] px-4 shrink-0 gap-2 sm:gap-0">
                 <div className="flex w-full sm:w-auto justify-between sm:justify-start items-center sm:gap-4 sm:min-w-50">
                     <div className="flex items-center">
                         <img src="/logo.png" alt="LiveNotes Logo" className="w-9 h-9 object-cover rounded-full" />
@@ -252,7 +252,7 @@ export default function RoomPage() {
                     <div className="hidden lg:flex items-center gap-1.5 px-2.5 py-1.5 bg-zinc-800/50 border border-zinc-700/50 rounded text-xs text-zinc-400 font-medium">
                         Ctrl + Shift + K
                     </div>
-                    <button onClick={() => setIsAlloyOpen(!isAlloyOpen)} className="flex items-center gap-1.5 bg-[#2EFF85] hover:bg-[#25dd72] text-[#0A0A0A] px-2.5 py-1.5 rounded text-xs font-medium transition-colors">
+                    <button onClick={() => setIsAlloyOpen(!isAlloyOpen)} className="flex items-center gap-1.5 bg-[#2EFF85] hover:bg-[#25dd72] text-[#161618] px-2.5 py-1.5 rounded text-xs font-medium transition-colors">
                         <Sparkles className="w-3.5 h-3.5" />
                         <span className="hidden sm:inline">Ask Elloy</span>
                     </button>
@@ -260,7 +260,7 @@ export default function RoomPage() {
             </header>
 
             {/* Main Content Area */}
-            <div className="flex-1 relative flex overflow-hidden bg-[#121212]">
+            <div className="flex-1 relative flex overflow-hidden bg-[#161618]">
                 {/* Dot Grid Background */}
                 <div className="absolute inset-0 z-0">
                     <DotGrid
@@ -324,9 +324,9 @@ export default function RoomPage() {
 
                     {/* Document PDF Viewer */}
                     {viewMode === 'document' && (
-                        <div className="absolute inset-0 z-10 w-full h-full flex flex-row overflow-hidden bg-[#09090B]">
+                        <div className="absolute inset-0 z-10 w-full h-full flex flex-row overflow-hidden bg-[#161618]">
                             {/* Sidebar */}
-                            <div className="hidden md:flex flex-col w-[260px] h-full border-r border-zinc-800/50 bg-[#09090B] shrink-0">
+                            <div className="hidden md:flex flex-col w-[260px] h-full border-r border-zinc-800/50 bg-[#161618] shrink-0">
                                 {/* Header / Search */}
                                 <div className="p-4">
                                     <div className="flex items-center justify-between mb-4">
@@ -427,7 +427,7 @@ export default function RoomPage() {
                                 </div>
 
                                 {/* Bottom Promo */}
-                                <div className="p-4 border-t border-zinc-800/50 bg-[#09090B]">
+                                <div className="p-4 border-t border-zinc-800/50 bg-[#161618]">
                                     <div className="bg-zinc-900 rounded-xl p-4 border border-zinc-800 text-center relative overflow-hidden">
                                         <Rocket className="w-8 h-8 text-[#2EFF85] mx-auto mb-2 drop-shadow-[0_0_8px_rgba(46,255,133,0.5)]" />
                                         <h5 className="text-sm font-semibold text-white mb-3 relative z-10">Chat PDFs with GPT-4o</h5>
@@ -440,14 +440,14 @@ export default function RoomPage() {
 
                             {/* Main Iframe Content / Upload UI */}
                             <div
-                                className="flex-1 flex flex-col min-w-0 bg-[#09090B] relative z-10"
+                                className="flex-1 flex flex-col min-w-0 bg-[#161618] relative z-10"
                                 onDrop={handleDrop}
                                 onDragOver={handleDragOver}
                             >
                                 {activeDocView === 'home' || !pdfFile ? (
-                                    <div className="flex-1 flex items-center justify-center p-8 bg-[#09090B]">
+                                    <div className="flex-1 flex items-center justify-center p-8 bg-[#161618]">
                                         <div
-                                            className="flex flex-col items-center justify-center w-full h-full max-w-2xl max-h-[600px] border-2 border-dashed border-zinc-700 hover:border-[#2EFF85] rounded-3xl bg-[#111111]/50 transition-colors cursor-pointer group"
+                                            className="flex flex-col items-center justify-center w-full h-full max-w-2xl max-h-[600px] border-2 border-dashed border-zinc-700 hover:border-[#2EFF85] rounded-3xl bg-[#161618]/50 transition-colors cursor-pointer group"
                                             onClick={() => fileInputRef.current?.click()}
                                         >
                                             <div className="w-16 h-16 rounded-full bg-zinc-800 flex items-center justify-center mb-4 group-hover:bg-[#2EFF85]/20 group-hover:text-[#2EFF85] transition-colors">
@@ -466,18 +466,18 @@ export default function RoomPage() {
                                     </div>
                                 ) : (
                                     <>
-                                        <div className="flex items-center justify-between px-4 py-2 border-b border-white/5 bg-linear-to-b from-[#111111] to-[#09090B] shrink-0">
+                                        <div className="flex items-center justify-between px-4 py-2 border-b border-white/5 bg-[#161618] shrink-0">
                                             <span className="text-sm font-medium text-white">Document Preview</span>
                                             <button
                                                 onClick={() => { setPdfFile(null); setActiveDocView("home"); }}
-                                                className="text-xs px-3 py-1 rounded bg-[#111111] hover:bg-[#2EFF85]/10 text-zinc-400 hover:text-[#2EFF85] transition-colors border border-white/5 hover:border-[#2EFF85]/20"
+                                                className="text-xs px-3 py-1 rounded bg-[#161618] hover:bg-[#2EFF85]/10 text-zinc-400 hover:text-[#2EFF85] transition-colors border border-white/5 hover:border-[#2EFF85]/20"
                                             >
                                                 Remove
                                             </button>
                                         </div>
                                         <iframe
                                             src={pdfFile}
-                                            className="w-full h-full border-0 bg-[#09090B]"
+                                            className="w-full h-full border-0 bg-[#161618]"
                                             title="PDF Preview"
                                         />
                                     </>
