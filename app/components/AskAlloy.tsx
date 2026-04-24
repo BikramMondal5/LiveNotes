@@ -5,6 +5,7 @@ import { X, Send, Sparkles } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import ReactMarkdown from 'react-markdown';
 import { useRouter, usePathname } from 'next/navigation';
+import { useSession } from 'next-auth/react';
 
 const MODEL_CATEGORIES = [
     {
@@ -126,11 +127,11 @@ const AskAlloy: React.FC<AskAlloyProps> = ({ defaultOpen = false, isOpen: contro
 
     const router = useRouter();
     const pathname = usePathname();
+    const { data: session, status } = useSession();
 
     const handleSend = async (overrideText?: string, overrideImage?: string) => {
-        // Authenticate before allowing send
-        const isLoggedIn = localStorage.getItem("isLoggedIn") === "true";
-        if (!isLoggedIn) {
+        // Authenticate before allowing send via real NextAuth session
+        if (status === "unauthenticated") {
             localStorage.setItem("lastRoom", pathname || "/");
             router.push("/login");
             return;

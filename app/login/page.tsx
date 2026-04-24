@@ -1,20 +1,37 @@
 "use client";
 
+import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Sparkles, Github } from "lucide-react";
+import { signIn } from "next-auth/react";
 
 export default function LoginPage() {
     const router = useRouter();
+    const [email, setEmail] = useState("");
+    const [password, setPassword] = useState("");
 
-    const handleLogin = (e: React.FormEvent) => {
+    const handleLogin = async (e: React.FormEvent) => {
         e.preventDefault();
-        // Mock auth logic for now
-        localStorage.setItem("isLoggedIn", "true");
 
-        // Redirect back to the room the user came from, or home
+        // Use NextAuth credentials provider
+        const result = await signIn("credentials", {
+            email,
+            password,
+            redirect: false,
+        });
+
+        if (result?.error) {
+            console.error(result.error);
+        } else {
+            const lastRoom = localStorage.getItem("lastRoom") || "/";
+            router.push(lastRoom);
+        }
+    };
+
+    const handleOAuthLogin = (provider: "google" | "github") => {
         const lastRoom = localStorage.getItem("lastRoom") || "/";
-        router.push(lastRoom);
+        signIn(provider, { callbackUrl: lastRoom });
     };
 
     return (
@@ -36,6 +53,8 @@ export default function LoginPage() {
                         <label className="block text-sm font-medium text-zinc-400">Email</label>
                         <input
                             type="email"
+                            value={email}
+                            onChange={(e) => setEmail(e.target.value)}
                             placeholder="you@example.com"
                             className="w-full bg-[#0a0a0a] border border-white/10 rounded-xl px-4 py-3 text-zinc-200 focus:outline-none focus:border-[#2EFF85]/50 transition-colors placeholder:text-zinc-600"
                             required
@@ -45,6 +64,8 @@ export default function LoginPage() {
                         <label className="block text-sm font-medium text-zinc-400">Password</label>
                         <input
                             type="password"
+                            value={password}
+                            onChange={(e) => setPassword(e.target.value)}
                             placeholder="••••••••"
                             className="w-full bg-[#0a0a0a] border border-white/10 rounded-xl px-4 py-3 text-zinc-200 focus:outline-none focus:border-[#2EFF85]/50 transition-colors placeholder:text-zinc-600"
                             required
@@ -66,7 +87,7 @@ export default function LoginPage() {
 
                 <div className="space-y-3">
                     <button
-                        onClick={handleLogin}
+                        onClick={() => handleOAuthLogin('google')}
                         className="w-full bg-[#0a0a0a] hover:bg-[#111] border border-white/10 text-white font-medium py-3 rounded-xl transition-colors flex justify-center items-center gap-3"
                     >
                         <svg className="w-5 h-5" viewBox="0 0 24 24">
@@ -78,7 +99,7 @@ export default function LoginPage() {
                         Google
                     </button>
                     <button
-                        onClick={handleLogin}
+                        onClick={() => handleOAuthLogin('github')}
                         className="w-full bg-[#0a0a0a] hover:bg-[#111] border border-white/10 text-white font-medium py-3 rounded-xl transition-colors flex justify-center items-center gap-3"
                     >
                         <Github className="w-5 h-5 text-white" />
