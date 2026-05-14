@@ -1,6 +1,8 @@
 import { NextResponse } from 'next/server';
+import { getServerSession } from 'next-auth/next';
 import ModelClient, { isUnexpected } from "@azure-rest/ai-inference";
 import { AzureKeyCredential } from "@azure/core-auth";
+import { authOptions } from '@/lib/auth';
 
 const API_URLS: Record<string, string> = {
     gemini: "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent",
@@ -9,6 +11,24 @@ const API_URLS: Record<string, string> = {
     mistral: "https://gen.pollinations.ai/v1/chat/completions",
     gpt4o: "https://models.inference.ai.azure.com/chat/completions",
     grok: "https://models.inference.ai.azure.com/chat/completions"
+};
+
+interface ChatMessage {
+    content: string;
+    image?: string;
+    sender: 'user' | 'ai';
+}
+
+type GeminiPart = {
+    text?: string;
+    inlineData?: {
+        mimeType: string;
+        data: string;
+    };
+};
+
+const getErrorMessage = (error: unknown) => {
+    return error instanceof Error ? error.message : "Sorry, there was an error processing your request. Please try again.";
 };
 
 const getApiKey = (provider: string) => {
@@ -25,6 +45,12 @@ const getApiKey = (provider: string) => {
 
 export async function POST(req: Request) {
     try {
+        const session = await getServerSession(authOptions);
+
+        if (!session) {
+            return NextResponse.json({ error: "Login required to use Ask Elloy." }, { status: 401 });
+        }
+
         const body = await req.json();
         const { provider, messages, userMessage, selectedModel } = body;
 
@@ -48,8 +74,8 @@ export async function POST(req: Request) {
                     systemInstruction: {
                         parts: [{ text: systemPrompt }]
                     },
-                    contents: allMessages.map((m: any) => {
-                        const parts: any[] = [{ text: m.content }];
+                    contents: allMessages.map((m: ChatMessage) => {
+                        const parts: GeminiPart[] = [{ text: m.content }];
                         if (m.image) {
                             const [meta, base64Data] = m.image.split(',');
                             const mimeType = meta.split(':')[1].split(';')[0];
@@ -82,7 +108,7 @@ export async function POST(req: Request) {
                     model: 'llama-3.3-70b-versatile',
                     messages: [
                         { role: 'system', content: systemPrompt },
-                        ...allMessages.map((m: any) => ({
+                        ...allMessages.map((m: ChatMessage) => ({
                             role: m.sender === 'user' ? 'user' : 'assistant',
                             content: m.content
                         }))
@@ -107,7 +133,7 @@ export async function POST(req: Request) {
                 body: {
                     messages: [
                         { role: "system", content: systemPrompt },
-                        ...allMessages.map((m: any) => ({
+                        ...allMessages.map((m: ChatMessage) => ({
                             role: m.sender === 'user' ? 'user' : 'assistant',
                             content: m.content
                         }))
@@ -136,7 +162,7 @@ export async function POST(req: Request) {
                     model: "nova-fast",
                     messages: [
                         { role: "system", content: systemPrompt },
-                        ...allMessages.map((m: any) => ({
+                        ...allMessages.map((m: ChatMessage) => ({
                             role: m.sender === 'user' ? 'user' : 'assistant',
                             content: m.content
                         }))
@@ -162,7 +188,7 @@ export async function POST(req: Request) {
                     model: "mistral",
                     messages: [
                         { role: "system", content: systemPrompt },
-                        ...allMessages.map((m: any) => ({
+                        ...allMessages.map((m: ChatMessage) => ({
                             role: m.sender === 'user' ? 'user' : 'assistant',
                             content: m.content
                         }))
@@ -187,7 +213,7 @@ export async function POST(req: Request) {
                 body: {
                     messages: [
                         { role: "system", content: systemPrompt },
-                        ...allMessages.map((m: any) => ({
+                        ...allMessages.map((m: ChatMessage) => ({
                             role: m.sender === 'user' ? 'user' : 'assistant',
                             content: m.content
                         }))
@@ -212,10 +238,10 @@ export async function POST(req: Request) {
 
         return NextResponse.json({ content: aiResponseContent });
 
-    } catch (error: any) {
+    } catch (error: unknown) {
         console.error("Error in API route:", error);
         return NextResponse.json(
-            { error: error?.message || "Sorry, there was an error processing your request. Please try again." },
+            { error: getErrorMessage(error) },
             { status: 500 }
         );
     }

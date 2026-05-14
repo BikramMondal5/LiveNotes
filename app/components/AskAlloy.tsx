@@ -129,11 +129,32 @@ const AskAlloy: React.FC<AskAlloyProps> = ({ defaultOpen = false, isOpen: contro
     const pathname = usePathname();
     const { data: session, status } = useSession();
 
+    const redirectToLogin = () => {
+        localStorage.setItem("lastRoom", pathname || "/");
+        router.push("/login");
+    };
+
+    const handleOpen = () => {
+        if (status === "unauthenticated") {
+            redirectToLogin();
+            return;
+        }
+
+        if (status === "loading") {
+            return;
+        }
+
+        setIsOpen(true);
+    };
+
     const handleSend = async (overrideText?: string, overrideImage?: string) => {
         // Authenticate before allowing send via real NextAuth session
         if (status === "unauthenticated") {
-            localStorage.setItem("lastRoom", pathname || "/");
-            router.push("/login");
+            redirectToLogin();
+            return;
+        }
+
+        if (status === "loading" || !session) {
             return;
         }
 
@@ -175,6 +196,11 @@ const AskAlloy: React.FC<AskAlloyProps> = ({ defaultOpen = false, isOpen: contro
             });
 
             if (!response.ok) {
+                if (response.status === 401) {
+                    redirectToLogin();
+                    return;
+                }
+
                 const errorData = await response.json().catch(() => ({}));
                 throw new Error(`API Error: ${response.status} - ${errorData.error || 'Unknown'}`);
             }
@@ -189,24 +215,17 @@ const AskAlloy: React.FC<AskAlloyProps> = ({ defaultOpen = false, isOpen: contro
             };
 
             setMessages(prev => [...prev, aiMessage]);
-        } catch (error: any) {
+        } catch (error: unknown) {
             console.error('Error fetching model response:', error);
             const errorMessage: Message = {
                 id: (Date.now() + 1).toString(),
-                content: error.message || 'Sorry, there was an error processing your request. Please try again.',
+                content: error instanceof Error ? error.message : 'Sorry, there was an error processing your request. Please try again.',
                 sender: 'ai',
                 timestamp: new Date()
             };
             setMessages(prev => [...prev, errorMessage]);
         } finally {
             setIsTyping(false);
-        }
-    };
-
-    const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
-        if (e.key === 'Enter' && !e.shiftKey) {
-            e.preventDefault();
-            handleSend();
         }
     };
 
@@ -302,7 +321,7 @@ const AskAlloy: React.FC<AskAlloyProps> = ({ defaultOpen = false, isOpen: contro
 
             {!isOpen && showFloatingButton && (
                 <button
-                    onClick={() => setIsOpen(true)}
+                    onClick={handleOpen}
                     className="fixed bottom-6 right-6 z-50 px-6 py-6 rounded-full bg-[#00C753] hover:bg-[#00a344] text-white font-semibold shadow-lg transition-all duration-300 hover:scale-105"
                     style={{
                         animation: 'glow 2s ease-in-out infinite'
@@ -568,7 +587,7 @@ const AskAlloy: React.FC<AskAlloyProps> = ({ defaultOpen = false, isOpen: contro
 
                                         <button
                                             onClick={() => handleSend()}
-                                            disabled={!inputValue.trim() && !stagedImage}
+                                            disabled={status === "loading" || (!inputValue.trim() && !stagedImage)}
                                             className="bg-[#2EFF85] hover:bg-[#28e075] text-[#161618] rounded-xl w-10 h-10 p-0 shrink-0 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-300 flex items-center justify-center shadow-[0_0_10px_rgba(46,255,133,0.2)]"
                                         >
                                             <Send className="w-5 h-5 ml-0.5" />
