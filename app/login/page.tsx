@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Sparkles } from "lucide-react";
@@ -10,6 +10,17 @@ export default function LoginPage() {
     const router = useRouter();
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
+    const [authError, setAuthError] = useState<string | null>(null);
+    const errorMessage =
+        authError === "OAuthCallback"
+            ? "Google sign-in could not finish. Check the Google OAuth callback URL and Vercel auth environment variables."
+            : authError
+                ? "Sign-in failed. Please try again."
+                : "";
+
+    useEffect(() => {
+        setAuthError(new URLSearchParams(window.location.search).get("error"));
+    }, []);
 
     const handleLogin = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -49,6 +60,12 @@ export default function LoginPage() {
                 </div>
 
                 <form onSubmit={handleLogin} className="space-y-4">
+                    {errorMessage ? (
+                        <p className="rounded-xl border border-red-500/20 bg-red-500/10 px-4 py-3 text-sm text-red-200">
+                            {errorMessage}
+                        </p>
+                    ) : null}
+
                     <div className="space-y-1.5">
                         <label className="block text-sm font-medium text-zinc-400">Email</label>
                         <input

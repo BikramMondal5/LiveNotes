@@ -4,6 +4,7 @@ import GithubProvider from "next-auth/providers/github";
 import CredentialsProvider from "next-auth/providers/credentials";
 
 export const authOptions: NextAuthOptions = {
+    secret: process.env.NEXTAUTH_SECRET,
     providers: [
         GoogleProvider({
             clientId: process.env.GOOGLE_CLIENT_ID || "",
@@ -35,4 +36,5 @@ export const authOptions: NextAuthOptions = {
     pages: {
         signIn: "/login",
     },
+    debug: process.env.NODE_ENV === "development",
 };
