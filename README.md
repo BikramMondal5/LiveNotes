@@ -1,6 +1,10 @@
 # 📝✨ LiveNotes – Real-Time Note Sharing App
 
 <div align="center">
+    <img src="./screenshot.png" alt="Preview Image"/>
+</div>
+
+<div align="center">
     <h3>LiveNotes</h3>
 
   <p>
@@ -22,10 +26,6 @@
     </a>
   </p>
 
-</div>
-
-<div align="center">
-    <img src="./screenshot.png" alt="Preview Image" height="500" width="100%" />
 </div>
 
 
