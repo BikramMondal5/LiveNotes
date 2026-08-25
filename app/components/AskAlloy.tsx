@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useRef, useEffect } from 'react';
-import { X, Send, Sparkles } from 'lucide-react';
+import { X, Send, Sparkles, Wrench, Mic } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import ReactMarkdown from 'react-markdown';
 import { useRouter, usePathname } from 'next/navigation';
@@ -355,7 +355,9 @@ const AskAlloy: React.FC<AskAlloyProps> = ({ defaultOpen = false, isOpen: contro
                             <div className="flex items-center justify-between p-6 border-b border-white/10 bg-[#161618] shrink-0">
                                 <div className="flex items-center gap-4">
                                     <div className="relative">
-                                        <img src="/logo.png" alt="Logo" className="w-12 h-12 object-contain" />
+                                        <div className="w-12 h-12 rounded-full border-2 border-[#00C753] p-0.5 flex items-center justify-center overflow-hidden">
+                                            <img src="/logo.png" alt="Logo" className="w-full h-full object-contain rounded-full" />
+                                        </div>
                                         <div className="absolute -bottom-0.5 -right-0.5 w-3 h-3 bg-[#00C753] rounded-full border-2 border-[#161618]" />
                                     </div>
                                     <div>
@@ -376,43 +378,15 @@ const AskAlloy: React.FC<AskAlloyProps> = ({ defaultOpen = false, isOpen: contro
                             <div className="flex-1 overflow-y-auto p-4 no-scrollbar">
                                 <div ref={scrollRef} className="flex flex-col">
                                     {messages.length === 0 ? (
-                                        <div className="flex flex-col items-center justify-center h-full min-h-100 text-center space-y-6">
-                                            <div className="relative flex items-center justify-center">
-                                                <div className="w-24 h-24 bg-[#00C753] rounded-full flex items-center justify-center shadow-lg">
-                                                    <img src="/Elloy-logo.png" alt="Elloy" className="w-20 h-20" />
+                                        <div className="flex flex-col items-center justify-center h-full min-h-100 text-center space-y-6 px-4 my-auto">
+                                            <div className="flex items-center justify-center">
+                                                <div className="w-32 h-32 bg-[#00C753] rounded-full flex items-center justify-center shadow-xl">
+                                                    <img src="/Elloy-logo.png" alt="Elloy" className="w-28 h-28 object-contain" />
                                                 </div>
-                                                <div className="absolute inset-0 bg-[#00C753]/20 rounded-full blur-xl" />
                                             </div>
-                                            <div className="space-y-2">
-                                                <h3 className="text-xl font-semibold text-white">Ask anything about your notes or ideas</h3>
-                                                <p className="text-gray-400 text-sm">Get instant help, generate ideas, or understand content faster</p>
-                                            </div>
-                                            <div className="grid grid-cols-2 gap-4 w-full max-w-md mx-auto">
-                                                {suggestionChips.map((chip, index) => (
-                                                    <motion.button
-                                                        key={index}
-                                                        onClick={() => handleChipClick(chip)}
-                                                        whileHover={{ scale: 1.02, y: -2 }}
-                                                        whileTap={{ scale: 0.98 }}
-                                                        className="group relative p-4 bg-white/5 border border-white/10 rounded-xl transition-all duration-300 hover:border-green-500/50 hover:bg-white/8 overflow-hidden"
-                                                        style={{
-                                                            animation: `fadeIn 0.3s ease-out ${index * 0.05}s both`
-                                                        }}
-                                                    >
-                                                        {/* Glow effect on hover */}
-                                                        <div className="absolute inset-0 bg-linear-to-br from-green-500/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 rounded-xl" />
-
-                                                        {/* Card content */}
-                                                        <div className="relative z-10 text-left">
-                                                            <h3 className="text-sm font-semibold text-white group-hover:text-green-300 transition-colors duration-300 mb-1">
-                                                                {chip.title}
-                                                            </h3>
-                                                            <p className="text-xs text-gray-400 group-hover:text-gray-300 transition-colors duration-300 line-clamp-2">
-                                                                {chip.description}
-                                                            </p>
-                                                        </div>
-                                                    </motion.button>
-                                                ))}
+                                            <div className="space-y-2 max-w-sm mx-auto">
+                                                <h3 className="text-2xl font-bold text-white tracking-tight">Ask anything about your notes or ideas</h3>
+                                                <p className="text-gray-400 text-sm leading-relaxed">Get instant help, generate ideas, or understand content faster</p>
                                             </div>
                                         </div>
                                     ) : (
@@ -558,18 +532,18 @@ const AskAlloy: React.FC<AskAlloyProps> = ({ defaultOpen = false, isOpen: contro
                                                 handleSend();
                                             }
                                         }}
-                                        placeholder="Ask about your notes, ideas, or documents..."
+                                        placeholder="Ask me anything..."
                                         className="w-full bg-transparent border-0 text-white placeholder:text-gray-500 focus:outline-none text-sm px-2 pt-0 pb-0 min-h-6 resize-none leading-relaxed no-scrollbar"
                                         style={{ overflowY: 'hidden', maxHeight: '160px' }}
                                     />
 
-                                    <div className="flex items-center justify-between w-full mt-0">
+                                    <div className="flex items-center justify-between w-full mt-2">
                                         {/* Model Selector Button */}
                                         <button
                                             onClick={() => setShowModels(!showModels)}
                                             title="Select Model"
                                             className={`flex items-center gap-2 pl-1 pr-3 py-1.5 h-10 rounded-full border transition-colors shrink-0
-                                                ${showModels ? 'bg-[#2a2a2a] border-[#2EFF85]/60 text-[#2EFF85]' : 'bg-[#2a2a2a] border-[#444] text-gray-300 hover:border-[#2EFF85]/40 hover:text-gray-100'}`}
+                                                ${showModels ? 'bg-[#2a2a2a] border-[#2EFF85]/60 text-[#2EFF85]' : 'bg-[#252528] border-white/10 text-gray-300 hover:border-[#2EFF85]/40 hover:text-gray-100'}`}
                                         >
                                             {(() => {
                                                 const currentModelObj = AVAILABLE_MODELS.find(m => m.name === selectedModel);
@@ -585,13 +559,21 @@ const AskAlloy: React.FC<AskAlloyProps> = ({ defaultOpen = false, isOpen: contro
                                             </svg>
                                         </button>
 
-                                        <button
-                                            onClick={() => handleSend()}
-                                            disabled={status === "loading" || (!inputValue.trim() && !stagedImage)}
-                                            className="bg-[#2EFF85] hover:bg-[#28e075] text-[#161618] rounded-xl w-10 h-10 p-0 shrink-0 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-300 flex items-center justify-center shadow-[0_0_10px_rgba(46,255,133,0.2)]"
-                                        >
-                                            <Send className="w-5 h-5 ml-0.5" />
-                                        </button>
+                                        <div className="flex items-center gap-3.5">
+                                            <button type="button" className="text-zinc-400 hover:text-zinc-200 transition-colors p-1" title="Tools">
+                                                <Wrench className="w-4 h-4" />
+                                            </button>
+                                            <button type="button" className="text-zinc-400 hover:text-zinc-200 transition-colors p-1" title="Voice Input">
+                                                <Mic className="w-4 h-4" />
+                                            </button>
+                                            <button
+                                                onClick={() => handleSend()}
+                                                disabled={status === "loading" || (!inputValue.trim() && !stagedImage)}
+                                                className="bg-zinc-800/80 hover:bg-[#2EFF85] hover:text-[#161618] text-zinc-400 rounded-xl w-9 h-9 p-0 shrink-0 disabled:opacity-40 disabled:cursor-not-allowed transition-all duration-200 flex items-center justify-center"
+                                            >
+                                                <Send className="w-4 h-4" />
+                                            </button>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
