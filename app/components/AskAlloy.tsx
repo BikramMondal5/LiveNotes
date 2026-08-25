@@ -294,12 +294,6 @@ const AskAlloy: React.FC<AskAlloyProps> = ({ defaultOpen = false, isOpen: contro
           }
         }
 
-        .noise-bg {
-          background-image: 
-            radial-gradient(circle at 20% 50%, rgba(34, 197, 94, 0.05) 0%, transparent 50%),
-            radial-gradient(circle at 80% 80%, rgba(34, 197, 94, 0.03) 0%, transparent 50%);
-        }
-
         .grid-bg {
           background-image: 
             linear-gradient(rgba(255, 255, 255, 0.02) 1px, transparent 1px),
@@ -345,20 +339,20 @@ const AskAlloy: React.FC<AskAlloyProps> = ({ defaultOpen = false, isOpen: contro
                     )}
 
                     <div
-                        className={inline ? "flex flex-col w-95 xl:w-120 h-full border-l border-zinc-800/50 bg-linear-to-b from-[#161618] to-[#0f172a] shrink-0 noise-bg z-20" : "fixed top-0 right-0 h-full w-full md:w-[40%] lg:w-[35%] bg-linear-to-b from-[#161618] to-[#0f172a] z-50 shadow-2xl border-l border-white/10 noise-bg"}
+                        className={inline ? "flex flex-col w-95 xl:w-120 h-full border-l border-zinc-800/50 bg-[#121214] shrink-0 z-20" : "fixed top-0 right-0 h-full w-full md:w-[40%] lg:w-[35%] bg-[#121214] z-50 shadow-2xl border-l border-white/10"}
                         style={{
                             animation: !inline ? (isOpen ? 'slideIn 0.3s ease-out' : 'slideOut 0.3s ease-in') : 'none',
                             backdropFilter: 'blur(20px)'
                         }}
                     >
                         <div className="flex flex-col h-full">
-                            <div className="flex items-center justify-between p-6 border-b border-white/10 bg-[#161618] shrink-0">
+                            <div className="flex items-center justify-between p-6 border-b border-white/10 bg-[#121214] shrink-0">
                                 <div className="flex items-center gap-4">
                                     <div className="relative">
                                         <div className="w-12 h-12 rounded-full border-2 border-[#00C753] p-0.5 flex items-center justify-center overflow-hidden">
                                             <img src="/logo.png" alt="Logo" className="w-full h-full object-contain rounded-full" />
                                         </div>
-                                        <div className="absolute -bottom-0.5 -right-0.5 w-3 h-3 bg-[#00C753] rounded-full border-2 border-[#161618]" />
+                                        <div className="absolute -bottom-0.5 -right-0.5 w-3 h-3 bg-[#00C753] rounded-full border-2 border-[#121214]" />
                                     </div>
                                     <div>
                                         <h2 className={inline ? "text-base font-bold text-white leading-tight" : "text-xl font-bold text-white"}>Ask Elloy</h2>
@@ -413,13 +407,13 @@ const AskAlloy: React.FC<AskAlloyProps> = ({ defaultOpen = false, isOpen: contro
                                                             )}
                                                             <div
                                                                 className={`px-[14px] py-[10px] transition-all duration-300 w-full ${message.image ? 'mt-[8px]' : ''} ${message.sender === 'user'
-                                                                    ? 'rounded-[18px] bg-[#2EFF85] text-[#09090B]'
-                                                                    : 'rounded-[16px] bg-[#18181B] text-[#E4E4E7] border border-white/6 shadow-[0_8px_24px_rgba(0,0,0,0.30)] hover:shadow-[0_10px_28px_rgba(0,0,0,0.34)]'
+                                                                    ? 'rounded-[20px] rounded-tr-[4px] bg-[#2EFF85] text-[#09090B]'
+                                                                    : 'rounded-[20px] rounded-tl-[4px] bg-[#202024] text-[#F4F4F5] border border-white/10 shadow-[0_2px_8px_rgba(0,0,0,0.15)]'
                                                                     }`}
                                                                 style={{ animation: 'slideUpFade 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards' }}
                                                             >
                                                                 {message.sender === 'ai' ? (
-                                                                    <div className="text-[14px] leading-[1.5] prose prose-invert prose-p:leading-[1.5] prose-p:my-1 max-w-none wrap-break-word font-medium">
+                                                                    <div className="text-[14px] leading-[1.5] prose prose-invert prose-p:leading-[1.5] prose-p:my-1 max-w-none wrap-break-word font-medium text-zinc-100">
                                                                         <ReactMarkdown>
                                                                             {message.content}
                                                                         </ReactMarkdown>
@@ -428,7 +422,7 @@ const AskAlloy: React.FC<AskAlloyProps> = ({ defaultOpen = false, isOpen: contro
                                                                     <p className="text-[14px] leading-[1.5] whitespace-pre-wrap wrap-break-word font-medium">{message.content}</p>
                                                                 )}
                                                                 <div className="mt-[4px] flex justify-end">
-                                                                    <span className={`text-[11px] opacity-60 ${message.sender === 'user' ? 'text-[#09090B]' : 'text-[#E4E4E7]'}`}>
+                                                                    <span className={`text-[11px] opacity-60 ${message.sender === 'user' ? 'text-[#09090B]' : 'text-zinc-400'}`}>
                                                                         {formatTime(message.timestamp)}
                                                                     </span>
                                                                 </div>
@@ -439,7 +433,7 @@ const AskAlloy: React.FC<AskAlloyProps> = ({ defaultOpen = false, isOpen: contro
                                             })}
                                             {isTyping && (
                                                 <div className="flex justify-start mt-3" style={{ animation: 'fadeIn 0.25s ease-out both' }}>
-                                                    <div className="bg-[#18181B] border border-white/6 rounded-[16px] px-4 py-4 shadow-[0_8px_24px_rgba(0,0,0,0.30)]">
+                                                    <div className="bg-[#202024] border border-white/10 rounded-[20px] rounded-tl-[4px] px-4 py-4 shadow-[0_2px_8px_rgba(0,0,0,0.15)]">
                                                         <div className="flex gap-1.5">
                                                             <div
                                                                 className="w-1.5 h-1.5 bg-gray-400 rounded-full"
@@ -462,8 +456,8 @@ const AskAlloy: React.FC<AskAlloyProps> = ({ defaultOpen = false, isOpen: contro
                                 </div>
                             </div>
 
-                            <div className="p-6 border-t border-white/10 bg-black/20">
-                                <div className="relative mb-3">
+                            <div className="p-3.5 border-t border-white/10 bg-[#121214]">
+                                <div className="relative mb-2">
                                     {/* Model Selection Dropdown Popup Wrapper */}
                                     <AnimatePresence>
                                         {showModels && (
@@ -472,14 +466,14 @@ const AskAlloy: React.FC<AskAlloyProps> = ({ defaultOpen = false, isOpen: contro
                                                 animate={{ opacity: 1, y: 0, scale: 1 }}
                                                 exit={{ opacity: 0, scale: 0.9 }}
                                                 transition={{ duration: 0.2 }}
-                                                className="absolute bottom-12 left-2 z-50 w-64 bg-[#161618] border border-white/10 rounded-[20px] shadow-2xl overflow-hidden shadow-black/50"
+                                                className="absolute bottom-10 left-1 z-50 w-60 bg-[#202024] border border-white/10 rounded-[16px] shadow-2xl overflow-hidden shadow-black/80"
                                             >
-                                                <div className="max-h-64 overflow-y-auto w-full py-2 no-scrollbar">
+                                                <div className="max-h-56 overflow-y-auto w-full py-1.5 no-scrollbar">
                                                     {MODEL_CATEGORIES.map(category => (
-                                                        <div key={category.category} className="mb-3 px-2">
+                                                        <div key={category.category} className="mb-2 px-1.5">
                                                             {/* Category Label */}
                                                             <div className="flex items-center gap-2 mb-1 pl-2">
-                                                                <span className="text-[11px] font-semibold text-[#2EFF85]/50 uppercase tracking-wider">
+                                                                <span className="text-[10px] font-semibold text-[#2EFF85]/70 uppercase tracking-wider">
                                                                     {category.category}
                                                                 </span>
                                                             </div>
@@ -491,10 +485,10 @@ const AskAlloy: React.FC<AskAlloyProps> = ({ defaultOpen = false, isOpen: contro
                                                                         setSelectedModel(model.name);
                                                                         setShowModels(false);
                                                                     }}
-                                                                    className={`w-full text-left px-3 py-2 text-sm rounded-xl transition-colors flex items-center gap-3 
-                                                                    ${selectedModel === model.name ? 'bg-[#2EFF85]/10 text-[#2EFF85] shadow-[inset_0_0_10px_rgba(46,255,133,0.05)]' : 'text-gray-300 hover:bg-white/5 hover:text-gray-100'}`}
+                                                                    className={`w-full text-left px-2.5 py-1.5 text-xs rounded-lg transition-colors flex items-center gap-2.5 
+                                                                    ${selectedModel === model.name ? 'bg-[#2EFF85]/15 text-[#2EFF85] font-semibold' : 'text-zinc-200 hover:bg-white/10 hover:text-white'}`}
                                                                 >
-                                                                    <div className="w-6 h-6 rounded-full shrink-0 overflow-hidden flex items-center justify-center bg-white/10">
+                                                                    <div className="w-5 h-5 rounded-full shrink-0 overflow-hidden flex items-center justify-center bg-white/10">
                                                                         <img src={model.icon} alt={model.name} className="w-full h-full object-cover" />
                                                                     </div>
                                                                     <span className="truncate">{model.name}</span>
@@ -508,17 +502,17 @@ const AskAlloy: React.FC<AskAlloyProps> = ({ defaultOpen = false, isOpen: contro
                                     </AnimatePresence>
                                 </div>
 
-                                <div className="flex flex-col justify-between bg-[#1A1A1A] rounded-3xl border border-white/10 p-3 focus-within:border-[#2EFF85] focus-within:shadow-[0_0_10px_rgba(46,255,133,0.2),0_0_20px_rgba(46,255,133,0.1),0_0_30px_rgba(46,255,133,0.05),inset_0_1px_1px_rgba(255,255,255,0.1),inset_0_-5px_15px_rgba(46,255,133,0.1)] transition-all duration-300 relative">
+                                <div className="flex flex-col justify-between bg-[#202024] rounded-2xl border border-[#2EFF85]/30 focus-within:border-[#2EFF85]/70 focus-within:shadow-[0_0_8px_rgba(46,255,133,0.15)] p-2.5 transition-all duration-300 relative">
                                     {stagedImage && (
                                         <div className="relative mb-2 shrink-0 self-start">
-                                            <div className="relative rounded-xl overflow-hidden border border-white/10 bg-black/50 p-1 flex items-center justify-center max-w-50">
-                                                <img src={stagedImage} alt="Staged attachment" className="rounded-lg object-contain max-h-30" />
+                                            <div className="relative rounded-xl overflow-hidden border border-white/10 bg-black/50 p-1 flex items-center justify-center max-w-44">
+                                                <img src={stagedImage} alt="Staged attachment" className="rounded-lg object-contain max-h-24" />
                                             </div>
                                             <button
                                                 onClick={onClearStagedImage}
-                                                className="absolute -top-2 -right-2 w-6 h-6 bg-red-500 hover:bg-red-600 text-white rounded-full flex items-center justify-center shadow-lg transition-colors border-2 border-[#1A1A1A]"
+                                                className="absolute -top-2 -right-2 w-5 h-5 bg-red-500 hover:bg-red-600 text-white rounded-full flex items-center justify-center shadow-lg transition-colors border-2 border-[#202024]"
                                             >
-                                                <X className="w-3.5 h-3.5" />
+                                                <X className="w-3 h-3" />
                                             </button>
                                         </div>
                                     )}
@@ -533,43 +527,43 @@ const AskAlloy: React.FC<AskAlloyProps> = ({ defaultOpen = false, isOpen: contro
                                             }
                                         }}
                                         placeholder="Ask me anything..."
-                                        className="w-full bg-transparent border-0 text-white placeholder:text-gray-500 focus:outline-none text-sm px-2 pt-0 pb-0 min-h-6 resize-none leading-relaxed no-scrollbar"
-                                        style={{ overflowY: 'hidden', maxHeight: '160px' }}
+                                        className="w-full bg-transparent border-0 text-zinc-100 placeholder:text-zinc-400 focus:outline-none text-sm px-1.5 pt-0.5 pb-0 min-h-5 resize-none leading-relaxed no-scrollbar"
+                                        style={{ overflowY: 'hidden', maxHeight: '120px' }}
                                     />
 
-                                    <div className="flex items-center justify-between w-full mt-2">
+                                    <div className="flex items-center justify-between w-full mt-1.5">
                                         {/* Model Selector Button */}
                                         <button
                                             onClick={() => setShowModels(!showModels)}
                                             title="Select Model"
-                                            className={`flex items-center gap-2 pl-1 pr-3 py-1.5 h-10 rounded-full border transition-colors shrink-0
-                                                ${showModels ? 'bg-[#2a2a2a] border-[#2EFF85]/60 text-[#2EFF85]' : 'bg-[#252528] border-white/10 text-gray-300 hover:border-[#2EFF85]/40 hover:text-gray-100'}`}
+                                            className={`flex items-center gap-1.5 pl-1 pr-2.5 py-1 h-8 rounded-full border transition-colors shrink-0
+                                                ${showModels ? 'bg-[#2B2B30] border-[#2EFF85]/60 text-[#2EFF85]' : 'bg-[#2B2B30] border-white/10 text-zinc-200 hover:border-[#2EFF85]/40 hover:text-white'}`}
                                         >
                                             {(() => {
                                                 const currentModelObj = AVAILABLE_MODELS.find(m => m.name === selectedModel);
                                                 return currentModelObj ? (
-                                                    <div className="w-7 h-7 rounded-full overflow-hidden shrink-0 border border-white/20">
+                                                    <div className="w-5.5 h-5.5 rounded-full overflow-hidden shrink-0 border border-white/20">
                                                         <img src={currentModelObj.icon} alt={selectedModel} className="w-full h-full object-cover" />
                                                     </div>
                                                 ) : null;
                                             })()}
-                                            <span className="text-xs font-semibold whitespace-nowrap">{selectedModel.split(' ')[0]}</span>
-                                            <svg className="w-3.5 h-3.5 text-gray-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <span className="text-[11px] font-semibold whitespace-nowrap">{selectedModel.split(' ')[0]}</span>
+                                            <svg className="w-3 h-3 text-zinc-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
                                             </svg>
                                         </button>
 
-                                        <div className="flex items-center gap-3.5">
-                                            <button type="button" className="text-zinc-400 hover:text-zinc-200 transition-colors p-1" title="Tools">
+                                        <div className="flex items-center gap-2.5">
+                                            <button type="button" className="text-zinc-300 hover:text-white transition-colors p-0.5" title="Tools">
                                                 <Wrench className="w-4 h-4" />
                                             </button>
-                                            <button type="button" className="text-zinc-400 hover:text-zinc-200 transition-colors p-1" title="Voice Input">
+                                            <button type="button" className="text-zinc-300 hover:text-white transition-colors p-0.5" title="Voice Input">
                                                 <Mic className="w-4 h-4" />
                                             </button>
                                             <button
                                                 onClick={() => handleSend()}
                                                 disabled={status === "loading" || (!inputValue.trim() && !stagedImage)}
-                                                className="bg-zinc-800/80 hover:bg-[#2EFF85] hover:text-[#161618] text-zinc-400 rounded-xl w-9 h-9 p-0 shrink-0 disabled:opacity-40 disabled:cursor-not-allowed transition-all duration-200 flex items-center justify-center"
+                                                className="bg-[#2B2B30] hover:bg-[#2EFF85] hover:text-[#161618] text-zinc-200 border border-white/10 rounded-lg w-8 h-8 p-0 shrink-0 disabled:opacity-40 disabled:cursor-not-allowed transition-all duration-200 flex items-center justify-center"
                                             >
                                                 <Send className="w-4 h-4" />
                                             </button>
