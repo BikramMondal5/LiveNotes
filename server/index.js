@@ -20,6 +20,7 @@ const io = new Server(httpServer, {
 // Simple in-memory storage for notes per room
 const roomNotes = {};
 const roomShapes = {};
+const roomDocuments = {};
 const roomTimers = {};
 const ROOM_EXPIRY_MS = 24 * 60 * 60 * 1000; // 24 hours in milliseconds
 
@@ -32,11 +33,13 @@ function ensureRoomTimer(roomId) {
             // Delete room data
             delete roomNotes[roomId];
             delete roomShapes[roomId];
+            delete roomDocuments[roomId];
             delete roomTimers[roomId];
 
             // Broadcast the clearance so everyone still connected sees an empty room immediately
             io.to(roomId).emit('update-notes', '');
             io.to(roomId).emit('canvas-data', []);
+            io.to(roomId).emit('update-document', null);
             console.log(`[Auto-Cleanup] Cleared data for room: ${roomId} after 24 hours`);
         }, ROOM_EXPIRY_MS);
         console.log(`[Timer set] Room ${roomId} will be cleared in 24 hours.`);
@@ -55,6 +58,10 @@ io.on('connection', (socket) => {
         // Send current note state if exists
         if (roomNotes[roomId]) {
             socket.emit('update-notes', roomNotes[roomId]);
+        }
+        // Send current document state if exists
+        if (roomDocuments[roomId]) {
+            socket.emit('update-document', roomDocuments[roomId]);
         }
     });
 
@@ -100,6 +107,20 @@ io.on('connection', (socket) => {
 
         // Broadcast to everyone else in the room
         socket.to(roomId).emit('update-notes', notes);
+    });
+
+    socket.on('upload-document', ({ roomId, document }) => {
+        ensureRoomTimer(roomId);
+        roomDocuments[roomId] = document;
+        // Broadcast to everyone else in the room
+        socket.to(roomId).emit('update-document', document);
+    });
+
+    socket.on('remove-document', ({ roomId }) => {
+        ensureRoomTimer(roomId);
+        delete roomDocuments[roomId];
+        // Broadcast to everyone else in the room
+        socket.to(roomId).emit('update-document', null);
     });
 
     socket.on('disconnect', () => {

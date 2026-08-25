@@ -34,17 +34,34 @@ export default function RoomPage() {
 
     const handleLocalUpload = (file: File) => {
         if (file && file.type === "application/pdf") {
-            const url = URL.createObjectURL(file);
-            setPdfFile(url);
-            setActiveDocView("preview");
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                const dataUrl = e.target?.result as string;
+                if (!dataUrl) return;
 
-            const size = (file.size / (1024 * 1024)).toFixed(2) + " MB";
-            const dateStr = new Date().toLocaleDateString('en-GB', { day: '2-digit', month: '2-digit', year: 'numeric' });
+                const size = (file.size / (1024 * 1024)).toFixed(2) + " MB";
+                const dateStr = new Date().toLocaleDateString('en-GB', { day: '2-digit', month: '2-digit', year: 'numeric' });
+                const docData = {
+                    id: Date.now().toString(),
+                    name: file.name,
+                    size,
+                    date: dateStr,
+                    url: dataUrl
+                };
 
-            setRecentFiles(prev => {
-                const filtered = prev.filter(f => f.name !== file.name);
-                return [{ id: Date.now().toString(), name: file.name, size, date: dateStr, url }, ...filtered];
-            });
+                setPdfFile(dataUrl);
+                setActiveDocView("preview");
+
+                setRecentFiles(prev => {
+                    const filtered = prev.filter(f => f.name !== file.name);
+                    return [docData, ...filtered];
+                });
+
+                if (socket) {
+                    socket.emit("upload-document", { roomId, document: docData });
+                }
+            };
+            reader.readAsDataURL(file);
         }
     };
 
@@ -75,6 +92,20 @@ export default function RoomPage() {
 
         newSocket.on("update-notes", (newNotes: string) => {
             setNotes(newNotes);
+        });
+
+        newSocket.on("update-document", (doc: { id: string, name: string, size: string, date: string, url: string } | null) => {
+            if (doc) {
+                setPdfFile(doc.url);
+                setActiveDocView("preview");
+                setRecentFiles(prev => {
+                    const filtered = prev.filter(f => f.id !== doc.id && f.name !== doc.name);
+                    return [doc, ...filtered];
+                });
+            } else {
+                setPdfFile(null);
+                setActiveDocView("home");
+            }
         });
 
         return () => {
@@ -407,6 +438,9 @@ export default function RoomPage() {
                                                     onClick={() => {
                                                         setPdfFile(file.url);
                                                         setActiveDocView("preview");
+                                                        if (socket) {
+                                                            socket.emit("upload-document", { roomId, document: file });
+                                                        }
                                                     }}
                                                     className={`w-full flex items-start gap-3 px-3 py-2.5 rounded-lg cursor-pointer transition-colors group border ${pdfFile === file.url ? 'bg-[#2EFF85]/5 border-[#2EFF85]/10' : 'hover:bg-zinc-800/30 border-transparent'}`}
                                                 >
@@ -469,7 +503,13 @@ export default function RoomPage() {
                                         <div className="flex items-center justify-between px-4 py-2 border-b border-white/5 bg-[#161618] shrink-0">
                                             <span className="text-sm font-medium text-white">Document Preview</span>
                                             <button
-                                                onClick={() => { setPdfFile(null); setActiveDocView("home"); }}
+                                                onClick={() => {
+                                                    setPdfFile(null);
+                                                    setActiveDocView("home");
+                                                    if (socket) {
+                                                        socket.emit("remove-document", { roomId });
+                                                    }
+                                                }}
                                                 className="text-xs px-3 py-1 rounded bg-[#161618] hover:bg-[#2EFF85]/10 text-zinc-400 hover:text-[#2EFF85] transition-colors border border-white/5 hover:border-[#2EFF85]/20"
                                             >
                                                 Remove
