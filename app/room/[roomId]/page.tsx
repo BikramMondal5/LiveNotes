@@ -329,12 +329,9 @@ export default function RoomPage() {
                 <div className="flex items-center bg-zinc-900/50 rounded-md p-1 border border-white/5 order-3 sm:order-2 w-full sm:w-auto justify-center">
                     <button
                         onClick={() => setViewMode("document")}
-                        className={`flex-1 sm:flex-none px-4 py-1.5 text-xs font-medium rounded-sm transition-colors relative flex items-center justify-center gap-1.5 ${viewMode === 'document' ? 'bg-[#2EFF85]/10 text-[#2EFF85]' : 'text-zinc-400 hover:text-[#2EFF85]'}`}
+                        className={`flex-1 sm:flex-none px-4 py-1.5 text-xs font-medium rounded-sm transition-colors ${viewMode === 'document' ? 'bg-[#2EFF85]/10 text-[#2EFF85]' : 'text-zinc-400 hover:text-[#2EFF85]'}`}
                     >
-                        <span>Document</span>
-                        {pdfFile && (
-                            <span className="w-2 h-2 rounded-full bg-[#2EFF85] shadow-[0_0_8px_#2EFF85] animate-pulse" title="Shared document active" />
-                        )}
+                        Document
                     </button>
                     <button
                         onClick={() => setViewMode("both")}
@@ -541,7 +538,7 @@ export default function RoomPage() {
                                         <Rocket className="w-8 h-8 text-[#2EFF85] mx-auto mb-2 drop-shadow-[0_0_8px_rgba(46,255,133,0.5)]" />
                                         <h5 className="text-sm font-semibold text-white mb-3 relative z-10">Chat PDFs with GPT-4o</h5>
                                         <button className="w-full bg-[#2EFF85]/10 text-[#2EFF85] hover:bg-[#2EFF85]/20 text-xs font-medium py-2 rounded-lg transition-colors border border-[#2EFF85]/20">
-                                            Start Free Trial
+                                            Completely free
                                         </button>
                                     </div>
                                 </div>
