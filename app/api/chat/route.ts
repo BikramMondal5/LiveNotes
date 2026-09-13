@@ -13,7 +13,7 @@ const API_URLS: Record<string, string> = {
     grok: "https://gen.pollinations.ai/v1/chat/completions",
     muse: "https://gen.pollinations.ai/v1/chat/completions",
     'muse-glimmer': "https://gen.pollinations.ai/v1/chat/completions",
-    mai: "https://gen.pollinations.ai/v1/chat/completions"
+    cohere: "https://gen.pollinations.ai/v1/chat/completions"
 };
 
 interface ChatMessage {
@@ -38,16 +38,22 @@ const getApiKey = (provider: string) => {
     switch (provider) {
         case 'gemini': return process.env.GEMINI_API_KEY || '';
         case 'groq': return process.env.GROQ_API_KEY || '';
-        case 'nova': return process.env.POLLINATIONS_API_KEY2 || process.env.POLLINATIONS_API_KEY || '';
-        case 'mistral': return process.env.POLLINATIONS_API_KEY2 || process.env.POLLINATIONS_API_KEY || '';
-        case 'deepseek': return process.env.POLLINATIONS_API_KEY2 || process.env.POLLINATIONS_API_KEY || '';
+        // Group 1: POLLINATIONS_API_KEY (DeepSeek-V4.1-Flash, Cohere Command A+)
+        case 'deepseek':
+        case 'cohere':
+            return process.env.POLLINATIONS_API_KEY || process.env.POLLINATIONS_API_KEY2 || process.env.POLLINATIONS_API_KEY3 || '';
+        // Group 2: POLLINATIONS_API_KEY2 (Nova 2 Lite, Mistral Large 3)
+        case 'nova':
+        case 'mistral':
+            return process.env.POLLINATIONS_API_KEY2 || process.env.POLLINATIONS_API_KEY || process.env.POLLINATIONS_API_KEY3 || '';
+        // Group 3: POLLINATIONS_API_KEY3 (GPT-5.4, Muse Glimmer 30B, Grok 4.6)
         case 'gpt54':
-        case 'gpt4o': return process.env.POLLINATIONS_API_KEY2 || process.env.POLLINATIONS_API_KEY || '';
-        case 'grok-4.6':
-        case 'grok': return process.env.POLLINATIONS_API_KEY2 || process.env.POLLINATIONS_API_KEY || '';
+        case 'gpt4o':
         case 'muse':
-        case 'muse-glimmer': return process.env.POLLINATIONS_API_KEY2 || process.env.POLLINATIONS_API_KEY || '';
-        case 'mai': return process.env.POLLINATIONS_API_KEY2 || process.env.POLLINATIONS_API_KEY || '';
+        case 'muse-glimmer':
+        case 'grok-4.6':
+        case 'grok':
+            return process.env.POLLINATIONS_API_KEY3 || process.env.POLLINATIONS_API_KEY2 || process.env.POLLINATIONS_API_KEY || '';
         default: return '';
     }
 };
@@ -317,15 +323,15 @@ export async function POST(req: Request) {
             const data = await response.json();
             aiResponseContent = data.choices?.[0]?.message?.content || 'No response from Muse Glimmer 30b.';
 
-        } else if (provider === 'mai') {
-            const response = await fetch(API_URLS.mai, {
+        } else if (provider === 'cohere') {
+            const response = await fetch(API_URLS.cohere, {
                 method: "POST",
                 headers: {
                     Authorization: `Bearer ${API_KEY}`,
                     "Content-Type": "application/json"
                 },
                 body: JSON.stringify({
-                    model: "microsoft/mai-image-2.5-flash",
+                    model: "cohere/command-a-plus",
                     messages: [
                         { role: "system", content: systemPrompt },
                         ...allMessages.map((m: ChatMessage) => ({
@@ -338,11 +344,11 @@ export async function POST(req: Request) {
 
             if (!response.ok) {
                 const errorData = await response.json().catch(() => ({}));
-                throw new Error(`MAI 2.5 Flash API Error: ${response.status} - ${errorData.error?.message || errorData.message || 'Unknown error'}`);
+                throw new Error(`Cohere Command A+ API Error: ${response.status} - ${errorData.error?.message || errorData.message || 'Unknown error'}`);
             }
 
             const data = await response.json();
-            aiResponseContent = data.choices?.[0]?.message?.content || 'No response from MAI 2.5 Flash.';
+            aiResponseContent = data.choices?.[0]?.message?.content || 'No response from Cohere Command A+.';
 
         } else {
             // Mock delay simulation for other unconfigured models

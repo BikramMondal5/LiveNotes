@@ -13,7 +13,6 @@ const MODEL_CATEGORIES = [
         models: [
             { name: "Gemini 3.6 Flash", icon: "https://static.vecteezy.com/system/resources/previews/055/687/055/non_2x/rectangle-gemini-google-icon-symbol-logo-free-png.png", provider: "gemini" },
             { name: "Groq: GPT-OSS-120b", icon: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRHVsO5kFrri_uqZdlB6mACC2bdyyy6D0bYag&s", provider: "groq" },
-            { name: "MAI 2.5 Flash", icon: "https://thumb.wikimedia.org/wikipedia/commons/thumb/4/44/Microsoft_logo.svg/960px-Microsoft_logo.svg.png?utm_source=commons.wikimedia.org&utm_campaign=index&utm_content=thumbnail&_=20210729021049", provider: "mai" },
         ]
     },
     {
@@ -28,8 +27,9 @@ const MODEL_CATEGORIES = [
         category: "Advanced Models",
         models: [
             { name: "GPT-5.4", icon: "https://static.vecteezy.com/system/resources/previews/022/227/364/non_2x/openai-chatgpt-logo-icon-free-png.png", provider: "gpt54" },
-            { name: "Muse Glimmer 30B", icon: "https://static.dezeen.com/uploads/2021/11/meta-facebook-rebranding-name-news_dezeen_2364_col_sq.jpg", provider: "muse" },
             { name: "Grok 4.6", icon: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQ2jp_76g7jO8SNGczRg1HUW8qa_vHiVaUBJQ&s", provider: "grok-4.6" },
+            { name: "Muse Glimmer 30B", icon: "https://static.dezeen.com/uploads/2021/11/meta-facebook-rebranding-name-news_dezeen_2364_col_sq.jpg", provider: "muse" },
+            { name: "Cohere Command A+", icon: "https://avatars.githubusercontent.com/u/54850923?s=280&v=4", provider: "cohere" },
         ]
     }
 ];
