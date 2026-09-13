@@ -65,6 +65,9 @@ export default function RoomPage() {
                 if (db && roomId) {
                     const docRef = ref(db, `rooms/${roomId}/document`);
                     set(docRef, docData).catch(err => console.error("Firebase upload document error:", err));
+
+                    const itemRef = ref(db, `rooms/${roomId}/documents/${docData.id}`);
+                    set(itemRef, docData).catch(err => console.error("Firebase save document item error:", err));
                 }
 
                 if (socket) {
@@ -73,6 +76,25 @@ export default function RoomPage() {
             };
             reader.readAsDataURL(file);
         }
+    };
+
+    const handleDeleteRecentFile = (e: React.MouseEvent, fileId: string) => {
+        e.stopPropagation();
+        if (db && roomId) {
+            const itemRef = ref(db, `rooms/${roomId}/documents/${fileId}`);
+            remove(itemRef).catch(err => console.error("Firebase delete document error:", err));
+        }
+        if (pdfFile && recentFiles.find(f => f.id === fileId)?.url === pdfFile) {
+            setPdfFile(null);
+            setActiveDocView("home");
+            if (db && roomId) {
+                remove(ref(db, `rooms/${roomId}/document`)).catch(console.error);
+            }
+            if (socket) {
+                socket.emit("remove-document", { roomId });
+            }
+        }
+        setRecentFiles(prev => prev.filter(f => f.id !== fileId));
     };
 
     const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -91,9 +113,16 @@ export default function RoomPage() {
         e.preventDefault();
     };
 
-    // 1. Firebase Realtime Database Listeners for Notes and Document
+    // 1. Firebase Realtime Database Listeners for Notes, Document, and Room Documents List
     useEffect(() => {
         if (!roomId || !db) return;
+
+        // Reset state immediately so data from previous rooms never leaks
+        setNotes("");
+        setPdfFile(null);
+        setActiveDocView("home");
+        setRecentFiles([]);
+        initialDocLoadedRef.current = false;
 
         const notesRef = ref(db, `rooms/${roomId}/notes`);
         const unsubNotes = onValue(notesRef, (snapshot) => {
@@ -114,10 +143,6 @@ export default function RoomPage() {
                 if (initialDocLoadedRef.current) {
                     setViewMode("document");
                 }
-                setRecentFiles(prev => {
-                    const filtered = prev.filter(f => f.id !== doc.id && f.name !== doc.name);
-                    return [doc, ...filtered];
-                });
             } else {
                 setPdfFile(null);
                 setActiveDocView("home");
@@ -125,9 +150,22 @@ export default function RoomPage() {
             initialDocLoadedRef.current = true;
         });
 
+        const docsRef = ref(db, `rooms/${roomId}/documents`);
+        const unsubDocs = onValue(docsRef, (snapshot) => {
+            const docs = snapshot.val();
+            if (docs && typeof docs === "object") {
+                const list = Object.values(docs) as { id: string, name: string, size: string, date: string, url: string }[];
+                list.sort((a, b) => Number(b.id) - Number(a.id));
+                setRecentFiles(list);
+            } else {
+                setRecentFiles([]);
+            }
+        });
+
         return () => {
             unsubNotes();
             unsubDoc();
+            unsubDocs();
         };
     }, [roomId]);
 
@@ -415,6 +453,7 @@ export default function RoomPage() {
                     {/* Drawing Canvas - visible when canvas mode */}
                     <div className={`absolute inset-0 transition-opacity duration-300 ${viewMode === 'document' ? 'opacity-0 pointer-events-none z-0' : 'opacity-100 z-10'}`}>
                         <DrawingCanvas
+                            key={roomId}
                             activeTool={activeTool as DrawingTool}
                             socket={socket || undefined}
                             roomId={roomId}
@@ -514,18 +553,27 @@ export default function RoomPage() {
                                                             socket.emit("upload-document", { roomId, document: file });
                                                         }
                                                     }}
-                                                    className={`w-full flex items-start gap-3 px-3 py-2.5 rounded-lg cursor-pointer transition-colors group border ${pdfFile === file.url ? 'bg-[#2EFF85]/5 border-[#2EFF85]/10' : 'hover:bg-zinc-800/30 border-transparent'}`}
+                                                    className={`w-full flex items-center justify-between gap-2 px-3 py-2.5 rounded-lg cursor-pointer transition-colors group border ${pdfFile === file.url ? 'bg-[#2EFF85]/5 border-[#2EFF85]/10' : 'hover:bg-zinc-800/30 border-transparent'}`}
                                                 >
-                                                    <FileText className={`w-5 h-5 shrink-0 mt-0.5 ${pdfFile === file.url ? 'text-[#2EFF85]' : 'text-zinc-500 group-hover:text-zinc-400'}`} />
-                                                    <div className="flex flex-col text-left overflow-hidden min-w-0 w-full">
-                                                        <span className={`text-sm truncate font-medium ${pdfFile === file.url ? 'text-zinc-200' : 'text-zinc-400 group-hover:text-zinc-200'}`}>
-                                                            {file.name}
-                                                        </span>
-                                                        <div className="flex items-center justify-between mt-1 text-xs text-zinc-600">
-                                                            <span className="truncate">{file.size}</span>
-                                                            <span className="ml-2 shrink-0">{file.date}</span>
+                                                    <div className="flex items-start gap-3 overflow-hidden min-w-0 flex-1">
+                                                        <FileText className={`w-5 h-5 shrink-0 mt-0.5 ${pdfFile === file.url ? 'text-[#2EFF85]' : 'text-zinc-500 group-hover:text-zinc-400'}`} />
+                                                        <div className="flex flex-col text-left overflow-hidden min-w-0 w-full">
+                                                            <span className={`text-sm truncate font-medium ${pdfFile === file.url ? 'text-zinc-200' : 'text-zinc-400 group-hover:text-zinc-200'}`}>
+                                                                {file.name}
+                                                            </span>
+                                                            <div className="flex items-center justify-between mt-1 text-xs text-zinc-600">
+                                                                <span className="truncate">{file.size}</span>
+                                                                <span className="ml-2 shrink-0">{file.date}</span>
+                                                            </div>
                                                         </div>
                                                     </div>
+                                                    <button
+                                                        onClick={(e) => handleDeleteRecentFile(e, file.id)}
+                                                        className="opacity-0 group-hover:opacity-100 p-1 text-zinc-500 hover:text-red-400 hover:bg-red-500/10 rounded transition-all shrink-0"
+                                                        title="Delete from this room"
+                                                    >
+                                                        <X className="w-3.5 h-3.5" />
+                                                    </button>
                                                 </div>
                                             ))
                                         )}
