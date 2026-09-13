@@ -5,7 +5,7 @@ import { useParams } from "next/navigation";
 import { io, Socket } from "socket.io-client";
 import { db } from "@/lib/firebase";
 import { ref, set, remove, onValue } from "firebase/database";
-import { Plus, Wand2, MousePointer2, Square, Circle, ArrowUpRight, Slash, PenLine, Type, Image as ImageIcon, Frame, HelpingHand, Settings, ChevronDown, MoreHorizontal, Sparkles, Search, Home, Briefcase, FileText, ChevronRight, Rocket, Share, X, Copy, Check, Scan, Presentation, UserCheck, FileSearch, Receipt } from "lucide-react";
+import { Plus, Wand2, MousePointer2, Square, Circle, ArrowUpRight, Slash, PenLine, Type, Image as ImageIcon, Frame, HelpingHand, Settings, ChevronDown, MoreHorizontal, Sparkles, Search, Home, Briefcase, FileText, ChevronRight, Rocket, Share, X, Copy, Check, Scan, Presentation, UserCheck, FileSearch, Receipt, Star } from "lucide-react";
 import DotGrid from "../../components/DotGrid";
 import DrawingCanvas from "../../components/DrawingCanvas";
 import AskAlloy from "../../components/AskAlloy";
@@ -27,6 +27,36 @@ export default function RoomPage() {
     const notesTimeoutRef = useRef<NodeJS.Timeout | null>(null);
     const initialDocLoadedRef = useRef(false);
     const [recentFiles, setRecentFiles] = useState<{ id: string, name: string, size: string, date: string, url: string }[]>([]);
+    const [githubStars, setGithubStars] = useState<number | null>(null);
+
+    // Fetch GitHub stars in real time
+    useEffect(() => {
+        let isMounted = true;
+        const fetchStars = async () => {
+            try {
+                const res = await fetch("https://api.github.com/repos/BikramMondal5/LiveNotes", {
+                    headers: {
+                        Accept: "application/vnd.github.v3+json",
+                    },
+                });
+                if (res.ok) {
+                    const data = await res.json();
+                    if (isMounted && typeof data.stargazers_count === "number") {
+                        setGithubStars(data.stargazers_count);
+                    }
+                }
+            } catch (err) {
+                console.error("Failed to fetch GitHub stars:", err);
+            }
+        };
+
+        fetchStars();
+        const interval = setInterval(fetchStars, 60000);
+        return () => {
+            isMounted = false;
+            clearInterval(interval);
+        };
+    }, []);
 
     // Screenshot feature states
     const [isScreenshotMode, setIsScreenshotMode] = useState(false);
@@ -385,7 +415,29 @@ export default function RoomPage() {
                     </button>
                 </div>
 
-                <div className="hidden sm:flex items-center gap-4 sm:min-w-50 justify-end order-2 sm:order-3 absolute right-4 top-3 sm:static">
+                <div className="hidden sm:flex items-center gap-3 sm:min-w-50 justify-end order-2 sm:order-3 absolute right-4 top-3 sm:static">
+                    {/* Star on GitHub Split Badge */}
+                    <a
+                        href="https://github.com/BikramMondal5/LiveNotes"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-flex items-center h-8 rounded-[8px] bg-[#1C1C1C] hover:bg-[#242424] border border-white/10 hover:border-white/20 text-xs font-medium text-zinc-300 hover:text-white transition-all duration-200 overflow-hidden group shadow-sm shrink-0"
+                        title="Star LiveNotes on GitHub"
+                    >
+                        {/* Left Div: GitHub Icon + Text */}
+                        <div className="flex items-center gap-1.5 px-2.5 h-full border-r border-white/10 group-hover:border-white/20 transition-colors">
+                            <svg className="w-3.5 h-3.5 fill-current text-zinc-300 group-hover:text-white transition-colors" viewBox="0 0 24 24" aria-hidden="true">
+                                <path d="M12 0C5.37 0 0 5.37 0 12c0 5.3 3.44 9.8 8.21 11.39.6.11.82-.26.82-.58v-2.03c-3.34.73-4.04-1.61-4.04-1.61-.55-1.39-1.33-1.76-1.33-1.76-1.09-.75.08-.73.08-.73 1.2.08 1.84 1.24 1.84 1.24 1.07 1.83 2.81 1.3 3.49.99.11-.78.42-1.3.76-1.6-2.66-.3-5.47-1.33-5.47-5.93 0-1.31.47-2.38 1.24-3.22-.12-.3-.54-1.52.12-3.18 0 0 1.01-.32 3.3 1.23.96-.27 1.98-.4 3-.4s2.04.13 3 .4c2.29-1.55 3.3-1.23 3.3-1.23.66 1.66.24 2.88.12 3.18.77.84 1.24 1.91 1.24 3.22 0 4.61-2.81 5.62-5.48 5.92.43.37.81 1.1.81 2.22v3.29c0 .32.22.69.82.58A12.01 12.01 0 0 0 24 12c0-6.63-5.37-12-12-12Z" />
+                            </svg>
+                            <span className="truncate">Star on GitHub</span>
+                        </div>
+                        {/* Right Div: Yellow Star + Live Count */}
+                        <div className="flex items-center gap-1 px-2.5 h-full bg-[#161618]/60 group-hover:bg-[#1a1a1d] transition-colors text-zinc-300 font-semibold">
+                            <Star className="w-3.5 h-3.5 fill-amber-400 text-amber-400" />
+                            <span>{githubStars !== null ? githubStars : "2"}</span>
+                        </div>
+                    </a>
+
                     <div className="hidden lg:flex items-center gap-1.5 px-2.5 py-1.5 bg-zinc-800/50 border border-zinc-700/50 rounded text-xs text-zinc-400 font-medium">
                         Ctrl + Shift + K
                     </div>
@@ -655,7 +707,7 @@ export default function RoomPage() {
                         <textarea
                             value={notes}
                             onChange={handleChange}
-                            className={`absolute inset-0 w-full h-full pt-12 px-20 pb-20 bg-transparent border-0 outline-none resize-none placeholder:text-zinc-600/50 leading-relaxed text-[#2EFF85] tracking-wide ${viewMode === 'text' ? 'opacity-100 z-20' : 'opacity-0 pointer-events-none z-0'} transition-opacity duration-300`}
+                            className={`absolute inset-0 w-full h-full pt-8 pl-6 sm:pl-10 pr-6 sm:pr-12 pb-16 bg-transparent border-0 outline-none resize-none placeholder:text-zinc-600/50 leading-relaxed text-[#2EFF85] tracking-wide ${viewMode === 'text' ? 'opacity-100 z-20' : 'opacity-0 pointer-events-none z-0'} transition-opacity duration-300`}
                             placeholder="Type to add notes, share in real time with your friends..."
                             style={{ caretColor: '#2EFF85' }}
                         />
