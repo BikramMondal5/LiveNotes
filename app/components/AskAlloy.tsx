@@ -12,15 +12,15 @@ const MODEL_CATEGORIES = [
         category: "Fast Models",
         models: [
             { name: "Gemini 3.6 Flash", icon: "https://static.vecteezy.com/system/resources/previews/055/687/055/non_2x/rectangle-gemini-google-icon-symbol-logo-free-png.png", provider: "gemini" },
+            { name: "Groq: GPT-OSS-120b", icon: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRHVsO5kFrri_uqZdlB6mACC2bdyyy6D0bYag&s", provider: "groq" },
             { name: "MAI 2.5 Flash", icon: "https://thumb.wikimedia.org/wikipedia/commons/thumb/4/44/Microsoft_logo.svg/960px-Microsoft_logo.svg.png?utm_source=commons.wikimedia.org&utm_campaign=index&utm_content=thumbnail&_=20210729021049", provider: "mai" },
-            { name: "Nova 2 Lite", icon: "https://images.seeklogo.com/logo-png/31/1/amazon-web-services-aws-logo-png_seeklogo-319188.png", provider: "nova" },
         ]
     },
     {
         category: "Reasoning + Fast Models",
         models: [
             { name: "DeepSeek-V4.1-Flash", icon: "https://img.icons8.com/color/512/deepseek.png", provider: "deepseek" },
-            { name: "Grok 4.6", icon: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQ2jp_76g7jO8SNGczRg1HUW8qa_vHiVaUBJQ&s", provider: "grok-4.6" },
+            { name: "Nova 2 Lite", icon: "https://images.seeklogo.com/logo-png/31/1/amazon-web-services-aws-logo-png_seeklogo-319188.png", provider: "nova" },
             { name: "Mistral Large 3", icon: "https://cdn.rayonlabs.ai/chutes/logos/mistral.webp", provider: "mistral" },
         ]
     },
@@ -29,7 +29,7 @@ const MODEL_CATEGORIES = [
         models: [
             { name: "GPT-5.4", icon: "https://static.vecteezy.com/system/resources/previews/022/227/364/non_2x/openai-chatgpt-logo-icon-free-png.png", provider: "gpt54" },
             { name: "Muse Glimmer 30B", icon: "https://static.dezeen.com/uploads/2021/11/meta-facebook-rebranding-name-news_dezeen_2364_col_sq.jpg", provider: "muse" },
-            { name: "Groq: GPT-OSS-120b", icon: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRHVsO5kFrri_uqZdlB6mACC2bdyyy6D0bYag&s", provider: "groq" },
+            { name: "Grok 4.6", icon: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQ2jp_76g7jO8SNGczRg1HUW8qa_vHiVaUBJQ&s", provider: "grok-4.6" },
         ]
     }
 ];
@@ -622,7 +622,7 @@ const AskAlloy: React.FC<AskAlloyProps> = ({ defaultOpen = false, isOpen: contro
                                                     </div>
                                                 ) : null;
                                             })()}
-                                            <span className="text-[11px] font-semibold whitespace-nowrap">{selectedModel.split(' ')[0].replace(':', '')}</span>
+                                            <span className="text-[11px] font-semibold whitespace-nowrap">{selectedModel}</span>
                                             <svg className="w-3 h-3 text-zinc-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
                                             </svg>
