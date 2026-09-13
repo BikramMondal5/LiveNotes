@@ -17,7 +17,7 @@ export default function RoomPage() {
     const [notes, setNotes] = useState("");
     const [socket, setSocket] = useState<Socket | null>(null);
     const [activeTool, setActiveTool] = useState("rect");
-    const [viewMode, setViewMode] = useState<"document" | "both" | "canvas">("both"); // Default to Text tab
+    const [viewMode, setViewMode] = useState<"document" | "text" | "canvas">("text"); // Default to Text tab
     const [isAlloyOpen, setIsAlloyOpen] = useState(false);
     const [isShareModalOpen, setIsShareModalOpen] = useState(false);
     const [isCopied, setIsCopied] = useState(false);
@@ -372,8 +372,8 @@ export default function RoomPage() {
                         Document
                     </button>
                     <button
-                        onClick={() => setViewMode("both")}
-                        className={`flex-1 sm:flex-none px-4 py-1.5 text-xs font-medium rounded-sm transition-colors ${viewMode === 'both' ? 'bg-[#2EFF85]/10 text-[#2EFF85]' : 'text-zinc-400 hover:text-[#2EFF85]'}`}
+                        onClick={() => setViewMode("text")}
+                        className={`flex-1 sm:flex-none px-4 py-1.5 text-xs font-medium rounded-sm transition-colors ${viewMode === 'text' ? 'bg-[#2EFF85]/10 text-[#2EFF85]' : 'text-zinc-400 hover:text-[#2EFF85]'}`}
                     >
                         Text
                     </button>
@@ -412,8 +412,8 @@ export default function RoomPage() {
                     />
                 </div>
 
-                {/* Left Toolbar */}
-                {viewMode !== 'document' && (
+                {/* Left Toolbar - only visible in canvas mode */}
+                {viewMode === 'canvas' && (
                     <div className="absolute left-4 top-4 flex flex-col gap-2 z-30 w-11">
                         {/* Top block */}
                         <div className="flex flex-col gap-1 bg-zinc-900/90 border border-zinc-800 rounded-xl p-1 shadow-xl backdrop-blur-sm">
@@ -450,8 +450,8 @@ export default function RoomPage() {
 
                 {/* Canvas Area */}
                 <div className="flex-1 w-full h-full relative overflow-hidden z-5">
-                    {/* Drawing Canvas - visible when canvas mode */}
-                    <div className={`absolute inset-0 transition-opacity duration-300 ${viewMode === 'document' ? 'opacity-0 pointer-events-none z-0' : 'opacity-100 z-10'}`}>
+                    {/* Drawing Canvas - visible ONLY when canvas mode */}
+                    <div className={`absolute inset-0 transition-opacity duration-300 ${viewMode === 'canvas' ? 'opacity-100 z-10' : 'opacity-0 pointer-events-none z-0'}`}>
                         <DrawingCanvas
                             key={roomId}
                             activeTool={activeTool as DrawingTool}
@@ -650,21 +650,23 @@ export default function RoomPage() {
                         </div>
                     )}
 
-                    {/* The textarea overlaid invisibly or if viewMode includes document */}
+                    {/* The textarea - visible when in text mode */}
                     {viewMode !== 'document' && (
                         <textarea
                             value={notes}
                             onChange={handleChange}
-                            className={`absolute inset-0 w-full h-full pt-12 px-20 pb-20 bg-transparent border-0 outline-none resize-none placeholder:text-zinc-600/50 leading-relaxed text-[#2EFF85] tracking-wide ${viewMode === 'canvas' ? 'opacity-0 pointer-events-none z-0' : 'opacity-100 z-20'} transition-opacity duration-300`}
+                            className={`absolute inset-0 w-full h-full pt-12 px-20 pb-20 bg-transparent border-0 outline-none resize-none placeholder:text-zinc-600/50 leading-relaxed text-[#2EFF85] tracking-wide ${viewMode === 'text' ? 'opacity-100 z-20' : 'opacity-0 pointer-events-none z-0'} transition-opacity duration-300`}
                             placeholder="Type to add notes, share in real time with your friends..."
                             style={{ caretColor: '#2EFF85' }}
                         />
                     )}
 
                     {/* Right Top Zoom Control */}
-                    <div className="absolute top-4 right-4 flex items-center gap-1 text-xs font-semibold text-zinc-400 hover:text-zinc-200 cursor-pointer transition-colors z-30 px-2 py-1 rounded hover:bg-zinc-800">
-                        <ChevronDown className="w-3 h-3 ml-0.5" />
-                    </div>
+                    {viewMode === 'canvas' && (
+                        <div className="absolute top-4 right-4 flex items-center gap-1 text-xs font-semibold text-zinc-400 hover:text-zinc-200 cursor-pointer transition-colors z-30 px-2 py-1 rounded hover:bg-zinc-800">
+                            <ChevronDown className="w-3 h-3 ml-0.5" />
+                        </div>
+                    )}
 
                     {/* Bottom Right Help */}
                     <div className="absolute bottom-6 right-6 z-30">
