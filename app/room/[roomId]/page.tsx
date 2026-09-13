@@ -11,6 +11,7 @@ import DrawingCanvas from "../../components/DrawingCanvas";
 import AskAlloy from "../../components/AskAlloy";
 import { ConfettiButton } from "@/components/ui/confetti";
 import type { DrawingTool } from "../../components/DrawingCanvas";
+import { getCachedStars } from "@/lib/githubStars";
 
 export default function RoomPage() {
     const { roomId } = useParams() as { roomId: string };
@@ -27,35 +28,11 @@ export default function RoomPage() {
     const notesTimeoutRef = useRef<NodeJS.Timeout | null>(null);
     const initialDocLoadedRef = useRef(false);
     const [recentFiles, setRecentFiles] = useState<{ id: string, name: string, size: string, date: string, url: string }[]>([]);
-    const [githubStars, setGithubStars] = useState<number | null>(null);
+    const [githubStars, setGithubStars] = useState<number | null>(() => getCachedStars());
 
-    // Fetch GitHub stars in real time
+    // Read cached GitHub stars (fetched only from the root `/` page)
     useEffect(() => {
-        let isMounted = true;
-        const fetchStars = async () => {
-            try {
-                const res = await fetch("https://api.github.com/repos/BikramMondal5/LiveNotes", {
-                    headers: {
-                        Accept: "application/vnd.github.v3+json",
-                    },
-                });
-                if (res.ok) {
-                    const data = await res.json();
-                    if (isMounted && typeof data.stargazers_count === "number") {
-                        setGithubStars(data.stargazers_count);
-                    }
-                }
-            } catch (err) {
-                console.error("Failed to fetch GitHub stars:", err);
-            }
-        };
-
-        fetchStars();
-        const interval = setInterval(fetchStars, 60000);
-        return () => {
-            isMounted = false;
-            clearInterval(interval);
-        };
+        setGithubStars(getCachedStars());
     }, []);
 
     // Screenshot feature states

@@ -3,6 +3,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { motion, useAnimationFrame, useMotionValue } from 'framer-motion';
 import { useRouter } from 'next/navigation';
 import { Star } from 'lucide-react';
+import { getCachedStars, fetchAndStoreStars } from '@/lib/githubStars';
 
 // Grid Pattern Component
 const GridPattern = ({ size = 80 }: { size?: number }) => {
@@ -51,7 +52,7 @@ const LiveNotesHero = () => {
     const router = useRouter();
     const [roomInput, setRoomInput] = useState('');
     const [isFocused, setIsFocused] = useState(false);
-    const [githubStars, setGithubStars] = useState<number | null>(null);
+    const [githubStars, setGithubStars] = useState<number | null>(() => getCachedStars());
     const inputRef = useRef<HTMLInputElement>(null);
 
     useEffect(() => {
@@ -60,32 +61,16 @@ const LiveNotesHero = () => {
         }
     }, []);
 
-    // Fetch GitHub stars in real time
+    // Fetch GitHub stars ONLY when the root `/` page is visited or refreshed
     useEffect(() => {
         let isMounted = true;
-        const fetchStars = async () => {
-            try {
-                const res = await fetch("https://api.github.com/repos/BikramMondal5/LiveNotes", {
-                    headers: {
-                        Accept: "application/vnd.github.v3+json",
-                    },
-                });
-                if (res.ok) {
-                    const data = await res.json();
-                    if (isMounted && typeof data.stargazers_count === "number") {
-                        setGithubStars(data.stargazers_count);
-                    }
-                }
-            } catch (err) {
-                console.error("Failed to fetch GitHub stars:", err);
+        fetchAndStoreStars().then((count) => {
+            if (isMounted && typeof count === 'number') {
+                setGithubStars(count);
             }
-        };
-
-        fetchStars();
-        const interval = setInterval(fetchStars, 60000);
+        });
         return () => {
             isMounted = false;
-            clearInterval(interval);
         };
     }, []);
 
