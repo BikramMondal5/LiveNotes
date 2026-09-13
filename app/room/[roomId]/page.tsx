@@ -100,6 +100,8 @@ export default function RoomPage() {
             const val = snapshot.val();
             if (typeof val === "string") {
                 setNotes(prev => (prev !== val ? val : prev));
+            } else if (val === null) {
+                setNotes("");
             }
         });
 

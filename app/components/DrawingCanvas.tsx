@@ -17,10 +17,16 @@ interface DrawingCanvasProps {
 const DrawingCanvas: React.FC<DrawingCanvasProps> = ({ activeTool, socket, roomId }) => {
     const canvasRef = useRef<HTMLCanvasElement>(null);
     const fabricCanvasRef = useRef<Canvas | null>(null);
-    const [isDrawing, setIsDrawing] = useState(false);
+    const [canvasReady, setCanvasReady] = useState(false);
+    const isDrawingRef = useRef(false);
+    const activeToolRef = useRef(activeTool);
     const startPointRef = useRef<{ x: number; y: number }>({ x: 0, y: 0 });
     const pointsRef = useRef<{ x: number; y: number }[]>([]);
     const previewObjectRef = useRef<any>(null);
+
+    useEffect(() => {
+        activeToolRef.current = activeTool;
+    }, [activeTool]);
 
     const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
@@ -92,6 +98,7 @@ const DrawingCanvas: React.FC<DrawingCanvasProps> = ({ activeTool, socket, roomI
         });
 
         fabricCanvasRef.current = canvas;
+        setCanvasReady(true);
 
         // Handle window resize
         const handleResize = () => {
@@ -105,16 +112,19 @@ const DrawingCanvas: React.FC<DrawingCanvasProps> = ({ activeTool, socket, roomI
         };
 
         window.addEventListener('resize', handleResize);
+        const timer = setTimeout(handleResize, 150);
 
         return () => {
+            clearTimeout(timer);
             window.removeEventListener('resize', handleResize);
             canvas.dispose();
+            setCanvasReady(false);
         };
     }, []);
 
     // Handle delete keyboard interactions dynamically 
     useEffect(() => {
-        if (!fabricCanvasRef.current) return;
+        if (!fabricCanvasRef.current || !canvasReady) return;
         const canvas = fabricCanvasRef.current;
 
         const handleKeyDown = (e: KeyboardEvent) => {
@@ -149,11 +159,11 @@ const DrawingCanvas: React.FC<DrawingCanvasProps> = ({ activeTool, socket, roomI
         return () => {
             window.removeEventListener('keydown', handleKeyDown);
         };
-    }, [socket, roomId]);
+    }, [canvasReady, socket, roomId]);
 
     // Set canvas cursor based on tool
     useEffect(() => {
-        if (!fabricCanvasRef.current) return;
+        if (!fabricCanvasRef.current || !canvasReady) return;
 
         const canvas = fabricCanvasRef.current;
         const isPencil = activeTool === 'pencil';
@@ -179,7 +189,7 @@ const DrawingCanvas: React.FC<DrawingCanvasProps> = ({ activeTool, socket, roomI
         };
 
         canvas.defaultCursor = cursorMap[activeTool] || 'default';
-    }, [activeTool]);
+    }, [canvasReady, activeTool]);
 
     const emitElement = useCallback(
         (element: any) => {
@@ -189,7 +199,7 @@ const DrawingCanvas: React.FC<DrawingCanvasProps> = ({ activeTool, socket, roomI
             const data = element.toJSON();
             data.id = element.id;
 
-            const shapeElement = {
+            const rawShapeElement = {
                 id: element.id,
                 type: element.type || 'shape',
                 left: element.left ?? 0,
@@ -202,6 +212,9 @@ const DrawingCanvas: React.FC<DrawingCanvasProps> = ({ activeTool, socket, roomI
                 data: data,
                 updatedAt: Date.now()
             };
+
+            // Firebase Realtime Database rejects any object containing 'undefined'
+            const shapeElement = JSON.parse(JSON.stringify(rawShapeElement));
 
             if (db && roomId) {
                 const shapeRef = ref(db, `rooms/${roomId}/shapes/${element.id}`);
@@ -220,7 +233,7 @@ const DrawingCanvas: React.FC<DrawingCanvasProps> = ({ activeTool, socket, roomI
 
     // Track when user modifies anything
     useEffect(() => {
-        if (!fabricCanvasRef.current) return;
+        if (!fabricCanvasRef.current || !canvasReady) return;
         const canvas = fabricCanvasRef.current;
 
         const onObjectModified = (e: any) => {
@@ -230,15 +243,17 @@ const DrawingCanvas: React.FC<DrawingCanvasProps> = ({ activeTool, socket, roomI
         };
 
         canvas.on('object:modified', onObjectModified);
+        canvas.on('text:changed', onObjectModified);
 
         return () => {
             canvas.off('object:modified', onObjectModified);
+            canvas.off('text:changed', onObjectModified);
         };
-    }, [emitElement]);
+    }, [canvasReady, emitElement]);
 
-    // Attach event listeners only once on mount, never detach/reattach
+    // Attach event listeners when canvas is ready
     useEffect(() => {
-        if (!fabricCanvasRef.current) return;
+        if (!fabricCanvasRef.current || !canvasReady) return;
 
         const canvas = fabricCanvasRef.current;
 
@@ -248,7 +263,9 @@ const DrawingCanvas: React.FC<DrawingCanvasProps> = ({ activeTool, socket, roomI
             startPointRef.current = { x: pointer.x, y: pointer.y };
             pointsRef.current = [];
 
-            if (activeTool === 'pointer') {
+            const tool = activeToolRef.current;
+
+            if (tool === 'pointer') {
                 return;
             }
 
@@ -257,7 +274,7 @@ const DrawingCanvas: React.FC<DrawingCanvasProps> = ({ activeTool, socket, roomI
                 return;
             }
 
-            if (activeTool === 'text') {
+            if (tool === 'text') {
                 const textNode = new IText('Type something...', {
                     left: pointer.x,
                     top: pointer.y,
@@ -280,22 +297,23 @@ const DrawingCanvas: React.FC<DrawingCanvasProps> = ({ activeTool, socket, roomI
                 return;
             }
 
-            if (activeTool === 'pencil') {
+            if (tool === 'pencil') {
                 // Native Fabric drawing mode handles this
                 return;
             }
 
-            setIsDrawing(true);
+            isDrawingRef.current = true;
         };
 
         const onMouseMove = (e: any) => {
-            if (!isDrawing) return;
+            if (!isDrawingRef.current) return;
 
             const pointer = canvas.getScenePoint(e);
+            const tool = activeToolRef.current;
 
-            if (activeTool === 'pencil') {
+            if (tool === 'pencil') {
                 return;
-            } else if (activeTool === 'rect') {
+            } else if (tool === 'rect') {
                 const width = Math.abs(pointer.x - startPointRef.current.x);
                 const height = Math.abs(pointer.y - startPointRef.current.y);
                 const left = Math.min(startPointRef.current.x, pointer.x);
@@ -310,7 +328,7 @@ const DrawingCanvas: React.FC<DrawingCanvasProps> = ({ activeTool, socket, roomI
                     top,
                     width,
                     height,
-                    fill: null,
+                    fill: 'transparent',
                     stroke: '#2EFF85',
                     strokeWidth: 2,
                     strokeUniform: true,
@@ -324,7 +342,7 @@ const DrawingCanvas: React.FC<DrawingCanvasProps> = ({ activeTool, socket, roomI
                 canvas.add(rect);
                 previewObjectRef.current = rect;
                 canvas.renderAll();
-            } else if (activeTool === 'circle') {
+            } else if (tool === 'circle') {
                 const width = Math.abs(pointer.x - startPointRef.current.x);
                 const height = Math.abs(pointer.y - startPointRef.current.y);
 
@@ -342,7 +360,7 @@ const DrawingCanvas: React.FC<DrawingCanvasProps> = ({ activeTool, socket, roomI
                     left,
                     top,
                     radius,
-                    fill: null,
+                    fill: 'transparent',
                     stroke: '#2EFF85',
                     strokeWidth: 2,
                     strokeUniform: true,
@@ -356,12 +374,12 @@ const DrawingCanvas: React.FC<DrawingCanvasProps> = ({ activeTool, socket, roomI
                 canvas.add(circle);
                 previewObjectRef.current = circle;
                 canvas.renderAll();
-            } else if (activeTool === 'line' || activeTool === 'arrow') {
+            } else if (tool === 'line' || tool === 'arrow') {
                 if (previewObjectRef.current) {
                     canvas.remove(previewObjectRef.current);
                 }
 
-                if (activeTool === 'arrow') {
+                if (tool === 'arrow') {
                     const dx = pointer.x - startPointRef.current.x;
                     const dy = pointer.y - startPointRef.current.y;
                     const angle = Math.atan2(dy, dx);
@@ -377,7 +395,7 @@ const DrawingCanvas: React.FC<DrawingCanvasProps> = ({ activeTool, socket, roomI
                     const arrow = new Path(pathData, {
                         stroke: '#2EFF85',
                         strokeWidth: 2,
-                        fill: null,
+                        fill: 'transparent',
                         strokeUniform: true,
                         hasControls: false,
                         hasBorders: false,
@@ -408,9 +426,9 @@ const DrawingCanvas: React.FC<DrawingCanvasProps> = ({ activeTool, socket, roomI
         };
 
         const onMouseUp = (e: any) => {
-            const pointer = canvas.getScenePoint(e);
+            const tool = activeToolRef.current;
 
-            if (activeTool === 'pencil') {
+            if (tool === 'pencil') {
                 return;
             } else {
                 if (previewObjectRef.current) {
@@ -427,12 +445,12 @@ const DrawingCanvas: React.FC<DrawingCanvasProps> = ({ activeTool, socket, roomI
             }
 
             canvas.renderAll();
-            setIsDrawing(false);
+            isDrawingRef.current = false;
             pointsRef.current = [];
         };
 
         const onPathCreated = (e: any) => {
-            if (activeTool === 'pencil') {
+            if (activeToolRef.current === 'pencil') {
                 const path = e.path;
                 path.set({
                     strokeUniform: true,
@@ -455,11 +473,11 @@ const DrawingCanvas: React.FC<DrawingCanvasProps> = ({ activeTool, socket, roomI
             canvas.off('mouse:up', onMouseUp);
             canvas.off('path:created', onPathCreated);
         };
-    }, [activeTool, emitElement, isDrawing]);
+    }, [canvasReady, emitElement]);
 
     // Listen for incoming drawings
     useEffect(() => {
-        if (!roomId || !fabricCanvasRef.current) return;
+        if (!roomId || !fabricCanvasRef.current || !canvasReady) return;
 
         const canvas = fabricCanvasRef.current;
 
@@ -467,7 +485,37 @@ const DrawingCanvas: React.FC<DrawingCanvasProps> = ({ activeTool, socket, roomI
         if (db) {
             const shapesRef = ref(db, `rooms/${roomId}/shapes`);
 
-            const handleIncomingShape = (snapshot: any) => {
+            const handleIncomingShapeAdded = (snapshot: any) => {
+                const element = snapshot.val();
+                if (!element || !element.data) return;
+
+                const existingObjects = canvas.getObjects() as any[];
+                const existingObj = existingObjects.find(o => o.id === element.id || (o as any).data?.id === element.id);
+
+                // If already present locally on canvas, avoid duplicate re-creation
+                if (existingObj) return;
+
+                const shapeData = { ...element.data };
+                if ((shapeData.fill === null || shapeData.fill === 'null' || !shapeData.fill) && shapeData.type !== 'i-text' && shapeData.type !== 'IText') {
+                    shapeData.fill = 'transparent';
+                }
+
+                util.enlivenObjects([shapeData]).then((enlivenedObjects: any) => {
+                    if (enlivenedObjects && enlivenedObjects.length > 0) {
+                        const obj = enlivenedObjects[0];
+                        obj.id = element.id;
+                        obj.set({
+                            hasControls: true,
+                            hasBorders: true,
+                            selectable: true,
+                        });
+                        canvas.add(obj);
+                        canvas.renderAll();
+                    }
+                });
+            };
+
+            const handleIncomingShapeChanged = (snapshot: any) => {
                 const element = snapshot.val();
                 if (!element || !element.data) return;
 
@@ -479,7 +527,12 @@ const DrawingCanvas: React.FC<DrawingCanvasProps> = ({ activeTool, socket, roomI
                     return;
                 }
 
-                util.enlivenObjects([element.data]).then((enlivenedObjects: any) => {
+                const shapeData = { ...element.data };
+                if ((shapeData.fill === null || shapeData.fill === 'null' || !shapeData.fill) && shapeData.type !== 'i-text' && shapeData.type !== 'IText') {
+                    shapeData.fill = 'transparent';
+                }
+
+                util.enlivenObjects([shapeData]).then((enlivenedObjects: any) => {
                     if (enlivenedObjects && enlivenedObjects.length > 0) {
                         const obj = enlivenedObjects[0];
                         obj.id = element.id;
@@ -510,8 +563,8 @@ const DrawingCanvas: React.FC<DrawingCanvasProps> = ({ activeTool, socket, roomI
                 }
             };
 
-            const unsubAdded = onChildAdded(shapesRef, handleIncomingShape);
-            const unsubChanged = onChildChanged(shapesRef, handleIncomingShape);
+            const unsubAdded = onChildAdded(shapesRef, handleIncomingShapeAdded);
+            const unsubChanged = onChildChanged(shapesRef, handleIncomingShapeChanged);
             const unsubRemoved = onChildRemoved(shapesRef, handleShapeRemoved);
 
             return () => {
@@ -529,7 +582,12 @@ const DrawingCanvas: React.FC<DrawingCanvasProps> = ({ activeTool, socket, roomI
                 const existingObjects = canvas.getObjects() as any[];
                 const existingObj = existingObjects.find(o => o.id === element.id || (o as any).data?.id === element.id);
 
-                util.enlivenObjects([element.data]).then((enlivenedObjects: any) => {
+                const shapeData = { ...element.data };
+                if ((shapeData.fill === null || shapeData.fill === 'null' || !shapeData.fill) && shapeData.type !== 'i-text' && shapeData.type !== 'IText') {
+                    shapeData.fill = 'transparent';
+                }
+
+                util.enlivenObjects([shapeData]).then((enlivenedObjects: any) => {
                     if (enlivenedObjects && enlivenedObjects.length > 0) {
                         const obj = enlivenedObjects[0];
                         obj.id = element.id;
@@ -551,7 +609,13 @@ const DrawingCanvas: React.FC<DrawingCanvasProps> = ({ activeTool, socket, roomI
 
             const handleCanvasData = (shapes: any[]) => {
                 canvas.clear();
-                const shapeDatas = shapes.map(s => s.data);
+                const shapeDatas = shapes.map(s => {
+                    const data = { ...s.data };
+                    if ((data.fill === null || data.fill === 'null' || !data.fill) && data.type !== 'i-text' && data.type !== 'IText') {
+                        data.fill = 'transparent';
+                    }
+                    return data;
+                });
                 util.enlivenObjects(shapeDatas).then((enlivenedObjects: any) => {
                     enlivenedObjects.forEach((obj: any, index: number) => {
                         obj.id = shapes[index].id;
@@ -597,7 +661,7 @@ const DrawingCanvas: React.FC<DrawingCanvasProps> = ({ activeTool, socket, roomI
                 socket.off('delete-shape', handleIncomingDelete);
             };
         }
-    }, [socket, roomId]);
+    }, [canvasReady, socket, roomId]);
 
     return (
         <>
