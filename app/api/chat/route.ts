@@ -1,7 +1,5 @@
 import { NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth/next';
-import ModelClient, { isUnexpected } from "@azure-rest/ai-inference";
-import { AzureKeyCredential } from "@azure/core-auth";
 import { authOptions } from '@/lib/auth';
 
 const API_URLS: Record<string, string> = {
@@ -9,8 +7,13 @@ const API_URLS: Record<string, string> = {
     groq: "https://api.groq.com/openai/v1/chat/completions",
     nova: "https://gen.pollinations.ai/v1/chat/completions",
     mistral: "https://gen.pollinations.ai/v1/chat/completions",
-    gpt4o: "https://models.inference.ai.azure.com/chat/completions",
-    grok: "https://models.inference.ai.azure.com/chat/completions"
+    deepseek: "https://gen.pollinations.ai/v1/chat/completions",
+    gpt54: "https://gen.pollinations.ai/v1/chat/completions",
+    'grok-4.6': "https://gen.pollinations.ai/v1/chat/completions",
+    grok: "https://gen.pollinations.ai/v1/chat/completions",
+    muse: "https://gen.pollinations.ai/v1/chat/completions",
+    'muse-glimmer': "https://gen.pollinations.ai/v1/chat/completions",
+    mai: "https://gen.pollinations.ai/v1/chat/completions"
 };
 
 interface ChatMessage {
@@ -35,10 +38,16 @@ const getApiKey = (provider: string) => {
     switch (provider) {
         case 'gemini': return process.env.GEMINI_API_KEY || '';
         case 'groq': return process.env.GROQ_API_KEY || '';
-        case 'nova': return process.env.POLLINATIONS_API_KEY || '';
-        case 'mistral': return process.env.POLLINATIONS_API_KEY || '';
-        case 'gpt4o': return process.env.GITHUB_TOKEN || '';
-        case 'grok': return process.env.GITHUB_TOKEN || '';
+        case 'nova': return process.env.POLLINATIONS_API_KEY2 || process.env.POLLINATIONS_API_KEY || '';
+        case 'mistral': return process.env.POLLINATIONS_API_KEY2 || process.env.POLLINATIONS_API_KEY || '';
+        case 'deepseek': return process.env.POLLINATIONS_API_KEY2 || process.env.POLLINATIONS_API_KEY || '';
+        case 'gpt54':
+        case 'gpt4o': return process.env.POLLINATIONS_API_KEY2 || process.env.POLLINATIONS_API_KEY || '';
+        case 'grok-4.6':
+        case 'grok': return process.env.POLLINATIONS_API_KEY2 || process.env.POLLINATIONS_API_KEY || '';
+        case 'muse':
+        case 'muse-glimmer': return process.env.POLLINATIONS_API_KEY2 || process.env.POLLINATIONS_API_KEY || '';
+        case 'mai': return process.env.POLLINATIONS_API_KEY2 || process.env.POLLINATIONS_API_KEY || '';
         default: return '';
     }
 };
@@ -98,14 +107,15 @@ export async function POST(req: Request) {
             aiResponseContent = data.candidates?.[0]?.content?.parts?.[0]?.text || 'No response from Gemini.';
 
         } else if (provider === 'groq') {
-            const response = await fetch(API_URLS.groq, {
+            const groqModel = process.env.GROQ_MODEL || 'openai/gpt-oss-120b';
+            let response = await fetch(API_URLS.groq, {
                 method: 'POST',
                 headers: {
                     'Authorization': `Bearer ${API_KEY}`,
                     'Content-Type': 'application/json'
                 },
                 body: JSON.stringify({
-                    model: 'llama-3.3-70b-versatile',
+                    model: groqModel,
                     messages: [
                         { role: 'system', content: systemPrompt },
                         ...allMessages.map((m: ChatMessage) => ({
@@ -116,40 +126,61 @@ export async function POST(req: Request) {
                 })
             });
 
+            // Fallback if the configured model is unavailable
+            if (response.status === 404 && groqModel !== 'groq/compound-mini') {
+                response = await fetch(API_URLS.groq, {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${API_KEY}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        model: 'groq/compound-mini',
+                        messages: [
+                            { role: 'system', content: systemPrompt },
+                            ...allMessages.map((m: ChatMessage) => ({
+                                role: m.sender === 'user' ? 'user' : 'assistant',
+                                content: m.content
+                            }))
+                        ]
+                    })
+                });
+            }
+
             if (!response.ok) {
-                throw new Error(`Groq API Error: ${response.status}`);
+                const errorData = await response.json().catch(() => ({}));
+                throw new Error(`Groq API Error: ${response.status} - ${errorData.error?.message || 'Unknown'}`);
             }
 
             const data = await response.json();
             aiResponseContent = data.choices?.[0]?.message?.content || 'No response from Groq.';
 
-        } else if (provider === 'gpt4o') {
-            const client = ModelClient(
-                "https://models.github.ai/inference",
-                new AzureKeyCredential(API_KEY)
-            );
-
-            const response = await client.path("/chat/completions").post({
-                body: {
+        } else if (provider === 'gpt54' || provider === 'gpt4o') {
+            const response = await fetch(API_URLS.gpt54 || "https://gen.pollinations.ai/v1/chat/completions", {
+                method: "POST",
+                headers: {
+                    Authorization: `Bearer ${API_KEY}`,
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify({
+                    model: "openai/gpt-5.4",
                     messages: [
                         { role: "system", content: systemPrompt },
                         ...allMessages.map((m: ChatMessage) => ({
                             role: m.sender === 'user' ? 'user' : 'assistant',
                             content: m.content
                         }))
-                    ],
-                    temperature: 1.0,
-                    top_p: 1.0,
-                    max_tokens: 1000,
-                    model: "openai/gpt-4o"
-                }
+                    ]
+                })
             });
 
-            if (isUnexpected(response)) {
-                throw new Error(`GPT-4o API Error: ${response.body?.error?.message || 'Unknown'}`);
+            if (!response.ok) {
+                const errorData = await response.json().catch(() => ({}));
+                throw new Error(`GPT-5.4 API Error: ${response.status} - ${errorData.error?.message || errorData.message || 'Unknown'}`);
             }
 
-            aiResponseContent = response.body.choices[0].message.content || 'No response from GPT-4o.';
+            const data = await response.json();
+            aiResponseContent = data.choices?.[0]?.message?.content || 'No response from GPT-5.4.';
 
         } else if (provider === 'nova') {
             const response = await fetch(API_URLS.nova, {
@@ -159,7 +190,7 @@ export async function POST(req: Request) {
                     "Content-Type": "application/json"
                 },
                 body: JSON.stringify({
-                    model: "nova-fast",
+                    model: "amazon/nova-2-lite-v1",
                     messages: [
                         { role: "system", content: systemPrompt },
                         ...allMessages.map((m: ChatMessage) => ({
@@ -171,11 +202,12 @@ export async function POST(req: Request) {
             });
 
             if (!response.ok) {
-                throw new Error(`Nova API Error: ${response.status}`);
+                const errorData = await response.json().catch(() => ({}));
+                throw new Error(`Nova 2 Lite API Error: ${response.status} - ${errorData.error?.message || errorData.message || 'Unknown error'}`);
             }
 
             const data = await response.json();
-            aiResponseContent = data.choices?.[0]?.message?.content || 'No response from Amazon Nova Micro.';
+            aiResponseContent = data.choices?.[0]?.message?.content || 'No response from Nova 2 Lite.';
 
         } else if (provider === 'mistral') {
             const response = await fetch(API_URLS.mistral, {
@@ -185,7 +217,7 @@ export async function POST(req: Request) {
                     "Content-Type": "application/json"
                 },
                 body: JSON.stringify({
-                    model: "mistral",
+                    model: "mistralai/mistral-large-3",
                     messages: [
                         { role: "system", content: systemPrompt },
                         ...allMessages.map((m: ChatMessage) => ({
@@ -197,38 +229,120 @@ export async function POST(req: Request) {
             });
 
             if (!response.ok) {
-                throw new Error(`Mistral API Error: ${response.status}`);
+                const errorData = await response.json().catch(() => ({}));
+                throw new Error(`Mistral Large 3 API Error: ${response.status} - ${errorData.error?.message || errorData.message || 'Unknown error'}`);
             }
 
             const data = await response.json();
-            aiResponseContent = data.choices?.[0]?.message?.content || 'No response from Mistral.';
+            aiResponseContent = data.choices?.[0]?.message?.content || 'No response from Mistral Large 3.';
 
-        } else if (provider === 'grok') {
-            const client = ModelClient(
-                "https://models.github.ai/inference",
-                new AzureKeyCredential(API_KEY)
-            );
-
-            const response = await client.path("/chat/completions").post({
-                body: {
+        } else if (provider === 'deepseek') {
+            const response = await fetch(API_URLS.deepseek, {
+                method: "POST",
+                headers: {
+                    Authorization: `Bearer ${API_KEY}`,
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify({
+                    model: "deepseek/deepseek-v4.1-flash",
                     messages: [
                         { role: "system", content: systemPrompt },
                         ...allMessages.map((m: ChatMessage) => ({
                             role: m.sender === 'user' ? 'user' : 'assistant',
                             content: m.content
                         }))
-                    ],
-                    temperature: 1.0,
-                    top_p: 1.0,
-                    model: "xai/grok-3"
-                }
+                    ]
+                })
             });
 
-            if (isUnexpected(response)) {
-                throw new Error(`Grok 3 API Error: ${response.body?.error?.message || 'Unknown error'}`);
+            if (!response.ok) {
+                const errorData = await response.json().catch(() => ({}));
+                throw new Error(`DeepSeek API Error: ${response.status} - ${errorData.error?.message || errorData.message || 'Unknown'}`);
             }
 
-            aiResponseContent = response.body.choices[0].message.content || 'No response from Grok 3.';
+            const data = await response.json();
+            aiResponseContent = data.choices?.[0]?.message?.content || 'No response from Deepseek-v4.1-flash.';
+
+        } else if (provider === 'grok-4.6' || provider === 'grok') {
+            const response = await fetch(API_URLS['grok-4.6'] || API_URLS.grok, {
+                method: "POST",
+                headers: {
+                    Authorization: `Bearer ${API_KEY}`,
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify({
+                    model: "x-ai/grok-4.6",
+                    messages: [
+                        { role: "system", content: systemPrompt },
+                        ...allMessages.map((m: ChatMessage) => ({
+                            role: m.sender === 'user' ? 'user' : 'assistant',
+                            content: m.content
+                        }))
+                    ]
+                })
+            });
+
+            if (!response.ok) {
+                const errorData = await response.json().catch(() => ({}));
+                throw new Error(`Grok 4.6 API Error: ${response.status} - ${errorData.error?.message || errorData.message || 'Unknown error'}`);
+            }
+
+            const data = await response.json();
+            aiResponseContent = data.choices?.[0]?.message?.content || 'No response from Grok 4.6.';
+
+        } else if (provider === 'muse' || provider === 'muse-glimmer') {
+            const response = await fetch(API_URLS.muse || API_URLS['muse-glimmer'], {
+                method: "POST",
+                headers: {
+                    Authorization: `Bearer ${API_KEY}`,
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify({
+                    model: "meta/muse-glimmer-30b",
+                    messages: [
+                        { role: "system", content: systemPrompt },
+                        ...allMessages.map((m: ChatMessage) => ({
+                            role: m.sender === 'user' ? 'user' : 'assistant',
+                            content: m.content
+                        }))
+                    ]
+                })
+            });
+
+            if (!response.ok) {
+                const errorData = await response.json().catch(() => ({}));
+                throw new Error(`Muse Glimmer API Error: ${response.status} - ${errorData.error?.message || errorData.message || 'Unknown error'}`);
+            }
+
+            const data = await response.json();
+            aiResponseContent = data.choices?.[0]?.message?.content || 'No response from Muse Glimmer 30b.';
+
+        } else if (provider === 'mai') {
+            const response = await fetch(API_URLS.mai, {
+                method: "POST",
+                headers: {
+                    Authorization: `Bearer ${API_KEY}`,
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify({
+                    model: "microsoft/mai-image-2.5-flash",
+                    messages: [
+                        { role: "system", content: systemPrompt },
+                        ...allMessages.map((m: ChatMessage) => ({
+                            role: m.sender === 'user' ? 'user' : 'assistant',
+                            content: m.content
+                        }))
+                    ]
+                })
+            });
+
+            if (!response.ok) {
+                const errorData = await response.json().catch(() => ({}));
+                throw new Error(`MAI 2.5 Flash API Error: ${response.status} - ${errorData.error?.message || errorData.message || 'Unknown error'}`);
+            }
+
+            const data = await response.json();
+            aiResponseContent = data.choices?.[0]?.message?.content || 'No response from MAI 2.5 Flash.';
 
         } else {
             // Mock delay simulation for other unconfigured models
