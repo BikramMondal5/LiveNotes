@@ -467,36 +467,38 @@ const AskAlloy: React.FC<AskAlloyProps> = ({ defaultOpen = false, isOpen: contro
                                                             animation: `fadeIn 0.3s ease-out ${Math.min(index, 4) * 0.06}s both`
                                                         }}
                                                     >
-                                                        <div className={`flex flex-col w-fit max-w-[85%] sm:max-w-[75%] md:max-w-[65%] mb-[8px] ${message.sender === 'user' ? 'self-end' : 'self-start'}`}>
+                                                        <div className={`flex flex-col max-w-[85%] sm:max-w-[75%] md:max-w-[70%] mb-[8px] ${message.sender === 'user' ? 'items-end self-end' : 'items-start self-start'}`}>
                                                             {message.image && (
                                                                 <div
-                                                                    className={`group relative transition-all duration-300 hover:scale-[1.02] w-full ${message.sender === 'user' ? 'shadow-[0_20px_60px_rgba(46,255,133,0.35)]' : 'shadow-[0_8px_30px_rgba(0,0,0,0.5)]'}`}
+                                                                    className={`group relative transition-all duration-300 hover:scale-[1.02] w-fit max-w-full rounded-[12px] overflow-hidden ${message.sender === 'user' ? 'shadow-[0_12px_36px_rgba(46,255,133,0.25)]' : 'shadow-[0_8px_30px_rgba(0,0,0,0.5)]'}`}
                                                                 >
-                                                                    <img src={message.image} alt="User attachment" className="block w-full max-h-[300px] object-contain rounded-[10px] m-0 p-0" />
+                                                                    <img src={message.image} alt="User attachment" className="block max-w-full max-h-[280px] object-contain rounded-[12px] m-0 p-0" />
                                                                 </div>
                                                             )}
-                                                            <div
-                                                                className={`px-[14px] py-[10px] transition-all duration-300 w-full ${message.image ? 'mt-[8px]' : ''} ${message.sender === 'user'
-                                                                    ? 'rounded-[20px] rounded-tr-[4px] bg-[#2EFF85] text-[#09090B]'
-                                                                    : 'rounded-[20px] rounded-tl-[4px] bg-[#202024] text-[#F4F4F5] border border-white/10 shadow-[0_2px_8px_rgba(0,0,0,0.15)]'
-                                                                    }`}
-                                                                style={{ animation: 'slideUpFade 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards' }}
-                                                            >
-                                                                {message.sender === 'ai' ? (
-                                                                    <div className="text-[14px] leading-[1.5] prose prose-invert prose-p:leading-[1.5] prose-p:my-1 max-w-none wrap-break-word font-medium text-zinc-100">
-                                                                        <ReactMarkdown>
-                                                                            {message.content}
-                                                                        </ReactMarkdown>
+                                                            {message.content && (
+                                                                <div
+                                                                    className={`px-[14px] py-[10px] transition-all duration-300 w-fit max-w-full ${message.image ? 'mt-[8px]' : ''} ${message.sender === 'user'
+                                                                        ? 'rounded-[20px] rounded-tr-[4px] bg-[#2EFF85] text-[#09090B]'
+                                                                        : 'rounded-[20px] rounded-tl-[4px] bg-[#202024] text-[#F4F4F5] border border-white/10 shadow-[0_2px_8px_rgba(0,0,0,0.15)]'
+                                                                        }`}
+                                                                    style={{ animation: 'slideUpFade 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards' }}
+                                                                >
+                                                                    {message.sender === 'ai' ? (
+                                                                        <div className="text-[14px] leading-[1.5] prose prose-invert prose-p:leading-[1.5] prose-p:my-1 max-w-none wrap-break-word font-medium text-zinc-100">
+                                                                            <ReactMarkdown>
+                                                                                {message.content}
+                                                                            </ReactMarkdown>
+                                                                        </div>
+                                                                    ) : (
+                                                                        <p className="text-[14px] leading-[1.5] whitespace-pre-wrap wrap-break-word font-medium">{message.content}</p>
+                                                                    )}
+                                                                    <div className="mt-[4px] flex justify-end">
+                                                                        <span className={`text-[11px] opacity-60 ${message.sender === 'user' ? 'text-[#09090B]' : 'text-zinc-400'}`}>
+                                                                            {formatTime(message.timestamp)}
+                                                                        </span>
                                                                     </div>
-                                                                ) : (
-                                                                    <p className="text-[14px] leading-[1.5] whitespace-pre-wrap wrap-break-word font-medium">{message.content}</p>
-                                                                )}
-                                                                <div className="mt-[4px] flex justify-end">
-                                                                    <span className={`text-[11px] opacity-60 ${message.sender === 'user' ? 'text-[#09090B]' : 'text-zinc-400'}`}>
-                                                                        {formatTime(message.timestamp)}
-                                                                    </span>
                                                                 </div>
-                                                            </div>
+                                                            )}
                                                         </div>
                                                     </div>
                                                 );

@@ -3,6 +3,8 @@
 import React, { useEffect, useRef, useState, useCallback } from 'react';
 import { Canvas, Rect, Circle, Line, Path, IText, FabricImage, PencilBrush, util } from 'fabric';
 import { Socket } from 'socket.io-client';
+import { db } from '@/lib/firebase';
+import { ref, set, remove, onChildAdded, onChildChanged, onChildRemoved } from 'firebase/database';
 
 export type DrawingTool = 'pointer' | 'rect' | 'circle' | 'arrow' | 'line' | 'pencil' | 'text' | 'image';
 
@@ -125,8 +127,14 @@ const DrawingCanvas: React.FC<DrawingCanvasProps> = ({ activeTool, socket, roomI
 
                     if (!isEditing && !isInputFocused) {
                         activeObjects.forEach((obj: any) => {
-                            if (obj.id && socket && roomId) {
-                                socket.emit('delete-shape', { roomId, id: obj.id });
+                            if (obj.id && roomId) {
+                                if (db) {
+                                    const shapeRef = ref(db, `rooms/${roomId}/shapes/${obj.id}`);
+                                    remove(shapeRef).catch((err) => console.error('Firebase delete error:', err));
+                                }
+                                if (socket) {
+                                    socket.emit('delete-shape', { roomId, id: obj.id });
+                                }
                             }
                             canvas.remove(obj);
                         });
@@ -178,25 +186,32 @@ const DrawingCanvas: React.FC<DrawingCanvasProps> = ({ activeTool, socket, roomI
             if (!element.id) {
                 element.id = Math.random().toString(36).substring(2, 9) + Date.now().toString(36);
             }
-            if (socket && roomId) {
-                const data = element.toJSON();
-                // Ensure id is part of the serialization if needed, or stick it directly onto the payload.
-                data.id = element.id;
+            const data = element.toJSON();
+            data.id = element.id;
 
+            const shapeElement = {
+                id: element.id,
+                type: element.type || 'shape',
+                left: element.left ?? 0,
+                top: element.top ?? 0,
+                width: element.width ?? 0,
+                height: element.height ?? 0,
+                fill: element.fill ? String(element.fill) : null,
+                stroke: element.stroke ? String(element.stroke) : null,
+                strokeWidth: element.strokeWidth ?? 1,
+                data: data,
+                updatedAt: Date.now()
+            };
+
+            if (db && roomId) {
+                const shapeRef = ref(db, `rooms/${roomId}/shapes/${element.id}`);
+                set(shapeRef, shapeElement).catch((err) => console.error('Firebase save shape error:', err));
+            }
+
+            if (socket && roomId) {
                 socket.emit('draw', {
                     roomId,
-                    element: {
-                        id: element.id,
-                        type: element.type,
-                        left: element.left,
-                        top: element.top,
-                        width: element.width,
-                        height: element.height,
-                        fill: element.fill,
-                        stroke: element.stroke,
-                        strokeWidth: element.strokeWidth,
-                        data: data,
-                    },
+                    element: shapeElement,
                 });
             }
         },
@@ -444,87 +459,144 @@ const DrawingCanvas: React.FC<DrawingCanvasProps> = ({ activeTool, socket, roomI
 
     // Listen for incoming drawings
     useEffect(() => {
-        if (!socket || !roomId || !fabricCanvasRef.current) return;
+        if (!roomId || !fabricCanvasRef.current) return;
 
         const canvas = fabricCanvasRef.current;
 
-        const handleIncomingDraw = (data: any) => {
-            const { element } = data;
+        // 1. Firebase Realtime Database Synchronization
+        if (db) {
+            const shapesRef = ref(db, `rooms/${roomId}/shapes`);
 
-            // Find if this object already exists
-            const existingObjects = canvas.getObjects() as any[];
-            const existingObj = existingObjects.find(o => o.id === element.id || (o as any).data?.id === element.id);
+            const handleIncomingShape = (snapshot: any) => {
+                const element = snapshot.val();
+                if (!element || !element.data) return;
 
-            // Basic object reconstruction
-            util.enlivenObjects([element.data]).then((enlivenedObjects: any) => {
-                if (enlivenedObjects && enlivenedObjects.length > 0) {
-                    const obj = enlivenedObjects[0];
-                    obj.id = element.id;  // preserve id
-                    obj.set({
-                        hasControls: true,
-                        hasBorders: true,
-                        selectable: true,
-                    });
+                const existingObjects = canvas.getObjects() as any[];
+                const existingObj = existingObjects.find(o => o.id === element.id || (o as any).data?.id === element.id);
 
-                    if (existingObj) {
-                        // Replace existing object with updated one
-                        canvas.remove(existingObj);
+                // If currently being manipulated by local user, do not interrupt
+                if (existingObj && canvas.getActiveObject() === existingObj) {
+                    return;
+                }
+
+                util.enlivenObjects([element.data]).then((enlivenedObjects: any) => {
+                    if (enlivenedObjects && enlivenedObjects.length > 0) {
+                        const obj = enlivenedObjects[0];
+                        obj.id = element.id;
+                        obj.set({
+                            hasControls: true,
+                            hasBorders: true,
+                            selectable: true,
+                        });
+
+                        if (existingObj) {
+                            canvas.remove(existingObj);
+                        }
+
+                        canvas.add(obj);
+                        canvas.renderAll();
                     }
+                });
+            };
 
-                    canvas.add(obj);
+            const handleShapeRemoved = (snapshot: any) => {
+                const shapeId = snapshot.key;
+                const existingObjects = canvas.getObjects() as any[];
+                const existingObj = existingObjects.find(o => o.id === shapeId || (o as any).data?.id === shapeId);
+
+                if (existingObj) {
+                    canvas.remove(existingObj);
                     canvas.renderAll();
                 }
-            });
-        };
+            };
 
-        const handleCanvasData = (shapes: any[]) => {
-            canvas.clear();
-            const shapeDatas = shapes.map(s => s.data);
-            util.enlivenObjects(shapeDatas).then((enlivenedObjects: any) => {
-                enlivenedObjects.forEach((obj: any, index: number) => {
-                    obj.id = shapes[index].id; // preserve id from server
-                    obj.set({
-                        hasControls: true,
-                        hasBorders: true,
-                        selectable: true,
-                    });
-                    canvas.add(obj);
-                });
-                canvas.renderAll();
-            });
-        };
+            const unsubAdded = onChildAdded(shapesRef, handleIncomingShape);
+            const unsubChanged = onChildChanged(shapesRef, handleIncomingShape);
+            const unsubRemoved = onChildRemoved(shapesRef, handleShapeRemoved);
 
-        const handleIncomingDelete = (id: string) => {
-            const existingObjects = canvas.getObjects() as any[];
-            const existingObj = existingObjects.find(o => o.id === id || (o as any).data?.id === id);
-
-            if (existingObj) {
-                canvas.remove(existingObj);
-                canvas.renderAll();
-            }
-        };
-
-        const handleConnect = () => {
-            socket.emit('get-canvas', roomId);
-        };
-
-        socket.on('connect', handleConnect);
-
-        // Trigger immediately if already connected
-        if (socket.connected) {
-            socket.emit('get-canvas', roomId);
+            return () => {
+                unsubAdded();
+                unsubChanged();
+                unsubRemoved();
+            };
         }
 
-        socket.on('draw', handleIncomingDraw);
-        socket.on('canvas-data', handleCanvasData);
-        socket.on('delete-shape', handleIncomingDelete);
+        // 2. Fallback to socket if Firebase is not active
+        if (socket) {
+            const handleIncomingDraw = (data: any) => {
+                const { element } = data;
 
-        return () => {
-            socket.off('connect', handleConnect);
-            socket.off('draw', handleIncomingDraw);
-            socket.off('canvas-data', handleCanvasData);
-            socket.off('delete-shape', handleIncomingDelete);
-        };
+                const existingObjects = canvas.getObjects() as any[];
+                const existingObj = existingObjects.find(o => o.id === element.id || (o as any).data?.id === element.id);
+
+                util.enlivenObjects([element.data]).then((enlivenedObjects: any) => {
+                    if (enlivenedObjects && enlivenedObjects.length > 0) {
+                        const obj = enlivenedObjects[0];
+                        obj.id = element.id;
+                        obj.set({
+                            hasControls: true,
+                            hasBorders: true,
+                            selectable: true,
+                        });
+
+                        if (existingObj) {
+                            canvas.remove(existingObj);
+                        }
+
+                        canvas.add(obj);
+                        canvas.renderAll();
+                    }
+                });
+            };
+
+            const handleCanvasData = (shapes: any[]) => {
+                canvas.clear();
+                const shapeDatas = shapes.map(s => s.data);
+                util.enlivenObjects(shapeDatas).then((enlivenedObjects: any) => {
+                    enlivenedObjects.forEach((obj: any, index: number) => {
+                        obj.id = shapes[index].id;
+                        obj.set({
+                            hasControls: true,
+                            hasBorders: true,
+                            selectable: true,
+                        });
+                        canvas.add(obj);
+                    });
+                    canvas.renderAll();
+                });
+            };
+
+            const handleIncomingDelete = (id: string) => {
+                const existingObjects = canvas.getObjects() as any[];
+                const existingObj = existingObjects.find(o => o.id === id || (o as any).data?.id === id);
+
+                if (existingObj) {
+                    canvas.remove(existingObj);
+                    canvas.renderAll();
+                }
+            };
+
+            const handleConnect = () => {
+                socket.emit('get-canvas', roomId);
+            };
+
+            socket.on('connect', handleConnect);
+
+            if (socket.connected) {
+                socket.emit('get-canvas', roomId);
+            }
+
+            socket.on('draw', handleIncomingDraw);
+            socket.on('canvas-data', handleCanvasData);
+            socket.on('delete-shape', handleIncomingDelete);
+
+            return () => {
+                socket.off('connect', handleConnect);
+                socket.off('draw', handleIncomingDraw);
+                socket.off('canvas-data', handleCanvasData);
+                socket.off('delete-shape', handleIncomingDelete);
+            };
+        }
     }, [socket, roomId]);
 
     return (

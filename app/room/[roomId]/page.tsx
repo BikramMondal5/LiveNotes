@@ -3,6 +3,8 @@
 import { useEffect, useState, useRef } from "react";
 import { useParams } from "next/navigation";
 import { io, Socket } from "socket.io-client";
+import { db } from "@/lib/firebase";
+import { ref, set, remove, onValue } from "firebase/database";
 import { Plus, Wand2, MousePointer2, Square, Circle, ArrowUpRight, Slash, PenLine, Type, Image as ImageIcon, Frame, HelpingHand, Settings, ChevronDown, MoreHorizontal, Sparkles, Search, Home, Briefcase, FileText, ChevronRight, Rocket, Share, X, Copy, Check, Scan, Presentation, UserCheck, FileSearch, Receipt } from "lucide-react";
 import DotGrid from "../../components/DotGrid";
 import DrawingCanvas from "../../components/DrawingCanvas";
@@ -15,13 +17,15 @@ export default function RoomPage() {
     const [notes, setNotes] = useState("");
     const [socket, setSocket] = useState<Socket | null>(null);
     const [activeTool, setActiveTool] = useState("rect");
-    const [viewMode, setViewMode] = useState("canvas"); // document | both | canvas
+    const [viewMode, setViewMode] = useState<"document" | "both" | "canvas">("both"); // Default to Text tab
     const [isAlloyOpen, setIsAlloyOpen] = useState(false);
     const [isShareModalOpen, setIsShareModalOpen] = useState(false);
     const [isCopied, setIsCopied] = useState(false);
     const [pdfFile, setPdfFile] = useState<string | null>(null);
     const [activeDocView, setActiveDocView] = useState<"home" | "preview">("home");
     const fileInputRef = useRef<HTMLInputElement>(null);
+    const notesTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+    const initialDocLoadedRef = useRef(false);
     const [recentFiles, setRecentFiles] = useState<{ id: string, name: string, size: string, date: string, url: string }[]>([]);
 
     // Screenshot feature states
@@ -33,7 +37,7 @@ export default function RoomPage() {
     const [fullScreenCanvas, setFullScreenCanvas] = useState<HTMLCanvasElement | null>(null);
 
     const handleLocalUpload = (file: File) => {
-        if (file && file.type === "application/pdf") {
+        if (file && (file.type === "application/pdf" || file.name.toLowerCase().endsWith(".pdf"))) {
             const reader = new FileReader();
             reader.onload = (e) => {
                 const dataUrl = e.target?.result as string;
@@ -51,11 +55,17 @@ export default function RoomPage() {
 
                 setPdfFile(dataUrl);
                 setActiveDocView("preview");
+                setViewMode("document");
 
                 setRecentFiles(prev => {
                     const filtered = prev.filter(f => f.name !== file.name);
                     return [docData, ...filtered];
                 });
+
+                if (db && roomId) {
+                    const docRef = ref(db, `rooms/${roomId}/document`);
+                    set(docRef, docData).catch(err => console.error("Firebase upload document error:", err));
+                }
 
                 if (socket) {
                     socket.emit("upload-document", { roomId, document: docData });
@@ -68,6 +78,7 @@ export default function RoomPage() {
     const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
         if (file) handleLocalUpload(file);
+        e.target.value = '';
     };
 
     const handleDrop = (e: React.DragEvent) => {
@@ -80,9 +91,49 @@ export default function RoomPage() {
         e.preventDefault();
     };
 
+    // 1. Firebase Realtime Database Listeners for Notes and Document
     useEffect(() => {
-        // Use the Render backend URL if provided, otherwise default to same-origin
+        if (!roomId || !db) return;
+
+        const notesRef = ref(db, `rooms/${roomId}/notes`);
+        const unsubNotes = onValue(notesRef, (snapshot) => {
+            const val = snapshot.val();
+            if (typeof val === "string") {
+                setNotes(prev => (prev !== val ? val : prev));
+            }
+        });
+
+        const docRef = ref(db, `rooms/${roomId}/document`);
+        const unsubDoc = onValue(docRef, (snapshot) => {
+            const doc = snapshot.val();
+            if (doc && doc.url) {
+                setPdfFile(doc.url);
+                setActiveDocView("preview");
+                if (initialDocLoadedRef.current) {
+                    setViewMode("document");
+                }
+                setRecentFiles(prev => {
+                    const filtered = prev.filter(f => f.id !== doc.id && f.name !== doc.name);
+                    return [doc, ...filtered];
+                });
+            } else {
+                setPdfFile(null);
+                setActiveDocView("home");
+            }
+            initialDocLoadedRef.current = true;
+        });
+
+        return () => {
+            unsubNotes();
+            unsubDoc();
+        };
+    }, [roomId]);
+
+    // 2. Socket.io fallback connection (if custom WS URL configured or Firebase unavailable)
+    useEffect(() => {
         const socketUrl = process.env.NEXT_PUBLIC_WS_URL;
+        if (!socketUrl && db) return;
+
         const newSocket = socketUrl ? io(socketUrl) : io();
         setSocket(newSocket);
 
@@ -98,6 +149,9 @@ export default function RoomPage() {
             if (doc) {
                 setPdfFile(doc.url);
                 setActiveDocView("preview");
+                if (initialDocLoadedRef.current) {
+                    setViewMode("document");
+                }
                 setRecentFiles(prev => {
                     const filtered = prev.filter(f => f.id !== doc.id && f.name !== doc.name);
                     return [doc, ...filtered];
@@ -116,6 +170,18 @@ export default function RoomPage() {
     const handleChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
         const value = e.target.value;
         setNotes(value);
+
+        const database = db;
+        if (database && roomId) {
+            if (notesTimeoutRef.current) {
+                clearTimeout(notesTimeoutRef.current);
+            }
+            notesTimeoutRef.current = setTimeout(() => {
+                const notesRef = ref(database, `rooms/${roomId}/notes`);
+                set(notesRef, value).catch(err => console.error("Firebase edit notes error:", err));
+            }, 150);
+        }
+
         if (socket) {
             socket.emit("edit-notes", { roomId, notes: value });
         }
@@ -261,9 +327,12 @@ export default function RoomPage() {
                 <div className="flex items-center bg-zinc-900/50 rounded-md p-1 border border-white/5 order-3 sm:order-2 w-full sm:w-auto justify-center">
                     <button
                         onClick={() => setViewMode("document")}
-                        className={`flex-1 sm:flex-none px-4 py-1.5 text-xs font-medium rounded-sm transition-colors ${viewMode === 'document' ? 'bg-[#2EFF85]/10 text-[#2EFF85]' : 'text-zinc-400 hover:text-[#2EFF85]'}`}
+                        className={`flex-1 sm:flex-none px-4 py-1.5 text-xs font-medium rounded-sm transition-colors relative flex items-center justify-center gap-1.5 ${viewMode === 'document' ? 'bg-[#2EFF85]/10 text-[#2EFF85]' : 'text-zinc-400 hover:text-[#2EFF85]'}`}
                     >
-                        Document
+                        <span>Document</span>
+                        {pdfFile && (
+                            <span className="w-2 h-2 rounded-full bg-[#2EFF85] shadow-[0_0_8px_#2EFF85] animate-pulse" title="Shared document active" />
+                        )}
                     </button>
                     <button
                         onClick={() => setViewMode("both")}
@@ -438,6 +507,10 @@ export default function RoomPage() {
                                                     onClick={() => {
                                                         setPdfFile(file.url);
                                                         setActiveDocView("preview");
+                                                        if (db && roomId) {
+                                                            const docRef = ref(db, `rooms/${roomId}/document`);
+                                                            set(docRef, file).catch(err => console.error("Firebase update document error:", err));
+                                                        }
                                                         if (socket) {
                                                             socket.emit("upload-document", { roomId, document: file });
                                                         }
@@ -506,6 +579,10 @@ export default function RoomPage() {
                                                 onClick={() => {
                                                     setPdfFile(null);
                                                     setActiveDocView("home");
+                                                    if (db && roomId) {
+                                                        const docRef = ref(db, `rooms/${roomId}/document`);
+                                                        remove(docRef).catch(err => console.error("Firebase remove document error:", err));
+                                                    }
                                                     if (socket) {
                                                         socket.emit("remove-document", { roomId });
                                                     }
@@ -532,7 +609,7 @@ export default function RoomPage() {
                             value={notes}
                             onChange={handleChange}
                             className={`absolute inset-0 w-full h-full pt-12 px-20 pb-20 bg-transparent border-0 outline-none resize-none placeholder:text-zinc-600/50 leading-relaxed text-[#2EFF85] tracking-wide ${viewMode === 'canvas' ? 'opacity-0 pointer-events-none z-0' : 'opacity-100 z-20'} transition-opacity duration-300`}
-                            placeholder="Type to add notes, or use the canvas tools..."
+                            placeholder="Type to add notes, share in real time with your friends..."
                             style={{ caretColor: '#2EFF85' }}
                         />
                     )}
