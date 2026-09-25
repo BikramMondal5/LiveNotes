@@ -3,7 +3,7 @@ import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/lib/auth';
 
 const API_URLS: Record<string, string> = {
-    gemini: "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent",
+    gemini: "https://generativelanguage.googleapis.com/v1beta/models/gemini-3.6-flash:generateContent",
     groq: "https://api.groq.com/openai/v1/chat/completions",
     nova: "https://gen.pollinations.ai/v1/chat/completions",
     mistral: "https://gen.pollinations.ai/v1/chat/completions",
