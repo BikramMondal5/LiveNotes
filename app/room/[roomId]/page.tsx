@@ -2,15 +2,14 @@
 
 import { useEffect, useState, useRef } from "react";
 import { useParams } from "next/navigation";
-import { useSession } from "next-auth/react";
 import { db } from "@/lib/firebase";
 import { ref, set, remove, onValue, get } from "firebase/database";
 import { Plus, Wand2, MousePointer2, Square, Circle, ArrowUpRight, Slash, PenLine, Type, Image as ImageIcon, Frame, HelpingHand, Settings, ChevronDown, MoreHorizontal, Sparkles, Search, Home, Briefcase, FileText, ChevronRight, Rocket, Share, X, Copy, Check, Scan, Presentation, UserCheck, FileSearch, Receipt, Star, Menu } from "lucide-react";
-import DotGrid from "../components/DotGrid";
-import DrawingCanvas from "../components/DrawingCanvas";
-import AskAlloy from "../components/AskAlloy";
+import DotGrid from "../../components/DotGrid";
+import DrawingCanvas from "../../components/DrawingCanvas";
+import AskAlloy from "../../components/AskAlloy";
 import { ConfettiButton } from "@/components/ui/confetti";
-import type { DrawingTool } from "../components/DrawingCanvas";
+import type { DrawingTool } from "../../components/DrawingCanvas";
 import { getCachedStars } from "@/lib/githubStars";
 
 export interface RoomDocument {
@@ -28,7 +27,6 @@ const MAX_FILE_SIZE = 25 * 1024 * 1024; // 25 MB max PDF size
 
 export default function RoomPage() {
     const { roomId } = useParams() as { roomId: string };
-    const { data: session } = useSession();
     const [notes, setNotes] = useState("");
     const [activeTool, setActiveTool] = useState("rect");
     const [viewMode, setViewMode] = useState<"document" | "text" | "canvas">("text"); // Default to Text tab
@@ -45,7 +43,7 @@ export default function RoomPage() {
     const initialDocLoadedRef = useRef(false);
     const docCacheRef = useRef<Map<string, string>>(new Map());
     const [recentFiles, setRecentFiles] = useState<RoomDocument[]>([]);
-    const [githubStars, setGithubStars] = useState<number | null>(null);
+    const [githubStars, setGithubStars] = useState<number | null>(() => getCachedStars());
 
     // Read cached GitHub stars (fetched only from the root `/` page)
     useEffect(() => {
@@ -582,7 +580,7 @@ export default function RoomPage() {
                     <Rocket className="w-8 h-8 text-[#2EFF85] mx-auto mb-2 drop-shadow-[0_0_8px_rgba(46,255,133,0.5)]" />
                     <h5 className="text-sm font-semibold text-white mb-3 relative z-10">Chat PDFs with GPT-5.4</h5>
                     <button className="w-full bg-[#2EFF85]/10 text-[#2EFF85] hover:bg-[#2EFF85]/20 text-xs font-medium py-2 rounded-lg transition-colors border border-[#2EFF85]/20">
-                        Completely free
+                        Completely Free
                     </button>
                 </div>
             </div>
@@ -598,39 +596,33 @@ export default function RoomPage() {
                         <img src="/logo.png" alt="LiveNotes Logo" className="w-9 h-9 object-cover rounded-full" />
                     </div>
 
-                    <div className="flex items-center gap-2">
-                        <div className="flex items-center bg-[#1C1C1C] rounded-[8px] h-8">
-                            <button
-                                onClick={() => {
-                                    navigator.clipboard.writeText(notes);
-                                    setIsCopied(true);
-                                    setTimeout(() => setIsCopied(false), 2000);
-                                }}
-                                className={`shrink-0 flex items-center gap-1.5 px-2.5 sm:px-3 h-full rounded-[8px] text-xs font-medium transition-all duration-200 ${isCopied
-                                    ? "bg-[#2EFF85]/20 text-[#2EFF85]"
-                                    : "bg-[#262626] hover:bg-[#333333] text-zinc-300"
-                                    }`}
-                            >
-                                {isCopied ? <Check className="w-3.5 h-3.5" /> : <Copy className="w-3.5 h-3.5" />}
-                                <span>{isCopied ? "Copied Text!" : "Copy Text"}</span>
-                            </button>
-                        </div>
-
-                        {/* Mobile profile avatar */}
-                        {session?.user && (
-                            session.user.image ? (
-                                <img
-                                    src={session.user.image}
-                                    alt={session.user.name || "User"}
-                                    className="sm:hidden w-8 h-8 rounded-full object-cover border border-white/10 ring-1 ring-white/5"
-                                />
-                            ) : (
-                                <div className="sm:hidden w-8 h-8 rounded-full bg-zinc-800 border border-white/10 flex items-center justify-center text-xs font-semibold text-white">
-                                    {session.user.name ? session.user.name.charAt(0).toUpperCase() : "U"}
-                                </div>
-                            )
-                        )}
+                    <div className="flex items-center bg-[#1C1C1C] rounded-[8px] pl-3 h-8 max-w-[65%] sm:max-w-none">
+                        <span className="text-xs text-zinc-300 truncate max-w-[110px] sm:max-w-[150px]">/room/{roomId}</span>
+                        <button
+                            onClick={() => {
+                                const url = (process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:3000") + "/room/" + roomId;
+                                navigator.clipboard.writeText(url);
+                                setIsCopied(true);
+                                setTimeout(() => setIsCopied(false), 2000);
+                            }}
+                            className={`ml-2 sm:ml-3 shrink-0 flex items-center gap-1.5 px-2.5 sm:px-3 h-full rounded-[8px] text-xs font-medium transition-all duration-200 ${isCopied
+                                ? "bg-[#2EFF85]/20 text-[#2EFF85]"
+                                : "bg-[#262626] hover:bg-[#333333] text-zinc-300"
+                                }`}
+                        >
+                            {isCopied ? <Check className="w-3.5 h-3.5" /> : <Copy className="w-3.5 h-3.5" />}
+                            <span className="hidden sm:inline">{isCopied ? "Copied!" : "Copy"}</span>
+                        </button>
                     </div>
+
+                    {/* Mobile Ask Elloy Quick Button */}
+                    <button
+                        onClick={() => setIsAlloyOpen(!isAlloyOpen)}
+                        className="sm:hidden flex items-center gap-1 bg-[#2EFF85] hover:bg-[#25dd72] text-[#161618] px-2.5 py-1.5 rounded-[8px] text-xs font-medium transition-colors"
+                    >
+                        <Sparkles className="w-3.5 h-3.5" />
+                        <span>Elloy</span>
+                    </button>
                 </div>
 
                 <div className="flex items-center bg-zinc-900/50 rounded-md p-1 border border-white/5 order-3 sm:order-2 w-full sm:w-auto justify-center">
@@ -664,16 +656,16 @@ export default function RoomPage() {
                         title="Star LiveNotes on GitHub"
                     >
                         {/* Left Div: GitHub Icon + Text */}
-                        <div className="flex items-center gap-1.5 px-2 sm:px-2.5 h-full border-r border-white/10 group-hover:border-white/20 transition-colors">
+                        <div className="flex items-center gap-1.5 px-2.5 h-full border-r border-white/10 group-hover:border-white/20 transition-colors">
                             <svg className="w-3.5 h-3.5 fill-current text-zinc-300 group-hover:text-white transition-colors" viewBox="0 0 24 24" aria-hidden="true">
                                 <path d="M12 0C5.37 0 0 5.37 0 12c0 5.3 3.44 9.8 8.21 11.39.6.11.82-.26.82-.58v-2.03c-3.34.73-4.04-1.61-4.04-1.61-.55-1.39-1.33-1.76-1.33-1.76-1.09-.75.08-.73.08-.73 1.2.08 1.84 1.24 1.84 1.24 1.07 1.83 2.81 1.3 3.49.99.11-.78.42-1.3.76-1.6-2.66-.3-5.47-1.33-5.47-5.93 0-1.31.47-2.38 1.24-3.22-.12-.3-.54-1.52.12-3.18 0 0 1.01-.32 3.3 1.23.96-.27 1.98-.4 3-.4s2.04.13 3 .4c2.29-1.55 3.3-1.23 3.3-1.23.66 1.66.24 2.88.12 3.18.77.84 1.24 1.91 1.24 3.22 0 4.61-2.81 5.62-5.48 5.92.43.37.81 1.1.81 2.22v3.29c0 .32.22.69.82.58A12.01 12.01 0 0 0 24 12c0-6.63-5.37-12-12-12Z" />
                             </svg>
-                            <span className="hidden sm:inline truncate">Star on GitHub</span>
+                            <span className="truncate">Star on GitHub</span>
                         </div>
                         {/* Right Div: Yellow Star + Live Count */}
                         <div className="flex items-center gap-1 px-2.5 h-full bg-[#161618]/60 group-hover:bg-[#1a1a1d] transition-colors text-zinc-300 font-semibold">
                             <Star className="w-3.5 h-3.5 fill-amber-400 text-amber-400" />
-                            <span suppressHydrationWarning>{githubStars !== null ? githubStars : "2"}</span>
+                            <span>{githubStars !== null ? githubStars : "2"}</span>
                         </div>
                     </a>
 
@@ -684,23 +676,6 @@ export default function RoomPage() {
                         <Sparkles className="w-3.5 h-3.5" />
                         <span className="hidden sm:inline">Ask Elloy</span>
                     </button>
-                    {session?.user && (
-                        session.user.image ? (
-                            <img
-                                src={session.user.image}
-                                alt={session.user.name || "User"}
-                                className="w-8 h-8 rounded-full object-cover border border-white/10 ring-1 ring-white/5 ml-1"
-                                title={session.user.name || session.user.email || "Logged in"}
-                            />
-                        ) : (
-                            <div
-                                className="w-8 h-8 rounded-full bg-zinc-800 border border-white/10 flex items-center justify-center text-xs font-semibold text-white ml-1"
-                                title={session.user.name || session.user.email || "Logged in"}
-                            >
-                                {session.user.name ? session.user.name.charAt(0).toUpperCase() : "U"}
-                            </div>
-                        )
-                    )}
                 </div>
             </header>
 
@@ -756,9 +731,9 @@ export default function RoomPage() {
                     </div>
                 )}
 
-                {/* Mobile Floating Top Canvas Toolbar */}
+                {/* Mobile Floating Bottom Canvas Toolbar */}
                 {viewMode === 'canvas' && (
-                    <div className="flex sm:hidden absolute top-3 left-1/2 -translate-x-1/2 flex-row gap-1 bg-zinc-900/95 border border-zinc-800 rounded-2xl p-1.5 shadow-2xl backdrop-blur-md z-30 max-w-[95vw] overflow-x-auto no-scrollbar">
+                    <div className="flex sm:hidden absolute bottom-4 left-1/2 -translate-x-1/2 flex-row gap-1 bg-zinc-900/95 border border-zinc-800 rounded-2xl p-1.5 shadow-2xl backdrop-blur-md z-30 max-w-[95vw] overflow-x-auto no-scrollbar">
                         <ToolButton icon={MousePointer2} label="V" active={activeTool === 'pointer'} onClick={() => setActiveTool('pointer')} />
                         <ToolButton icon={Square} label="R" active={activeTool === 'rect'} onClick={() => setActiveTool('rect')} />
                         <ToolButton icon={Circle} label="O" active={activeTool === 'circle'} onClick={() => setActiveTool('circle')} />
@@ -919,11 +894,18 @@ export default function RoomPage() {
                             <ChevronDown className="w-3 h-3 ml-0.5" />
                         </div>
                     )}
+
+                    {/* Bottom Right Help */}
+                    <div className="hidden sm:block absolute bottom-6 right-6 z-30">
+                        <button className="w-8 h-8 flex items-center justify-center rounded-full bg-zinc-800/80 hover:bg-zinc-700 text-zinc-400 hover:text-zinc-200 border border-zinc-700/50 backdrop-blur-sm transition-all shadow-lg">
+                            <span className="font-semibold text-sm">?</span>
+                        </button>
+                    </div>
                 </div>
 
                 {/* THE UNIFIED ASK ELLOY CHAT SYSTEM */}
-                {/* Desktop: Collapsible inline sidebar */}
-                <div className={`hidden md:block h-full shrink-0 transition-all duration-300 ease-in-out ${isAlloyOpen ? 'w-[380px] xl:w-[480px] border-l border-zinc-800/50 bg-[#161618]' : 'w-0 overflow-hidden'}`}>
+                {/* Responsive AskAlloy Panel: Full-screen modal on mobile, slide-in sidebar on desktop */}
+                <div className={`h-full shrink-0 transition-all duration-300 ease-in-out ${isAlloyOpen ? 'fixed md:relative inset-0 md:inset-auto z-40 md:z-20 w-full md:w-[380px] xl:w-[480px] border-l border-zinc-800/50 bg-[#161618]' : 'w-0 overflow-hidden'}`}>
                     <AskAlloy
                         isOpen={isAlloyOpen}
                         onOpenChange={setIsAlloyOpen}
@@ -936,45 +918,21 @@ export default function RoomPage() {
 
             </div>
 
-            {/* Mobile Floating Popup Chat Modal for Ask Elloy */}
-            {isAlloyOpen && (
-                <div className="md:hidden fixed inset-0 z-40">
-                    {/* Subtle backdrop to dismiss when clicking outside */}
-                    <div
-                        className="fixed inset-0 bg-black/40 backdrop-blur-[2px] transition-opacity duration-200"
-                        onClick={() => setIsAlloyOpen(false)}
-                    />
-                    {/* Floating Popup Card Modal */}
-                    <div className="fixed bottom-20 right-4 left-4 sm:left-auto sm:right-6 w-[calc(100vw-2rem)] max-w-[390px] h-[520px] max-h-[72vh] rounded-[24px] border border-white/10 bg-[#121214] shadow-[0_16px_50px_rgba(0,0,0,0.85)] flex flex-col overflow-hidden animate-in zoom-in-95 slide-in-from-bottom-4 duration-200 z-50">
-                        <AskAlloy
-                            isOpen={true}
-                            onOpenChange={setIsAlloyOpen}
-                            showFloatingButton={false}
-                            inline={true}
-                            stagedImage={screenshotPreview}
-                            onClearStagedImage={() => setScreenshotPreview(null)}
-                        />
-                    </div>
-                </div>
-            )}
-
-            {/* Mobile Floating AI Bubble Button in Circular Div */}
-            <button
-                onClick={() => setIsAlloyOpen(!isAlloyOpen)}
-                className="fixed bottom-5 right-5 md:hidden z-50 w-13 h-13 sm:w-14 sm:h-14 rounded-full bg-[#05D668] hover:bg-[#04bd5c] shadow-xl flex items-center justify-center p-1 overflow-hidden active:scale-95 transition-all duration-200"
-                title={isAlloyOpen ? "Close Ask Elloy" : "Ask Elloy"}
-                aria-label={isAlloyOpen ? "Close Ask Elloy AI Assistant" : "Open Ask Elloy AI Assistant"}
-            >
-                {isAlloyOpen ? (
-                    <X className="w-6 h-6 text-[#161618]" />
-                ) : (
+            {/* Mobile Floating AI Chat Bubble for Ask Elloy */}
+            {!isAlloyOpen && (
+                <button
+                    onClick={() => setIsAlloyOpen(true)}
+                    className="fixed bottom-6 right-6 sm:hidden z-30 w-14 h-14 flex items-center justify-center p-0 bg-transparent border-0 outline-none cursor-pointer active:scale-90 transition-transform duration-200"
+                    title="Ask Elloy"
+                    aria-label="Open Ask Elloy AI Assistant"
+                >
                     <img
-                        src="/Elloy-logo.png"
+                        src="/logo.png"
                         alt="Ask Elloy"
                         className="w-full h-full object-contain"
                     />
-                )}
-            </button>
+                </button>
+            )}
 
             {/* Share Modal */}
             {isShareModalOpen && (
@@ -999,12 +957,12 @@ export default function RoomPage() {
 
                             <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 bg-black/40 border border-white/10 p-2 sm:p-1.5 rounded-xl">
                                 <div className="flex-1 px-3 py-1.5 text-xs sm:text-sm text-zinc-300 truncate font-mono select-all">
-                                    {(process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:3000") + "/" + roomId}
+                                    {(process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:3000") + "/room/" + roomId}
                                 </div>
                                 <ConfettiButton
                                     options={{ particleCount: 250, spread: 120, colors: ['#2EFF85', '#FFFFFF', '#10B981'] }}
                                     onClick={() => {
-                                        const url = (process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:3000") + "/" + roomId;
+                                        const url = (process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:3000") + "/room/" + roomId;
                                         navigator.clipboard.writeText(url);
                                         setIsCopied(true);
                                         setTimeout(() => setIsCopied(false), 2000);
@@ -1044,20 +1002,6 @@ export default function RoomPage() {
                     )}
                 </div>
             )}
-
-            {/* Bottom-left GitHub Creator Link */}
-            <a
-                href="https://github.com/BikramMondal5"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="fixed bottom-5 left-5 z-30 inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-[#161618]/80 hover:bg-[#202024] border border-white/10 hover:border-[#2EFF85]/30 text-xs font-medium text-zinc-400 hover:text-white backdrop-blur-md transition-all duration-200 shadow-lg group pointer-events-auto"
-                title="Bikram Mondal on GitHub"
-            >
-                <svg className="w-3.5 h-3.5 fill-current text-zinc-400 group-hover:text-white transition-colors" viewBox="0 0 24 24" aria-hidden="true">
-                    <path d="M12 0C5.37 0 0 5.37 0 12c0 5.3 3.44 9.8 8.21 11.39.6.11.82-.26.82-.58v-2.03c-3.34.73-4.04-1.61-4.04-1.61-.55-1.39-1.33-1.76-1.33-1.76-1.09-.75.08-.73.08-.73 1.2.08 1.84 1.24 1.84 1.24 1.07 1.83 2.81 1.3 3.49.99.11-.78.42-1.3.76-1.6-2.66-.3-5.47-1.33-5.47-5.93 0-1.31.47-2.38 1.24-3.22-.12-.3-.54-1.52.12-3.18 0 0 1.01-.32 3.3 1.23.96-.27 1.98-.4 3-.4s2.04.13 3 .4c2.29-1.55 3.3-1.23 3.3-1.23.66 1.66.24 2.88.12 3.18.77.84 1.24 1.91 1.24 3.22 0 4.61-2.81 5.62-5.48 5.92.43.37.81 1.1.81 2.22v3.29c0 .32.22.69.82.58A12.01 12.01 0 0 0 24 12c0-6.63-5.37-12-12-12Z" />
-                </svg>
-                <span>@BikramMondal5</span>
-            </a>
         </div>
     );
 }
