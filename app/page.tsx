@@ -2,6 +2,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { motion, useAnimationFrame, useMotionValue } from 'framer-motion';
 import { useRouter } from 'next/navigation';
+import { useSession } from 'next-auth/react';
 import { Star } from 'lucide-react';
 import { getCachedStars, fetchAndStoreStars } from '@/lib/githubStars';
 
@@ -50,6 +51,7 @@ const NeonGlow = ({ className = '' }: { className?: string }) => {
 // Main Component
 const LiveNotesHero = () => {
     const router = useRouter();
+    const { data: session } = useSession();
     const [roomInput, setRoomInput] = useState('');
     const [isFocused, setIsFocused] = useState(false);
     const [githubStars, setGithubStars] = useState<number | null>(null);
@@ -147,6 +149,24 @@ const LiveNotesHero = () => {
                                 <span suppressHydrationWarning>{githubStars !== null ? githubStars : "2"}</span>
                             </div>
                         </a>
+
+                        {session?.user && (
+                            session.user.image ? (
+                                <img
+                                    src={session.user.image}
+                                    alt={session.user.name || "User"}
+                                    className="w-8 h-8 rounded-full object-cover border border-white/10 ring-1 ring-white/5"
+                                    title={session.user.name || session.user.email || "Logged in"}
+                                />
+                            ) : (
+                                <div
+                                    className="w-8 h-8 rounded-full bg-zinc-800 border border-white/10 flex items-center justify-center text-xs font-semibold text-white"
+                                    title={session.user.name || session.user.email || "Logged in"}
+                                >
+                                    {session.user.name ? session.user.name.charAt(0).toUpperCase() : "U"}
+                                </div>
+                            )
+                        )}
                     </div>
                 </div>
             </nav>

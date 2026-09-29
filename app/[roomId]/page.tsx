@@ -2,6 +2,7 @@
 
 import { useEffect, useState, useRef } from "react";
 import { useParams } from "next/navigation";
+import { useSession } from "next-auth/react";
 import { db } from "@/lib/firebase";
 import { ref, set, remove, onValue, get } from "firebase/database";
 import { Plus, Wand2, MousePointer2, Square, Circle, ArrowUpRight, Slash, PenLine, Type, Image as ImageIcon, Frame, HelpingHand, Settings, ChevronDown, MoreHorizontal, Sparkles, Search, Home, Briefcase, FileText, ChevronRight, Rocket, Share, X, Copy, Check, Scan, Presentation, UserCheck, FileSearch, Receipt, Star, Menu } from "lucide-react";
@@ -27,6 +28,7 @@ const MAX_FILE_SIZE = 25 * 1024 * 1024; // 25 MB max PDF size
 
 export default function RoomPage() {
     const { roomId } = useParams() as { roomId: string };
+    const { data: session } = useSession();
     const [notes, setNotes] = useState("");
     const [activeTool, setActiveTool] = useState("rect");
     const [viewMode, setViewMode] = useState<"document" | "text" | "canvas">("text"); // Default to Text tab
@@ -596,31 +598,39 @@ export default function RoomPage() {
                         <img src="/logo.png" alt="LiveNotes Logo" className="w-9 h-9 object-cover rounded-full" />
                     </div>
 
-                    <div className="flex items-center bg-[#1C1C1C] rounded-[8px] h-8 max-w-[65%] sm:max-w-none">
-                        <button
-                            onClick={() => {
-                                navigator.clipboard.writeText(notes);
-                                setIsCopied(true);
-                                setTimeout(() => setIsCopied(false), 2000);
-                            }}
-                            className={`shrink-0 flex items-center gap-1.5 px-2.5 sm:px-3 h-full rounded-[8px] text-xs font-medium transition-all duration-200 ${isCopied
-                                ? "bg-[#2EFF85]/20 text-[#2EFF85]"
-                                : "bg-[#262626] hover:bg-[#333333] text-zinc-300"
-                                }`}
-                        >
-                            {isCopied ? <Check className="w-3.5 h-3.5" /> : <Copy className="w-3.5 h-3.5" />}
-                            <span className="hidden sm:inline">{isCopied ? "Copied Text!" : "Copy Text"}</span>
-                        </button>
-                    </div>
+                    <div className="flex items-center gap-2">
+                        <div className="flex items-center bg-[#1C1C1C] rounded-[8px] h-8">
+                            <button
+                                onClick={() => {
+                                    navigator.clipboard.writeText(notes);
+                                    setIsCopied(true);
+                                    setTimeout(() => setIsCopied(false), 2000);
+                                }}
+                                className={`shrink-0 flex items-center gap-1.5 px-2.5 sm:px-3 h-full rounded-[8px] text-xs font-medium transition-all duration-200 ${isCopied
+                                    ? "bg-[#2EFF85]/20 text-[#2EFF85]"
+                                    : "bg-[#262626] hover:bg-[#333333] text-zinc-300"
+                                    }`}
+                            >
+                                {isCopied ? <Check className="w-3.5 h-3.5" /> : <Copy className="w-3.5 h-3.5" />}
+                                <span>{isCopied ? "Copied Text!" : "Copy Text"}</span>
+                            </button>
+                        </div>
 
-                    {/* Mobile Ask Elloy Quick Button */}
-                    <button
-                        onClick={() => setIsAlloyOpen(!isAlloyOpen)}
-                        className="sm:hidden flex items-center gap-1 bg-[#2EFF85] hover:bg-[#25dd72] text-[#161618] px-2.5 py-1.5 rounded-[8px] text-xs font-medium transition-colors"
-                    >
-                        <Sparkles className="w-3.5 h-3.5" />
-                        <span>Elloy</span>
-                    </button>
+                        {/* Mobile profile avatar */}
+                        {session?.user && (
+                            session.user.image ? (
+                                <img
+                                    src={session.user.image}
+                                    alt={session.user.name || "User"}
+                                    className="sm:hidden w-8 h-8 rounded-full object-cover border border-white/10 ring-1 ring-white/5"
+                                />
+                            ) : (
+                                <div className="sm:hidden w-8 h-8 rounded-full bg-zinc-800 border border-white/10 flex items-center justify-center text-xs font-semibold text-white">
+                                    {session.user.name ? session.user.name.charAt(0).toUpperCase() : "U"}
+                                </div>
+                            )
+                        )}
+                    </div>
                 </div>
 
                 <div className="flex items-center bg-zinc-900/50 rounded-md p-1 border border-white/5 order-3 sm:order-2 w-full sm:w-auto justify-center">
@@ -674,6 +684,23 @@ export default function RoomPage() {
                         <Sparkles className="w-3.5 h-3.5" />
                         <span className="hidden sm:inline">Ask Elloy</span>
                     </button>
+                    {session?.user && (
+                        session.user.image ? (
+                            <img
+                                src={session.user.image}
+                                alt={session.user.name || "User"}
+                                className="w-8 h-8 rounded-full object-cover border border-white/10 ring-1 ring-white/5 ml-1"
+                                title={session.user.name || session.user.email || "Logged in"}
+                            />
+                        ) : (
+                            <div
+                                className="w-8 h-8 rounded-full bg-zinc-800 border border-white/10 flex items-center justify-center text-xs font-semibold text-white ml-1"
+                                title={session.user.name || session.user.email || "Logged in"}
+                            >
+                                {session.user.name ? session.user.name.charAt(0).toUpperCase() : "U"}
+                            </div>
+                        )
+                    )}
                 </div>
             </header>
 
