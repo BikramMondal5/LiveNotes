@@ -596,15 +596,14 @@ export default function RoomPage() {
                         <img src="/logo.png" alt="LiveNotes Logo" className="w-9 h-9 object-cover rounded-full" />
                     </div>
 
-                    <div className="flex items-center bg-[#1C1C1C] rounded-[8px] pl-3 h-8 max-w-[65%] sm:max-w-none">
-                        <span className="text-xs text-zinc-300 truncate max-w-[110px] sm:max-w-[150px]">/{roomId}</span>
+                    <div className="flex items-center bg-[#1C1C1C] rounded-[8px] h-8 max-w-[65%] sm:max-w-none">
                         <button
                             onClick={() => {
                                 navigator.clipboard.writeText(notes);
                                 setIsCopied(true);
                                 setTimeout(() => setIsCopied(false), 2000);
                             }}
-                            className={`ml-2 sm:ml-3 shrink-0 flex items-center gap-1.5 px-2.5 sm:px-3 h-full rounded-[8px] text-xs font-medium transition-all duration-200 ${isCopied
+                            className={`shrink-0 flex items-center gap-1.5 px-2.5 sm:px-3 h-full rounded-[8px] text-xs font-medium transition-all duration-200 ${isCopied
                                 ? "bg-[#2EFF85]/20 text-[#2EFF85]"
                                 : "bg-[#262626] hover:bg-[#333333] text-zinc-300"
                                 }`}
