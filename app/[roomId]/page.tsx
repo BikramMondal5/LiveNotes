@@ -756,9 +756,9 @@ export default function RoomPage() {
                     </div>
                 )}
 
-                {/* Mobile Floating Bottom Canvas Toolbar */}
+                {/* Mobile Floating Top Canvas Toolbar */}
                 {viewMode === 'canvas' && (
-                    <div className="flex sm:hidden absolute bottom-4 left-1/2 -translate-x-1/2 flex-row gap-1 bg-zinc-900/95 border border-zinc-800 rounded-2xl p-1.5 shadow-2xl backdrop-blur-md z-30 max-w-[95vw] overflow-x-auto no-scrollbar">
+                    <div className="flex sm:hidden absolute top-3 left-1/2 -translate-x-1/2 flex-row gap-1 bg-zinc-900/95 border border-zinc-800 rounded-2xl p-1.5 shadow-2xl backdrop-blur-md z-30 max-w-[95vw] overflow-x-auto no-scrollbar">
                         <ToolButton icon={MousePointer2} label="V" active={activeTool === 'pointer'} onClick={() => setActiveTool('pointer')} />
                         <ToolButton icon={Square} label="R" active={activeTool === 'rect'} onClick={() => setActiveTool('rect')} />
                         <ToolButton icon={Circle} label="O" active={activeTool === 'circle'} onClick={() => setActiveTool('circle')} />
