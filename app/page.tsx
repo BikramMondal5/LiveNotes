@@ -3,7 +3,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { motion, useAnimationFrame, useMotionValue } from 'framer-motion';
 import { useRouter } from 'next/navigation';
 import { useSession } from 'next-auth/react';
-import { Star } from 'lucide-react';
+import { Star, Copy, Check } from 'lucide-react';
 import { getCachedStars, fetchAndStoreStars } from '@/lib/githubStars';
 
 // Grid Pattern Component
@@ -55,7 +55,109 @@ const LiveNotesHero = () => {
     const [roomInput, setRoomInput] = useState('');
     const [isFocused, setIsFocused] = useState(false);
     const [githubStars, setGithubStars] = useState<number | null>(null);
+    const [pkgManager, setPkgManager] = useState<'npm' | 'pnpm' | 'yarn' | 'bun' | 'curl'>('npm');
+    const [isSnippetCopied, setIsSnippetCopied] = useState(false);
     const inputRef = useRef<HTMLInputElement>(null);
+
+    const packageManagers = [
+        {
+            id: 'npm' as const,
+            name: 'npm',
+            command: 'npm install -g livenotes',
+            display: (
+                <>
+                    <span className="text-[#2EFF85] font-semibold">npm</span>{' '}
+                    <span className="text-[#00E5FF]">install</span>{' '}
+                    <span className="text-[#00E5FF]">-g</span>{' '}
+                    <span className="text-[#00E5FF]">livenotes</span>
+                </>
+            ),
+            icon: (
+                <svg className="w-3.5 h-3.5 fill-current" viewBox="0 0 24 24">
+                    <path d="M1.763 0C.786 0 0 .786 0 1.763v20.474C0 23.214.786 24 1.763 24h20.474c.977 0 1.763-.786 1.763-1.763V1.763C24 .786 23.214 0 22.237 0zM5.13 5.13h13.74v13.74h-3.435V8.565h-3.435v10.305H5.13z" />
+                </svg>
+            ),
+        },
+        {
+            id: 'pnpm' as const,
+            name: 'pnpm',
+            command: 'pnpm add -g livenotes',
+            display: (
+                <>
+                    <span className="text-[#2EFF85] font-semibold">pnpm</span>{' '}
+                    <span className="text-[#00E5FF]">add</span>{' '}
+                    <span className="text-[#00E5FF]">-g</span>{' '}
+                    <span className="text-[#00E5FF]">livenotes</span>
+                </>
+            ),
+            icon: (
+                <svg className="w-3.5 h-3.5 fill-current" viewBox="0 0 24 24">
+                    <path d="M0 0h7.5v7.5H0zm8.25 0h7.5v7.5h-7.5zm8.25 0H24v7.5h-7.5zM8.25 8.25h7.5v7.5h-7.5zm8.25 0H24v7.5h-7.5zM8.25 16.5h7.5V24h-7.5zm8.25 0H24V24h-7.5zM0 16.5h7.5V24H0z" />
+                </svg>
+            ),
+        },
+        {
+            id: 'yarn' as const,
+            name: 'yarn',
+            command: 'yarn global add livenotes',
+            display: (
+                <>
+                    <span className="text-[#2EFF85] font-semibold">yarn</span>{' '}
+                    <span className="text-[#00E5FF]">global</span>{' '}
+                    <span className="text-[#00E5FF]">add</span>{' '}
+                    <span className="text-[#00E5FF]">livenotes</span>
+                </>
+            ),
+            icon: (
+                <svg className="w-3.5 h-3.5 fill-current" viewBox="0 0 24 24">
+                    <path d="M12.986 2.378c-.753-.448-1.706-.448-2.46 0L1.758 7.575C1.004 8.022.54 8.825.54 9.721v10.395c0 .895.464 1.698 1.218 2.146l8.768 5.197c.754.447 1.707.447 2.46 0l8.768-5.197c.754-.448 1.218-1.251 1.218-2.146V9.721c0-.896-.464-1.699-1.218-2.146z" />
+                </svg>
+            ),
+        },
+        {
+            id: 'bun' as const,
+            name: 'bun',
+            command: 'bun add -g livenotes',
+            display: (
+                <>
+                    <span className="text-[#2EFF85] font-semibold">bun</span>{' '}
+                    <span className="text-[#00E5FF]">add</span>{' '}
+                    <span className="text-[#00E5FF]">-g</span>{' '}
+                    <span className="text-[#00E5FF]">livenotes</span>
+                </>
+            ),
+            icon: (
+                <svg className="w-3.5 h-3.5 fill-current" viewBox="0 0 24 24">
+                    <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 14.93c-.96.09-1.92.09-2.88 0-.58-.06-.99-.54-.96-1.12.03-.58.53-.99 1.11-.96.9.05 1.79.05 2.69 0 .58-.03 1.08.38 1.11.96.03.58-.38 1.06-.96 1.12zM8.5 11c-.83 0-1.5-.67-1.5-1.5S7.67 8 8.5 8s1.5.67 1.5 1.5S9.33 11 8.5 11zm7 0c-.83 0-1.5-.67-1.5-1.5S14.67 8 15.5 8s1.5.67 1.5 1.5-.67 1.5-1.5 1.5z" />
+                </svg>
+            ),
+        },
+        {
+            id: 'curl' as const,
+            name: 'curl',
+            command: 'curl -fsSL https://livenotes.app/install.sh | bash',
+            display: (
+                <>
+                    <span className="text-[#2EFF85] font-semibold">curl</span>{' '}
+                    <span className="text-[#00E5FF]">-fsSL</span>{' '}
+                    <span className="text-[#00E5FF]">https://livenotes.app/install.sh</span>{' '}
+                    <span className="text-zinc-400">|</span>{' '}
+                    <span className="text-[#2EFF85]">bash</span>
+                </>
+            ),
+            icon: (
+                <span className="font-mono font-bold text-[11px] leading-none">&gt;_</span>
+            ),
+        },
+    ];
+
+    const currentPm = packageManagers.find((p) => p.id === pkgManager) || packageManagers[0];
+
+    const handleCopySnippet = () => {
+        navigator.clipboard.writeText("Comming Soon, Stay Tuned!");
+        setIsSnippetCopied(true);
+        setTimeout(() => setIsSnippetCopied(false), 2000);
+    };
 
     useEffect(() => {
         if (inputRef.current) {
@@ -181,15 +283,16 @@ const LiveNotesHero = () => {
                 >
                     {/* Heading */}
                     <div className="space-y-4">
-                        <h1 className="text-5xl md:text-7xl lg:text-8xl font-bold text-white leading-tight tracking-tight">
-                            Start Writing.{' '}
+                        <h1 className="text-5xl md:text-7xl lg:text-8xl font-bold text-white tracking-tight leading-none flex flex-col gap-1 sm:gap-2 items-center">
+                            <span>Start Writing.</span>
                             <span className="text-[#2EFF85] relative inline-block">
                                 Share Instantly.
                                 <div className="absolute -inset-4 bg-[#2EFF85] opacity-20 blur-3xl -z-10" />
                             </span>
                         </h1>
                         <p className="text-lg md:text-xl text-[#A1A1AA] max-w-2xl mx-auto leading-relaxed">
-                            Create a room and collaborate in real-time with your friends.
+                            Share notes in real-time with your friends.<br></br>
+                            Create a room with a name or join an existing room.
                         </p>
                     </div>
 
@@ -238,18 +341,58 @@ const LiveNotesHero = () => {
                         </div>
                     </motion.div>
 
-                    {/* Helper Text */}
+                    {/* CLI Install Snippet Box */}
                     <motion.div
-                        initial={{ opacity: 0 }}
-                        animate={{ opacity: 1 }}
-                        transition={{ duration: 0.8, delay: 0.4 }}
-                        className="flex items-center justify-center gap-3 text-xs md:text-sm text-[#A1A1AA]"
+                        initial={{ opacity: 0, y: 15 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ duration: 0.8, delay: 0.35 }}
+                        className="w-full max-w-2xl mx-auto -mt-5 sm:-mt-6"
                     >
-                        <span>No sign-up required</span>
-                        <span className="w-1 h-1 rounded-full bg-[#A1A1AA]" />
-                        <span>Free forever</span>
-                        <span className="w-1 h-1 rounded-full bg-[#A1A1AA]" />
-                        <span>End-to-end encrypted</span>
+                        <div className="rounded-2xl bg-[#111113]/90 border border-white/10 p-3 sm:p-4 text-left shadow-2xl backdrop-blur-md">
+                            {/* Package Manager Tabs */}
+                            <div className="bg-[#18181B] border border-white/5 rounded-xl p-1 inline-flex items-center gap-1">
+                                {packageManagers.map((pm) => (
+                                    <button
+                                        key={pm.id}
+                                        onClick={() => setPkgManager(pm.id)}
+                                        className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all cursor-pointer ${pkgManager === pm.id
+                                            ? 'bg-[#27272A] text-white shadow-sm'
+                                            : 'text-zinc-400 hover:text-zinc-200'
+                                            }`}
+                                    >
+                                        {pm.icon}
+                                        <span>{pm.name}</span>
+                                    </button>
+                                ))}
+                            </div>
+
+                            {/* Subtle divider */}
+                            <div className="border-b border-white/5 my-3" />
+
+                            {/* Command snippet + Copy button */}
+                            <div className="bg-[#0A0A0C] border border-white/5 rounded-xl px-4 py-2.5 flex items-center justify-between gap-3 overflow-x-auto no-scrollbar">
+                                <code className="font-mono text-xs sm:text-sm whitespace-nowrap select-all">
+                                    {currentPm.display}
+                                </code>
+                                <button
+                                    onClick={handleCopySnippet}
+                                    className="shrink-0 flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-zinc-800/80 hover:bg-zinc-700 text-zinc-300 hover:text-white border border-white/10 text-xs font-medium transition-all active:scale-95 ml-2 cursor-pointer"
+                                    title="Copy command"
+                                >
+                                    {isSnippetCopied ? (
+                                        <>
+                                            <Check className="w-3.5 h-3.5 text-[#2EFF85]" />
+                                            <span className="text-[#2EFF85]">Copied!</span>
+                                        </>
+                                    ) : (
+                                        <>
+                                            <Copy className="w-3.5 h-3.5" />
+                                            <span>Copy</span>
+                                        </>
+                                    )}
+                                </button>
+                            </div>
+                        </div>
                     </motion.div>
                 </motion.div>
             </div>
