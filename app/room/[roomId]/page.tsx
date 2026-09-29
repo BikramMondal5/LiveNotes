@@ -4,7 +4,7 @@ import { useEffect, useState, useRef } from "react";
 import { useParams } from "next/navigation";
 import { db } from "@/lib/firebase";
 import { ref, set, remove, onValue, get } from "firebase/database";
-import { Plus, Wand2, MousePointer2, Square, Circle, ArrowUpRight, Slash, PenLine, Type, Image as ImageIcon, Frame, HelpingHand, Settings, ChevronDown, MoreHorizontal, Sparkles, Search, Home, Briefcase, FileText, ChevronRight, Rocket, Share, X, Copy, Check, Scan, Presentation, UserCheck, FileSearch, Receipt, Star } from "lucide-react";
+import { Plus, Wand2, MousePointer2, Square, Circle, ArrowUpRight, Slash, PenLine, Type, Image as ImageIcon, Frame, HelpingHand, Settings, ChevronDown, MoreHorizontal, Sparkles, Search, Home, Briefcase, FileText, ChevronRight, Rocket, Share, X, Copy, Check, Scan, Presentation, UserCheck, FileSearch, Receipt, Star, Menu } from "lucide-react";
 import DotGrid from "../../components/DotGrid";
 import DrawingCanvas from "../../components/DrawingCanvas";
 import AskAlloy from "../../components/AskAlloy";
@@ -36,6 +36,7 @@ export default function RoomPage() {
     const [pdfFile, setPdfFile] = useState<string | null>(null);
     const [activeDocId, setActiveDocId] = useState<string | null>(null);
     const [isDocLoading, setIsDocLoading] = useState(false);
+    const [isMobileDocSidebarOpen, setIsMobileDocSidebarOpen] = useState(false);
     const [activeDocView, setActiveDocView] = useState<"home" | "preview">("home");
     const fileInputRef = useRef<HTMLInputElement>(null);
     const notesTimeoutRef = useRef<NodeJS.Timeout | null>(null);
@@ -148,6 +149,7 @@ export default function RoomPage() {
     const handleSelectRecentFile = async (file: RoomDocument) => {
         setActiveDocId(file.id);
         setActiveDocView("preview");
+        setIsMobileDocSidebarOpen(false);
 
         if (file.url && !file.isChunked) {
             setPdfFile(file.url);
@@ -445,6 +447,146 @@ export default function RoomPage() {
         return () => window.removeEventListener('keydown', handleKeyDown);
     }, [isScreenshotMode, isPdfToolsOpen]);
 
+    // Reusable PDF Sidebar component for desktop and mobile drawer
+    const PdfSidebarContent = () => (
+        <div className="flex flex-col h-full bg-[#161618]">
+            {/* Header / Search */}
+            <div className="p-4">
+                <div className="flex items-center justify-between mb-4">
+                    <div className="flex items-center gap-2">
+                        <img src="/pdfs.png" alt="PDF Logo" className="w-6 h-6 object-contain" />
+                        <span className="font-semibold text-zinc-200">Ask Elloy PDF</span>
+                    </div>
+                    {/* Mobile close button */}
+                    <button
+                        onClick={() => setIsMobileDocSidebarOpen(false)}
+                        className="md:hidden p-1.5 text-zinc-400 hover:text-white rounded-lg hover:bg-zinc-800"
+                    >
+                        <X className="w-4 h-4" />
+                    </button>
+                </div>
+                <div className="relative">
+                    <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-zinc-500" />
+                    <input
+                        type="text"
+                        placeholder="Search"
+                        className="w-full bg-zinc-900 border border-zinc-800 rounded-lg py-2 pl-9 pr-4 text-sm text-zinc-200 focus:outline-none focus:border-[#2EFF85]/50 transition-colors placeholder:text-zinc-600"
+                    />
+                </div>
+            </div>
+
+            {/* Navigation */}
+            <div className="px-3 pb-4 space-y-1 border-b border-zinc-800/50">
+                <button
+                    onClick={() => {
+                        setActiveDocView("home");
+                        setIsMobileDocSidebarOpen(false);
+                    }}
+                    className={`w-full flex items-center justify-between px-3 py-2 rounded-lg transition-colors group ${activeDocView === 'home' ? 'bg-zinc-800/50 text-[#2EFF85]' : 'text-zinc-300 hover:bg-zinc-800/50 hover:text-[#2EFF85]'}`}
+                >
+                    <div className="flex items-center gap-3">
+                        <Home className={`w-4 h-4 ${activeDocView === 'home' ? 'text-[#2EFF85]' : 'text-zinc-400 group-hover:text-[#2EFF85]'}`} />
+                        <span className="text-sm font-medium">Home</span>
+                    </div>
+                </button>
+                <div className="space-y-1 relative">
+                    <button onClick={() => setIsPdfToolsOpen(!isPdfToolsOpen)} className={`w-full flex items-center justify-between px-3 py-2 rounded-lg transition-colors group ${isPdfToolsOpen ? 'bg-zinc-800/50 text-[#2EFF85]' : 'text-zinc-300 hover:bg-zinc-800/50 hover:text-[#2EFF85]'}`}>
+                        <div className="flex items-center gap-3">
+                            <Briefcase className={`w-4 h-4 ${isPdfToolsOpen ? 'text-[#2EFF85]' : 'text-zinc-400 group-hover:text-[#2EFF85]'}`} />
+                            <span className="text-sm font-medium">PDF tools</span>
+                        </div>
+                        <ChevronRight className={`w-4 h-4 transition-transform ${isPdfToolsOpen ? 'text-[#2EFF85] rotate-90' : 'text-zinc-600 group-hover:text-[#2EFF85]'}`} />
+                    </button>
+
+                    {isPdfToolsOpen && (
+                        <>
+                            {/* Click outside backdrop */}
+                            <div className="fixed inset-0 z-40" onClick={() => setIsPdfToolsOpen(false)} />
+
+                            {/* Floating Modal */}
+                            <div
+                                className="absolute left-0 md:left-[calc(100%+12px)] top-10 md:top-0 z-50 w-[260px] md:w-[280px] p-3 flex flex-col gap-1 shadow-[0_10px_40px_rgba(0,0,0,0.6)] animate-in fade-in zoom-in-95 slide-in-from-bottom-2 duration-200 ease-out"
+                                style={{
+                                    backgroundColor: '#0F1115',
+                                    border: '1px solid rgba(255,255,255,0.08)',
+                                    borderRadius: '16px'
+                                }}
+                            >
+                                <div className="px-2 pb-2 mb-1 border-b border-white/5">
+                                    <span className="text-[11px] font-semibold text-zinc-500 uppercase tracking-wider">Quick Actions</span>
+                                </div>
+
+                                <div className="flex flex-col gap-1 max-h-[360px] overflow-y-auto no-scrollbar">
+                                    <button
+                                        onClick={() => {
+                                            setIsMobileDocSidebarOpen(false);
+                                            startScreenCapture();
+                                        }}
+                                        className="w-full flex items-center gap-3 px-3 py-2.5 rounded-[10px] text-zinc-300 font-medium text-sm transition-all hover:bg-[#2EFF85]/10 hover:text-[#2EFF85] active:scale-95 group"
+                                    >
+                                        <Scan className="w-4 h-4 text-zinc-400 group-hover:text-[#2EFF85] transition-colors" />
+                                        Screenshot & Ask Elloy
+                                    </button>
+                                </div>
+                            </div>
+                        </>
+                    )}
+                </div>
+            </div>
+
+            {/* Recent */}
+            <div className="flex-1 overflow-y-auto px-3 py-4 no-scrollbar">
+                <h4 className="text-xs font-semibold text-zinc-500 px-3 mb-3">Recent</h4>
+                <div className="space-y-1">
+                    {recentFiles.length === 0 ? (
+                        <div className="px-3 py-4 text-center text-xs text-zinc-600">
+                            No recent files. Upload a PDF to get started.
+                        </div>
+                    ) : (
+                        recentFiles.map((file) => (
+                            <div
+                                key={file.id}
+                                onClick={() => handleSelectRecentFile(file)}
+                                className={`w-full flex items-center justify-between gap-2 px-3 py-2.5 rounded-lg cursor-pointer transition-colors group border ${activeDocId === file.id ? 'bg-[#2EFF85]/5 border-[#2EFF85]/10' : 'hover:bg-zinc-800/30 border-transparent'}`}
+                            >
+                                <div className="flex items-start gap-3 overflow-hidden min-w-0 flex-1">
+                                    <FileText className={`w-5 h-5 shrink-0 mt-0.5 ${activeDocId === file.id ? 'text-[#2EFF85]' : 'text-zinc-500 group-hover:text-zinc-400'}`} />
+                                    <div className="flex flex-col text-left overflow-hidden min-w-0 w-full">
+                                        <span className={`text-sm truncate font-medium ${activeDocId === file.id ? 'text-zinc-200' : 'text-zinc-400 group-hover:text-zinc-200'}`}>
+                                            {file.name}
+                                        </span>
+                                        <div className="flex items-center justify-between mt-1 text-xs text-zinc-600">
+                                            <span className="truncate">{file.size}</span>
+                                            <span className="ml-2 shrink-0">{file.date}</span>
+                                        </div>
+                                    </div>
+                                </div>
+                                <button
+                                    onClick={(e) => handleDeleteRecentFile(e, file.id)}
+                                    className="opacity-0 group-hover:opacity-100 p-1 text-zinc-500 hover:text-red-400 hover:bg-red-500/10 rounded transition-all shrink-0"
+                                    title="Delete from this room"
+                                >
+                                    <X className="w-3.5 h-3.5" />
+                                </button>
+                            </div>
+                        ))
+                    )}
+                </div>
+            </div>
+
+            {/* Bottom Promo */}
+            <div className="p-4 border-t border-zinc-800/50 bg-[#161618]">
+                <div className="bg-zinc-900 rounded-xl p-4 border border-zinc-800 text-center relative overflow-hidden">
+                    <Rocket className="w-8 h-8 text-[#2EFF85] mx-auto mb-2 drop-shadow-[0_0_8px_rgba(46,255,133,0.5)]" />
+                    <h5 className="text-sm font-semibold text-white mb-3 relative z-10">Chat PDFs with GPT-4o</h5>
+                    <button className="w-full bg-[#2EFF85]/10 text-[#2EFF85] hover:bg-[#2EFF85]/20 text-xs font-medium py-2 rounded-lg transition-colors border border-[#2EFF85]/20">
+                        Completely free
+                    </button>
+                </div>
+            </div>
+        </div>
+    );
+
     return (
         <div className="h-screen w-full bg-[#161618] flex flex-col overflow-hidden font-sans text-zinc-300">
             {/* Top Navigation */}
@@ -454,8 +596,8 @@ export default function RoomPage() {
                         <img src="/logo.png" alt="LiveNotes Logo" className="w-9 h-9 object-cover rounded-full" />
                     </div>
 
-                    <div className="flex items-center bg-[#1C1C1C] rounded-[8px] pl-3 h-8 max-w-[60%] sm:max-w-none">
-                        <span className="text-xs text-zinc-300 truncate max-w-[100px] sm:max-w-[150px]">/room/{roomId}</span>
+                    <div className="flex items-center bg-[#1C1C1C] rounded-[8px] pl-3 h-8 max-w-[65%] sm:max-w-none">
+                        <span className="text-xs text-zinc-300 truncate max-w-[110px] sm:max-w-[150px]">/room/{roomId}</span>
                         <button
                             onClick={() => {
                                 const url = (process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:3000") + "/room/" + roomId;
@@ -463,7 +605,7 @@ export default function RoomPage() {
                                 setIsCopied(true);
                                 setTimeout(() => setIsCopied(false), 2000);
                             }}
-                            className={`ml-3 shrink-0 flex items-center gap-1.5 px-3 h-full rounded-[8px] text-xs font-medium transition-all duration-200 ${isCopied
+                            className={`ml-2 sm:ml-3 shrink-0 flex items-center gap-1.5 px-2.5 sm:px-3 h-full rounded-[8px] text-xs font-medium transition-all duration-200 ${isCopied
                                 ? "bg-[#2EFF85]/20 text-[#2EFF85]"
                                 : "bg-[#262626] hover:bg-[#333333] text-zinc-300"
                                 }`}
@@ -472,6 +614,15 @@ export default function RoomPage() {
                             <span className="hidden sm:inline">{isCopied ? "Copied!" : "Copy"}</span>
                         </button>
                     </div>
+
+                    {/* Mobile Ask Elloy Quick Button */}
+                    <button
+                        onClick={() => setIsAlloyOpen(!isAlloyOpen)}
+                        className="sm:hidden flex items-center gap-1 bg-[#2EFF85] hover:bg-[#25dd72] text-[#161618] px-2.5 py-1.5 rounded-[8px] text-xs font-medium transition-colors"
+                    >
+                        <Sparkles className="w-3.5 h-3.5" />
+                        <span>Elloy</span>
+                    </button>
                 </div>
 
                 <div className="flex items-center bg-zinc-900/50 rounded-md p-1 border border-white/5 order-3 sm:order-2 w-full sm:w-auto justify-center">
@@ -495,7 +646,7 @@ export default function RoomPage() {
                     </button>
                 </div>
 
-                <div className="hidden sm:flex items-center gap-3 sm:min-w-50 justify-end order-2 sm:order-3 absolute right-4 top-3 sm:static">
+                <div className="hidden sm:flex items-center gap-3 sm:min-w-50 justify-end order-2 sm:order-3">
                     {/* Star on GitHub Split Badge */}
                     <a
                         href="https://github.com/BikramMondal5/LiveNotes"
@@ -544,9 +695,9 @@ export default function RoomPage() {
                     />
                 </div>
 
-                {/* Left Toolbar - only visible in canvas mode */}
+                {/* Left Desktop Toolbar - only visible in canvas mode */}
                 {viewMode === 'canvas' && (
-                    <div className="absolute left-4 top-4 flex flex-col gap-2 z-30 w-11">
+                    <div className="hidden sm:flex absolute left-4 top-4 flex-col gap-2 z-30 w-11">
                         {/* Top block */}
                         <div className="flex flex-col gap-1 bg-zinc-900/90 border border-zinc-800 rounded-xl p-1 shadow-xl backdrop-blur-sm">
                             <button className="w-9 h-9 flex items-center justify-center rounded-lg hover:bg-zinc-800 text-zinc-400 transition-colors group relative">
@@ -580,6 +731,20 @@ export default function RoomPage() {
                     </div>
                 )}
 
+                {/* Mobile Floating Bottom Canvas Toolbar */}
+                {viewMode === 'canvas' && (
+                    <div className="flex sm:hidden absolute bottom-4 left-1/2 -translate-x-1/2 flex-row gap-1 bg-zinc-900/95 border border-zinc-800 rounded-2xl p-1.5 shadow-2xl backdrop-blur-md z-30 max-w-[95vw] overflow-x-auto no-scrollbar">
+                        <ToolButton icon={MousePointer2} label="V" active={activeTool === 'pointer'} onClick={() => setActiveTool('pointer')} />
+                        <ToolButton icon={Square} label="R" active={activeTool === 'rect'} onClick={() => setActiveTool('rect')} />
+                        <ToolButton icon={Circle} label="O" active={activeTool === 'circle'} onClick={() => setActiveTool('circle')} />
+                        <ToolButton icon={ArrowUpRight} label="A" active={activeTool === 'arrow'} onClick={() => setActiveTool('arrow')} />
+                        <ToolButton icon={Slash} label="L" active={activeTool === 'line'} onClick={() => setActiveTool('line')} className="rotate-90" />
+                        <ToolButton icon={PenLine} label="D" active={activeTool === 'pencil'} onClick={() => setActiveTool('pencil')} />
+                        <ToolButton icon={Type} label="T" active={activeTool === 'text'} onClick={() => setActiveTool('text')} />
+                        <ToolButton icon={Share} label="Share" active={isShareModalOpen} onClick={() => setIsShareModalOpen(true)} />
+                    </div>
+                )}
+
                 {/* Canvas Area */}
                 <div className="flex-1 w-full h-full relative overflow-hidden z-5">
                     {/* Drawing Canvas - visible ONLY when canvas mode */}
@@ -594,124 +759,23 @@ export default function RoomPage() {
                     {/* Document PDF Viewer */}
                     {viewMode === 'document' && (
                         <div className="absolute inset-0 z-10 w-full h-full flex flex-row overflow-hidden bg-[#161618]">
-                            {/* Sidebar */}
+                            {/* Desktop Sidebar */}
                             <div className="hidden md:flex flex-col w-[260px] h-full border-r border-zinc-800/50 bg-[#161618] shrink-0">
-                                {/* Header / Search */}
-                                <div className="p-4">
-                                    <div className="flex items-center justify-between mb-4">
-                                        <div className="flex items-center gap-2">
-                                            <img src="/pdfs.png" alt="PDF Logo" className="w-6 h-6 object-contain" />
-                                            <span className="font-semibold text-zinc-200">Ask Elloy PDF</span>
-                                        </div>
-                                    </div>
-                                    <div className="relative">
-                                        <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-zinc-500" />
-                                        <input
-                                            type="text"
-                                            placeholder="Search"
-                                            className="w-full bg-zinc-900 border border-zinc-800 rounded-lg py-2 pl-9 pr-4 text-sm text-zinc-200 focus:outline-none focus:border-[#2EFF85]/50 transition-colors placeholder:text-zinc-600"
-                                        />
-                                    </div>
-                                </div>
-
-                                {/* Navigation */}
-                                <div className="px-3 pb-4 space-y-1 border-b border-zinc-800/50">
-                                    <button onClick={() => setActiveDocView("home")} className={`w-full flex items-center justify-between px-3 py-2 rounded-lg transition-colors group ${activeDocView === 'home' ? 'bg-zinc-800/50 text-[#2EFF85]' : 'text-zinc-300 hover:bg-zinc-800/50 hover:text-[#2EFF85]'}`}>
-                                        <div className="flex items-center gap-3">
-                                            <Home className={`w-4 h-4 ${activeDocView === 'home' ? 'text-[#2EFF85]' : 'text-zinc-400 group-hover:text-[#2EFF85]'}`} />
-                                            <span className="text-sm font-medium">Home</span>
-                                        </div>
-                                    </button>
-                                    <div className="space-y-1 relative">
-                                        <button onClick={() => setIsPdfToolsOpen(!isPdfToolsOpen)} className={`w-full flex items-center justify-between px-3 py-2 rounded-lg transition-colors group ${isPdfToolsOpen ? 'bg-zinc-800/50 text-[#2EFF85]' : 'text-zinc-300 hover:bg-zinc-800/50 hover:text-[#2EFF85]'}`}>
-                                            <div className="flex items-center gap-3">
-                                                <Briefcase className={`w-4 h-4 ${isPdfToolsOpen ? 'text-[#2EFF85]' : 'text-zinc-400 group-hover:text-[#2EFF85]'}`} />
-                                                <span className="text-sm font-medium">PDF tools</span>
-                                            </div>
-                                            <ChevronRight className={`w-4 h-4 transition-transform ${isPdfToolsOpen ? 'text-[#2EFF85] rotate-90' : 'text-zinc-600 group-hover:text-[#2EFF85]'}`} />
-                                        </button>
-
-                                        {isPdfToolsOpen && (
-                                            <>
-                                                {/* Click outside backdrop */}
-                                                <div className="fixed inset-0 z-40" onClick={() => setIsPdfToolsOpen(false)} />
-
-                                                {/* Floating Modal */}
-                                                <div
-                                                    className="absolute left-[calc(100%+12px)] top-0 z-50 w-[280px] p-3 flex flex-col gap-1 shadow-[0_10px_40px_rgba(0,0,0,0.6)] animate-in fade-in zoom-in-95 slide-in-from-bottom-2 duration-200 ease-out"
-                                                    style={{
-                                                        backgroundColor: '#0F1115',
-                                                        border: '1px solid rgba(255,255,255,0.08)',
-                                                        borderRadius: '16px'
-                                                    }}
-                                                >
-                                                    <div className="px-2 pb-2 mb-1 border-b border-white/5">
-                                                        <span className="text-[11px] font-semibold text-zinc-500 uppercase tracking-wider">Quick Actions</span>
-                                                    </div>
-
-                                                    <div className="flex flex-col gap-1 max-h-[360px] overflow-y-auto no-scrollbar">
-                                                        <button onClick={startScreenCapture} className="w-full flex items-center gap-3 px-3 py-2.5 rounded-[10px] text-zinc-300 font-medium text-sm transition-all hover:bg-[#2EFF85]/10 hover:text-[#2EFF85] active:scale-95 group">
-                                                            <Scan className="w-4 h-4 text-zinc-400 group-hover:text-[#2EFF85] transition-colors" />
-                                                            Screenshot & Ask Elloy
-                                                        </button>
-                                                    </div>
-                                                </div>
-                                            </>
-                                        )}
-                                    </div>
-                                </div>
-
-                                {/* Recent */}
-                                <div className="flex-1 overflow-y-auto px-3 py-4 no-scrollbar">
-                                    <h4 className="text-xs font-semibold text-zinc-500 px-3 mb-3">Recent</h4>
-                                    <div className="space-y-1">
-                                        {recentFiles.length === 0 ? (
-                                            <div className="px-3 py-4 text-center text-xs text-zinc-600">
-                                                No recent files. Upload a PDF to get started.
-                                            </div>
-                                        ) : (
-                                            recentFiles.map((file, idx) => (
-                                                <div
-                                                    key={file.id}
-                                                    onClick={() => handleSelectRecentFile(file)}
-                                                    className={`w-full flex items-center justify-between gap-2 px-3 py-2.5 rounded-lg cursor-pointer transition-colors group border ${activeDocId === file.id ? 'bg-[#2EFF85]/5 border-[#2EFF85]/10' : 'hover:bg-zinc-800/30 border-transparent'}`}
-                                                >
-                                                    <div className="flex items-start gap-3 overflow-hidden min-w-0 flex-1">
-                                                        <FileText className={`w-5 h-5 shrink-0 mt-0.5 ${activeDocId === file.id ? 'text-[#2EFF85]' : 'text-zinc-500 group-hover:text-zinc-400'}`} />
-                                                        <div className="flex flex-col text-left overflow-hidden min-w-0 w-full">
-                                                            <span className={`text-sm truncate font-medium ${activeDocId === file.id ? 'text-zinc-200' : 'text-zinc-400 group-hover:text-zinc-200'}`}>
-                                                                {file.name}
-                                                            </span>
-                                                            <div className="flex items-center justify-between mt-1 text-xs text-zinc-600">
-                                                                <span className="truncate">{file.size}</span>
-                                                                <span className="ml-2 shrink-0">{file.date}</span>
-                                                            </div>
-                                                        </div>
-                                                    </div>
-                                                    <button
-                                                        onClick={(e) => handleDeleteRecentFile(e, file.id)}
-                                                        className="opacity-0 group-hover:opacity-100 p-1 text-zinc-500 hover:text-red-400 hover:bg-red-500/10 rounded transition-all shrink-0"
-                                                        title="Delete from this room"
-                                                    >
-                                                        <X className="w-3.5 h-3.5" />
-                                                    </button>
-                                                </div>
-                                            ))
-                                        )}
-                                    </div>
-                                </div>
-
-                                {/* Bottom Promo */}
-                                <div className="p-4 border-t border-zinc-800/50 bg-[#161618]">
-                                    <div className="bg-zinc-900 rounded-xl p-4 border border-zinc-800 text-center relative overflow-hidden">
-                                        <Rocket className="w-8 h-8 text-[#2EFF85] mx-auto mb-2 drop-shadow-[0_0_8px_rgba(46,255,133,0.5)]" />
-                                        <h5 className="text-sm font-semibold text-white mb-3 relative z-10">Chat PDFs with GPT-4o</h5>
-                                        <button className="w-full bg-[#2EFF85]/10 text-[#2EFF85] hover:bg-[#2EFF85]/20 text-xs font-medium py-2 rounded-lg transition-colors border border-[#2EFF85]/20">
-                                            Completely free
-                                        </button>
-                                    </div>
-                                </div>
+                                <PdfSidebarContent />
                             </div>
+
+                            {/* Mobile Sidebar Slide-over Drawer */}
+                            {isMobileDocSidebarOpen && (
+                                <div className="fixed inset-0 z-50 md:hidden flex">
+                                    <div
+                                        className="fixed inset-0 bg-black/60 backdrop-blur-sm"
+                                        onClick={() => setIsMobileDocSidebarOpen(false)}
+                                    />
+                                    <div className="relative w-[280px] max-w-[80vw] h-full bg-[#161618] border-r border-zinc-800 z-10 shadow-2xl">
+                                        <PdfSidebarContent />
+                                    </div>
+                                </div>
+                            )}
 
                             {/* Main Iframe Content / Upload UI */}
                             <div
@@ -720,25 +784,36 @@ export default function RoomPage() {
                                 onDragOver={handleDragOver}
                             >
                                 {activeDocView === 'home' || !pdfFile ? (
-                                    <div className="flex-1 flex items-center justify-center p-8 bg-[#161618]">
+                                    <div className="flex-1 flex flex-col items-center justify-center p-4 sm:p-8 bg-[#161618]">
+                                        {/* Mobile Button to Open Document History */}
+                                        <div className="md:hidden w-full flex justify-between items-center mb-4 max-w-lg">
+                                            <button
+                                                onClick={() => setIsMobileDocSidebarOpen(true)}
+                                                className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-zinc-800 border border-zinc-700 text-xs font-medium text-zinc-300"
+                                            >
+                                                <Menu className="w-4 h-4" />
+                                                <span>Recent PDFs ({recentFiles.length})</span>
+                                            </button>
+                                        </div>
+
                                         <div
-                                            className="flex flex-col items-center justify-center w-full h-full max-w-2xl max-h-[600px] border-2 border-dashed border-zinc-700 hover:border-[#2EFF85] rounded-3xl bg-[#161618]/50 transition-colors cursor-pointer group"
+                                            className="flex flex-col items-center justify-center w-full h-full max-w-2xl max-h-[600px] border-2 border-dashed border-zinc-700 hover:border-[#2EFF85] rounded-2xl sm:rounded-3xl bg-[#161618]/50 p-6 transition-colors cursor-pointer group text-center"
                                             onClick={() => !isDocLoading && fileInputRef.current?.click()}
                                         >
                                             {isDocLoading ? (
                                                 <div className="flex flex-col items-center justify-center gap-3">
                                                     <div className="w-9 h-9 border-2 border-[#2EFF85] border-t-transparent rounded-full animate-spin" />
-                                                    <h3 className="text-lg font-medium text-white">Syncing Document...</h3>
+                                                    <h3 className="text-base sm:text-lg font-medium text-white">Syncing Document...</h3>
                                                     <p className="text-zinc-400 text-xs">Uploading and splitting PDF chunks for realtime room sync</p>
                                                 </div>
                                             ) : (
                                                 <>
-                                                    <div className="w-16 h-16 rounded-full bg-zinc-800 flex items-center justify-center mb-4 group-hover:bg-[#2EFF85]/20 group-hover:text-[#2EFF85] transition-colors">
-                                                        <Plus className="w-8 h-8 text-zinc-400 group-hover:text-[#2EFF85]" />
+                                                    <div className="w-12 h-12 sm:w-16 sm:h-16 rounded-full bg-zinc-800 flex items-center justify-center mb-3 sm:mb-4 group-hover:bg-[#2EFF85]/20 group-hover:text-[#2EFF85] transition-colors">
+                                                        <Plus className="w-6 h-6 sm:w-8 sm:h-8 text-zinc-400 group-hover:text-[#2EFF85]" />
                                                     </div>
-                                                    <h3 className="text-xl font-medium text-white mb-2">Upload Document</h3>
-                                                    <p className="text-zinc-500 text-sm">Drag and drop your PDF here, or click to browse</p>
-                                                    <p className="text-zinc-600 text-xs mt-1">Supports PDF files up to 25 MB</p>
+                                                    <h3 className="text-lg sm:text-xl font-medium text-white mb-2">Upload Document</h3>
+                                                    <p className="text-zinc-500 text-xs sm:text-sm">Drag and drop your PDF here, or click to browse</p>
+                                                    <p className="text-zinc-600 text-[11px] sm:text-xs mt-1">Supports PDF files up to 25 MB</p>
                                                 </>
                                             )}
                                             <input
@@ -753,8 +828,19 @@ export default function RoomPage() {
                                     </div>
                                 ) : (
                                     <>
-                                        <div className="flex items-center justify-between px-4 py-2 border-b border-white/5 bg-[#161618] shrink-0">
-                                            <span className="text-sm font-medium text-white">Document Preview</span>
+                                        <div className="flex items-center justify-between px-3 sm:px-4 py-2 border-b border-white/5 bg-[#161618] shrink-0">
+                                            <div className="flex items-center gap-2">
+                                                <button
+                                                    onClick={() => setIsMobileDocSidebarOpen(true)}
+                                                    className="md:hidden p-1.5 text-zinc-400 hover:text-white rounded-lg hover:bg-zinc-800"
+                                                    title="Open PDF history"
+                                                >
+                                                    <Menu className="w-4 h-4" />
+                                                </button>
+                                                <span className="text-xs sm:text-sm font-medium text-white truncate max-w-[160px] sm:max-w-xs">
+                                                    Document Preview
+                                                </span>
+                                            </div>
                                             <button
                                                 onClick={async () => {
                                                     setPdfFile(null);
@@ -768,7 +854,7 @@ export default function RoomPage() {
                                                         }
                                                     }
                                                 }}
-                                                className="text-xs px-3 py-1 rounded bg-[#161618] hover:bg-[#2EFF85]/10 text-zinc-400 hover:text-[#2EFF85] transition-colors border border-white/5 hover:border-[#2EFF85]/20"
+                                                className="text-xs px-2.5 sm:px-3 py-1 rounded bg-[#161618] hover:bg-[#2EFF85]/10 text-zinc-400 hover:text-[#2EFF85] transition-colors border border-white/5 hover:border-[#2EFF85]/20"
                                             >
                                                 Remove
                                             </button>
@@ -796,7 +882,7 @@ export default function RoomPage() {
                         <textarea
                             value={notes}
                             onChange={handleChange}
-                            className={`absolute inset-0 w-full h-full pt-8 pl-6 sm:pl-10 pr-6 sm:pr-12 pb-16 bg-transparent border-0 outline-none resize-none placeholder:text-zinc-600/50 leading-relaxed text-[#2EFF85] tracking-wide ${viewMode === 'text' ? 'opacity-100 z-20' : 'opacity-0 pointer-events-none z-0'} transition-opacity duration-300`}
+                            className={`absolute inset-0 w-full h-full pt-6 sm:pt-8 pl-4 sm:pl-10 pr-4 sm:pr-12 pb-16 bg-transparent border-0 outline-none resize-none placeholder:text-zinc-600/50 leading-relaxed text-[#2EFF85] tracking-wide ${viewMode === 'text' ? 'opacity-100 z-20' : 'opacity-0 pointer-events-none z-0'} transition-opacity duration-300`}
                             placeholder="Type to add notes, share in real time with your friends..."
                             style={{ caretColor: '#2EFF85' }}
                         />
@@ -804,13 +890,13 @@ export default function RoomPage() {
 
                     {/* Right Top Zoom Control */}
                     {viewMode === 'canvas' && (
-                        <div className="absolute top-4 right-4 flex items-center gap-1 text-xs font-semibold text-zinc-400 hover:text-zinc-200 cursor-pointer transition-colors z-30 px-2 py-1 rounded hover:bg-zinc-800">
+                        <div className="hidden sm:flex absolute top-4 right-4 items-center gap-1 text-xs font-semibold text-zinc-400 hover:text-zinc-200 cursor-pointer transition-colors z-30 px-2 py-1 rounded hover:bg-zinc-800">
                             <ChevronDown className="w-3 h-3 ml-0.5" />
                         </div>
                     )}
 
                     {/* Bottom Right Help */}
-                    <div className="absolute bottom-6 right-6 z-30">
+                    <div className="hidden sm:block absolute bottom-6 right-6 z-30">
                         <button className="w-8 h-8 flex items-center justify-center rounded-full bg-zinc-800/80 hover:bg-zinc-700 text-zinc-400 hover:text-zinc-200 border border-zinc-700/50 backdrop-blur-sm transition-all shadow-lg">
                             <span className="font-semibold text-sm">?</span>
                         </button>
@@ -818,8 +904,8 @@ export default function RoomPage() {
                 </div>
 
                 {/* THE UNIFIED ASK ELLOY CHAT SYSTEM */}
-                {/* Mounted adjacent to the canvas so it acts as an inline sidebar pushing content */}
-                <div className={`h-full shrink-0 z-20 transition-all duration-300 ease-in-out ${isAlloyOpen ? 'w-[380px] xl:w-[480px] border-l border-zinc-800/50' : 'w-0 overflow-hidden'}`}>
+                {/* Responsive AskAlloy Panel: Full-screen modal on mobile, slide-in sidebar on desktop */}
+                <div className={`h-full shrink-0 transition-all duration-300 ease-in-out ${isAlloyOpen ? 'fixed md:relative inset-0 md:inset-auto z-40 md:z-20 w-full md:w-[380px] xl:w-[480px] border-l border-zinc-800/50 bg-[#161618]' : 'w-0 overflow-hidden'}`}>
                     <AskAlloy
                         isOpen={isAlloyOpen}
                         onOpenChange={setIsAlloyOpen}
@@ -836,8 +922,8 @@ export default function RoomPage() {
             {isShareModalOpen && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-in fade-in duration-200">
                     <div className="bg-[#18181A] border border-white/10 rounded-2xl w-full max-w-md shadow-2xl overflow-hidden animate-in zoom-in-95 duration-200">
-                        <div className="flex items-center justify-between p-5 border-b border-white/5">
-                            <h2 className="text-lg font-semibold text-white tracking-tight flex items-center gap-2">
+                        <div className="flex items-center justify-between p-4 sm:p-5 border-b border-white/5">
+                            <h2 className="text-base sm:text-lg font-semibold text-white tracking-tight flex items-center gap-2">
                                 <Share className="w-5 h-5 text-[#2EFF85]" />
                                 Share with Friends
                             </h2>
@@ -848,13 +934,13 @@ export default function RoomPage() {
                                 <X className="w-5 h-5" />
                             </button>
                         </div>
-                        <div className="p-5">
-                            <p className="text-sm text-zinc-400 mb-4 leading-relaxed">
+                        <div className="p-4 sm:p-5">
+                            <p className="text-xs sm:text-sm text-zinc-400 mb-4 leading-relaxed">
                                 Anyone with this link will be able to join this room and collaborate with you in real-time.
                             </p>
 
-                            <div className="flex items-center gap-2 bg-black/40 border border-white/10 p-1.5 rounded-xl">
-                                <div className="flex-1 px-3 py-1.5 text-sm text-zinc-300 truncate font-mono select-all">
+                            <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 bg-black/40 border border-white/10 p-2 sm:p-1.5 rounded-xl">
+                                <div className="flex-1 px-3 py-1.5 text-xs sm:text-sm text-zinc-300 truncate font-mono select-all">
                                     {(process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:3000") + "/room/" + roomId}
                                 </div>
                                 <ConfettiButton
@@ -865,7 +951,7 @@ export default function RoomPage() {
                                         setIsCopied(true);
                                         setTimeout(() => setIsCopied(false), 2000);
                                     }}
-                                    className={`shrink-0 flex items-center gap-1.5 px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${isCopied
+                                    className={`shrink-0 flex items-center justify-center gap-1.5 px-4 py-2 rounded-lg text-xs sm:text-sm font-medium transition-all duration-200 ${isCopied
                                         ? "bg-[#2EFF85]/20 text-[#2EFF85] border border-[#2EFF85]/30"
                                         : "bg-white/10 text-white hover:bg-white/15 border border-transparent"
                                         }`}

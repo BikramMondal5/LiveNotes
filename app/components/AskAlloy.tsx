@@ -389,7 +389,7 @@ const AskAlloy: React.FC<AskAlloyProps> = ({ defaultOpen = false, isOpen: contro
             {!isOpen && showFloatingButton && (
                 <button
                     onClick={handleOpen}
-                    className="fixed bottom-6 right-6 z-50 px-6 py-6 rounded-full bg-[#00C753] hover:bg-[#00a344] text-white font-semibold shadow-lg transition-all duration-300 hover:scale-105"
+                    className="fixed bottom-4 right-4 sm:bottom-6 sm:right-6 z-50 px-4 py-4 sm:px-6 sm:py-6 rounded-full bg-[#00C753] hover:bg-[#00a344] text-white font-semibold shadow-lg transition-all duration-300 hover:scale-105"
                     style={{
                         animation: 'glow 2s ease-in-out infinite'
                     }}
@@ -412,17 +412,17 @@ const AskAlloy: React.FC<AskAlloyProps> = ({ defaultOpen = false, isOpen: contro
                     )}
 
                     <div
-                        className={inline ? "flex flex-col w-95 xl:w-120 h-full border-l border-zinc-800/50 bg-[#121214] shrink-0 z-20" : "fixed top-0 right-0 h-full w-full md:w-[40%] lg:w-[35%] bg-[#121214] z-50 shadow-2xl border-l border-white/10"}
+                        className={inline ? "flex flex-col w-full md:w-80 xl:w-[30rem] h-full border-l border-zinc-800/50 bg-[#121214] shrink-0 z-20" : "fixed top-0 right-0 h-full w-full md:w-[40%] lg:w-[35%] bg-[#121214] z-50 shadow-2xl border-l border-white/10"}
                         style={{
                             animation: !inline ? (isOpen ? 'slideIn 0.3s ease-out' : 'slideOut 0.3s ease-in') : 'none',
                             backdropFilter: 'blur(20px)'
                         }}
                     >
                         <div className="flex flex-col h-full">
-                            <div className="flex items-center justify-between p-6 border-b border-white/10 bg-[#121214] shrink-0">
+                            <div className="flex items-center justify-between p-4 sm:p-6 border-b border-white/10 bg-[#121214] shrink-0">
                                 <div className="flex items-center gap-4">
                                     <div className="relative">
-                                        <div className="w-12 h-12 rounded-full border-2 border-[#00C753] p-0.5 flex items-center justify-center overflow-hidden">
+                                        <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-full border-2 border-[#00C753] p-0.5 flex items-center justify-center overflow-hidden">
                                             <img src="/logo.png" alt="Logo" className="w-full h-full object-contain rounded-full" />
                                         </div>
                                         <div className="absolute -bottom-0.5 -right-0.5 w-3 h-3 bg-[#00C753] rounded-full border-2 border-[#121214]" />
@@ -445,14 +445,14 @@ const AskAlloy: React.FC<AskAlloyProps> = ({ defaultOpen = false, isOpen: contro
                             <div className="flex-1 overflow-y-auto p-4 no-scrollbar">
                                 <div ref={scrollRef} className="flex flex-col">
                                     {messages.length === 0 ? (
-                                        <div className="flex flex-col items-center justify-center h-full min-h-100 text-center space-y-6 px-4 my-auto">
+                                        <div className="flex flex-col items-center justify-center h-full min-h-[16rem] sm:min-h-[25rem] text-center space-y-6 px-4 my-auto">
                                             <div className="flex items-center justify-center">
-                                                <div className="w-32 h-32 bg-[#00C753] rounded-full flex items-center justify-center shadow-xl">
+                                                <div className="w-20 h-20 sm:w-32 sm:h-32 bg-[#00C753] rounded-full flex items-center justify-center shadow-xl">
                                                     <img src="/Elloy-logo.png" alt="Elloy" className="w-28 h-28 object-contain" />
                                                 </div>
                                             </div>
                                             <div className="space-y-2 max-w-sm mx-auto">
-                                                <h3 className="text-2xl font-bold text-white tracking-tight">Ask anything about your notes or ideas</h3>
+                                                <h3 className="text-xl sm:text-2xl font-bold text-white tracking-tight">Ask anything about your notes or ideas</h3>
                                                 <p className="text-gray-400 text-sm leading-relaxed">Get instant help, generate ideas, or understand content faster</p>
                                             </div>
                                         </div>
@@ -541,7 +541,7 @@ const AskAlloy: React.FC<AskAlloyProps> = ({ defaultOpen = false, isOpen: contro
                                                 animate={{ opacity: 1, y: 0, scale: 1 }}
                                                 exit={{ opacity: 0, scale: 0.9 }}
                                                 transition={{ duration: 0.2 }}
-                                                className="absolute bottom-10 left-1 z-50 w-60 bg-[#202024] border border-white/10 rounded-[16px] shadow-2xl overflow-hidden shadow-black/80"
+                                                className="absolute bottom-10 left-1 z-50 w-52 sm:w-60 bg-[#202024] border border-white/10 rounded-[16px] shadow-2xl overflow-hidden shadow-black/80"
                                             >
                                                 <div className="max-h-56 overflow-y-auto w-full py-1.5 no-scrollbar">
                                                     {MODEL_CATEGORIES.map(category => (
