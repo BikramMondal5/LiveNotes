@@ -1051,6 +1051,20 @@ export default function RoomPage() {
                     )}
                 </div>
             )}
+
+            {/* Bottom-left GitHub Creator Link */}
+            <a
+                href="https://github.com/BikramMondal5"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="fixed bottom-5 left-5 z-30 inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-[#161618]/80 hover:bg-[#202024] border border-white/10 hover:border-[#2EFF85]/30 text-xs font-medium text-zinc-400 hover:text-white backdrop-blur-md transition-all duration-200 shadow-lg group pointer-events-auto"
+                title="Bikram Mondal on GitHub"
+            >
+                <svg className="w-3.5 h-3.5 fill-current text-zinc-400 group-hover:text-white transition-colors" viewBox="0 0 24 24" aria-hidden="true">
+                    <path d="M12 0C5.37 0 0 5.37 0 12c0 5.3 3.44 9.8 8.21 11.39.6.11.82-.26.82-.58v-2.03c-3.34.73-4.04-1.61-4.04-1.61-.55-1.39-1.33-1.76-1.33-1.76-1.09-.75.08-.73.08-.73 1.2.08 1.84 1.24 1.84 1.24 1.07 1.83 2.81 1.3 3.49.99.11-.78.42-1.3.76-1.6-2.66-.3-5.47-1.33-5.47-5.93 0-1.31.47-2.38 1.24-3.22-.12-.3-.54-1.52.12-3.18 0 0 1.01-.32 3.3 1.23.96-.27 1.98-.4 3-.4s2.04.13 3 .4c2.29-1.55 3.3-1.23 3.3-1.23.66 1.66.24 2.88.12 3.18.77.84 1.24 1.91 1.24 3.22 0 4.61-2.81 5.62-5.48 5.92.43.37.81 1.1.81 2.22v3.29c0 .32.22.69.82.58A12.01 12.01 0 0 0 24 12c0-6.63-5.37-12-12-12Z" />
+                </svg>
+                <span>@BikramMondal5</span>
+            </a>
         </div>
     );
 }
