@@ -5,11 +5,11 @@ import { useParams } from "next/navigation";
 import { db } from "@/lib/firebase";
 import { ref, set, remove, onValue, get } from "firebase/database";
 import { Plus, Wand2, MousePointer2, Square, Circle, ArrowUpRight, Slash, PenLine, Type, Image as ImageIcon, Frame, HelpingHand, Settings, ChevronDown, MoreHorizontal, Sparkles, Search, Home, Briefcase, FileText, ChevronRight, Rocket, Share, X, Copy, Check, Scan, Presentation, UserCheck, FileSearch, Receipt, Star, Menu } from "lucide-react";
-import DotGrid from "../../components/DotGrid";
-import DrawingCanvas from "../../components/DrawingCanvas";
-import AskAlloy from "../../components/AskAlloy";
+import DotGrid from "../components/DotGrid";
+import DrawingCanvas from "../components/DrawingCanvas";
+import AskAlloy from "../components/AskAlloy";
 import { ConfettiButton } from "@/components/ui/confetti";
-import type { DrawingTool } from "../../components/DrawingCanvas";
+import type { DrawingTool } from "../components/DrawingCanvas";
 import { getCachedStars } from "@/lib/githubStars";
 
 export interface RoomDocument {
@@ -43,7 +43,7 @@ export default function RoomPage() {
     const initialDocLoadedRef = useRef(false);
     const docCacheRef = useRef<Map<string, string>>(new Map());
     const [recentFiles, setRecentFiles] = useState<RoomDocument[]>([]);
-    const [githubStars, setGithubStars] = useState<number | null>(() => getCachedStars());
+    const [githubStars, setGithubStars] = useState<number | null>(null);
 
     // Read cached GitHub stars (fetched only from the root `/` page)
     useEffect(() => {
@@ -597,11 +597,10 @@ export default function RoomPage() {
                     </div>
 
                     <div className="flex items-center bg-[#1C1C1C] rounded-[8px] pl-3 h-8 max-w-[65%] sm:max-w-none">
-                        <span className="text-xs text-zinc-300 truncate max-w-[110px] sm:max-w-[150px]">/room/{roomId}</span>
+                        <span className="text-xs text-zinc-300 truncate max-w-[110px] sm:max-w-[150px]">/{roomId}</span>
                         <button
                             onClick={() => {
-                                const url = (process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:3000") + "/room/" + roomId;
-                                navigator.clipboard.writeText(url);
+                                navigator.clipboard.writeText(notes);
                                 setIsCopied(true);
                                 setTimeout(() => setIsCopied(false), 2000);
                             }}
@@ -611,7 +610,7 @@ export default function RoomPage() {
                                 }`}
                         >
                             {isCopied ? <Check className="w-3.5 h-3.5" /> : <Copy className="w-3.5 h-3.5" />}
-                            <span className="hidden sm:inline">{isCopied ? "Copied!" : "Copy"}</span>
+                            <span className="hidden sm:inline">{isCopied ? "Copied Text!" : "Copy Text"}</span>
                         </button>
                     </div>
 
@@ -665,7 +664,7 @@ export default function RoomPage() {
                         {/* Right Div: Yellow Star + Live Count */}
                         <div className="flex items-center gap-1 px-2.5 h-full bg-[#161618]/60 group-hover:bg-[#1a1a1d] transition-colors text-zinc-300 font-semibold">
                             <Star className="w-3.5 h-3.5 fill-amber-400 text-amber-400" />
-                            <span>{githubStars !== null ? githubStars : "2"}</span>
+                            <span suppressHydrationWarning>{githubStars !== null ? githubStars : "2"}</span>
                         </div>
                     </a>
 
@@ -981,12 +980,12 @@ export default function RoomPage() {
 
                             <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 bg-black/40 border border-white/10 p-2 sm:p-1.5 rounded-xl">
                                 <div className="flex-1 px-3 py-1.5 text-xs sm:text-sm text-zinc-300 truncate font-mono select-all">
-                                    {(process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:3000") + "/room/" + roomId}
+                                    {(process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:3000") + "/" + roomId}
                                 </div>
                                 <ConfettiButton
                                     options={{ particleCount: 250, spread: 120, colors: ['#2EFF85', '#FFFFFF', '#10B981'] }}
                                     onClick={() => {
-                                        const url = (process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:3000") + "/room/" + roomId;
+                                        const url = (process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:3000") + "/" + roomId;
                                         navigator.clipboard.writeText(url);
                                         setIsCopied(true);
                                         setTimeout(() => setIsCopied(false), 2000);

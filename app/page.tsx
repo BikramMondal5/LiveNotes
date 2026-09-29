@@ -52,7 +52,7 @@ const LiveNotesHero = () => {
     const router = useRouter();
     const [roomInput, setRoomInput] = useState('');
     const [isFocused, setIsFocused] = useState(false);
-    const [githubStars, setGithubStars] = useState<number | null>(() => getCachedStars());
+    const [githubStars, setGithubStars] = useState<number | null>(null);
     const inputRef = useRef<HTMLInputElement>(null);
 
     useEffect(() => {
@@ -64,6 +64,10 @@ const LiveNotesHero = () => {
     // Fetch GitHub stars ONLY when the root `/` page is visited or refreshed
     useEffect(() => {
         let isMounted = true;
+        const cached = getCachedStars();
+        if (cached !== null) {
+            setGithubStars(cached);
+        }
         fetchAndStoreStars().then((count) => {
             if (isMounted && typeof count === 'number') {
                 setGithubStars(count);
@@ -79,10 +83,10 @@ const LiveNotesHero = () => {
             const randomId = Math.random().toString(36).substring(2, 8).toUpperCase();
             setRoomInput(randomId);
             console.log('Generated room ID:', randomId);
-            router.push(`/room/${randomId}`);
+            router.push(`/${randomId}`);
         } else {
             console.log('Joining room:', roomInput);
-            router.push(`/room/${roomInput}`);
+            router.push(`/${roomInput}`);
         }
     };
 
@@ -140,7 +144,7 @@ const LiveNotesHero = () => {
                             {/* Right Div: Yellow Star + Live Count */}
                             <div className="flex items-center gap-1 px-2.5 h-full bg-[#161618]/60 group-hover:bg-[#1a1a1d] transition-colors text-zinc-300 font-semibold">
                                 <Star className="w-3.5 h-3.5 fill-amber-400 text-amber-400" />
-                                <span>{githubStars !== null ? githubStars : "2"}</span>
+                                <span suppressHydrationWarning>{githubStars !== null ? githubStars : "2"}</span>
                             </div>
                         </a>
                     </div>
