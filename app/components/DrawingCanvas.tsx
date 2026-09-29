@@ -2,7 +2,6 @@
 
 import React, { useEffect, useRef, useState, useCallback } from 'react';
 import { Canvas, Rect, Circle, Line, Path, IText, FabricImage, PencilBrush, util } from 'fabric';
-import { Socket } from 'socket.io-client';
 import { db } from '@/lib/firebase';
 import { ref, set, remove, onChildAdded, onChildChanged, onChildRemoved } from 'firebase/database';
 
@@ -10,11 +9,10 @@ export type DrawingTool = 'pointer' | 'rect' | 'circle' | 'arrow' | 'line' | 'pe
 
 interface DrawingCanvasProps {
     activeTool: DrawingTool;
-    socket?: Socket;
     roomId?: string;
 }
 
-const DrawingCanvas: React.FC<DrawingCanvasProps> = ({ activeTool, socket, roomId }) => {
+const DrawingCanvas: React.FC<DrawingCanvasProps> = ({ activeTool, roomId }) => {
     const canvasRef = useRef<HTMLCanvasElement>(null);
     const fabricCanvasRef = useRef<Canvas | null>(null);
     const [canvasReady, setCanvasReady] = useState(false);
@@ -142,9 +140,6 @@ const DrawingCanvas: React.FC<DrawingCanvasProps> = ({ activeTool, socket, roomI
                                     const shapeRef = ref(db, `rooms/${roomId}/shapes/${obj.id}`);
                                     remove(shapeRef).catch((err) => console.error('Firebase delete error:', err));
                                 }
-                                if (socket) {
-                                    socket.emit('delete-shape', { roomId, id: obj.id });
-                                }
                             }
                             canvas.remove(obj);
                         });
@@ -159,7 +154,7 @@ const DrawingCanvas: React.FC<DrawingCanvasProps> = ({ activeTool, socket, roomI
         return () => {
             window.removeEventListener('keydown', handleKeyDown);
         };
-    }, [canvasReady, socket, roomId]);
+    }, [canvasReady, roomId]);
 
     // Set canvas cursor based on tool
     useEffect(() => {
@@ -220,15 +215,8 @@ const DrawingCanvas: React.FC<DrawingCanvasProps> = ({ activeTool, socket, roomI
                 const shapeRef = ref(db, `rooms/${roomId}/shapes/${element.id}`);
                 set(shapeRef, shapeElement).catch((err) => console.error('Firebase save shape error:', err));
             }
-
-            if (socket && roomId) {
-                socket.emit('draw', {
-                    roomId,
-                    element: shapeElement,
-                });
-            }
         },
-        [socket, roomId]
+        [roomId]
     );
 
     // Track when user modifies anything
@@ -573,95 +561,7 @@ const DrawingCanvas: React.FC<DrawingCanvasProps> = ({ activeTool, socket, roomI
                 unsubRemoved();
             };
         }
-
-        // 2. Fallback to socket if Firebase is not active
-        if (socket) {
-            const handleIncomingDraw = (data: any) => {
-                const { element } = data;
-
-                const existingObjects = canvas.getObjects() as any[];
-                const existingObj = existingObjects.find(o => o.id === element.id || (o as any).data?.id === element.id);
-
-                const shapeData = { ...element.data };
-                if ((shapeData.fill === null || shapeData.fill === 'null' || !shapeData.fill) && shapeData.type !== 'i-text' && shapeData.type !== 'IText') {
-                    shapeData.fill = 'transparent';
-                }
-
-                util.enlivenObjects([shapeData]).then((enlivenedObjects: any) => {
-                    if (enlivenedObjects && enlivenedObjects.length > 0) {
-                        const obj = enlivenedObjects[0];
-                        obj.id = element.id;
-                        obj.set({
-                            hasControls: true,
-                            hasBorders: true,
-                            selectable: true,
-                        });
-
-                        if (existingObj) {
-                            canvas.remove(existingObj);
-                        }
-
-                        canvas.add(obj);
-                        canvas.renderAll();
-                    }
-                });
-            };
-
-            const handleCanvasData = (shapes: any[]) => {
-                canvas.clear();
-                const shapeDatas = shapes.map(s => {
-                    const data = { ...s.data };
-                    if ((data.fill === null || data.fill === 'null' || !data.fill) && data.type !== 'i-text' && data.type !== 'IText') {
-                        data.fill = 'transparent';
-                    }
-                    return data;
-                });
-                util.enlivenObjects(shapeDatas).then((enlivenedObjects: any) => {
-                    enlivenedObjects.forEach((obj: any, index: number) => {
-                        obj.id = shapes[index].id;
-                        obj.set({
-                            hasControls: true,
-                            hasBorders: true,
-                            selectable: true,
-                        });
-                        canvas.add(obj);
-                    });
-                    canvas.renderAll();
-                });
-            };
-
-            const handleIncomingDelete = (id: string) => {
-                const existingObjects = canvas.getObjects() as any[];
-                const existingObj = existingObjects.find(o => o.id === id || (o as any).data?.id === id);
-
-                if (existingObj) {
-                    canvas.remove(existingObj);
-                    canvas.renderAll();
-                }
-            };
-
-            const handleConnect = () => {
-                socket.emit('get-canvas', roomId);
-            };
-
-            socket.on('connect', handleConnect);
-
-            if (socket.connected) {
-                socket.emit('get-canvas', roomId);
-            }
-
-            socket.on('draw', handleIncomingDraw);
-            socket.on('canvas-data', handleCanvasData);
-            socket.on('delete-shape', handleIncomingDelete);
-
-            return () => {
-                socket.off('connect', handleConnect);
-                socket.off('draw', handleIncomingDraw);
-                socket.off('canvas-data', handleCanvasData);
-                socket.off('delete-shape', handleIncomingDelete);
-            };
-        }
-    }, [canvasReady, socket, roomId]);
+    }, [canvasReady, roomId]);
 
     return (
         <>

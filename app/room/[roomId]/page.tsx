@@ -2,9 +2,8 @@
 
 import { useEffect, useState, useRef } from "react";
 import { useParams } from "next/navigation";
-import { io, Socket } from "socket.io-client";
 import { db } from "@/lib/firebase";
-import { ref, set, remove, onValue } from "firebase/database";
+import { ref, set, remove, onValue, get } from "firebase/database";
 import { Plus, Wand2, MousePointer2, Square, Circle, ArrowUpRight, Slash, PenLine, Type, Image as ImageIcon, Frame, HelpingHand, Settings, ChevronDown, MoreHorizontal, Sparkles, Search, Home, Briefcase, FileText, ChevronRight, Rocket, Share, X, Copy, Check, Scan, Presentation, UserCheck, FileSearch, Receipt, Star } from "lucide-react";
 import DotGrid from "../../components/DotGrid";
 import DrawingCanvas from "../../components/DrawingCanvas";
@@ -13,21 +12,36 @@ import { ConfettiButton } from "@/components/ui/confetti";
 import type { DrawingTool } from "../../components/DrawingCanvas";
 import { getCachedStars } from "@/lib/githubStars";
 
+export interface RoomDocument {
+    id: string;
+    name: string;
+    size: string;
+    date: string;
+    url?: string;
+    isChunked?: boolean;
+    chunkCount?: number;
+}
+
+const CHUNK_SIZE = 500 * 1024; // 500 KB per chunk (RTDB limit is 10MB per string)
+const MAX_FILE_SIZE = 25 * 1024 * 1024; // 25 MB max PDF size
+
 export default function RoomPage() {
     const { roomId } = useParams() as { roomId: string };
     const [notes, setNotes] = useState("");
-    const [socket, setSocket] = useState<Socket | null>(null);
     const [activeTool, setActiveTool] = useState("rect");
     const [viewMode, setViewMode] = useState<"document" | "text" | "canvas">("text"); // Default to Text tab
     const [isAlloyOpen, setIsAlloyOpen] = useState(false);
     const [isShareModalOpen, setIsShareModalOpen] = useState(false);
     const [isCopied, setIsCopied] = useState(false);
     const [pdfFile, setPdfFile] = useState<string | null>(null);
+    const [activeDocId, setActiveDocId] = useState<string | null>(null);
+    const [isDocLoading, setIsDocLoading] = useState(false);
     const [activeDocView, setActiveDocView] = useState<"home" | "preview">("home");
     const fileInputRef = useRef<HTMLInputElement>(null);
     const notesTimeoutRef = useRef<NodeJS.Timeout | null>(null);
     const initialDocLoadedRef = useRef(false);
-    const [recentFiles, setRecentFiles] = useState<{ id: string, name: string, size: string, date: string, url: string }[]>([]);
+    const docCacheRef = useRef<Map<string, string>>(new Map());
+    const [recentFiles, setRecentFiles] = useState<RoomDocument[]>([]);
     const [githubStars, setGithubStars] = useState<number | null>(() => getCachedStars());
 
     // Read cached GitHub stars (fetched only from the root `/` page)
@@ -44,63 +58,163 @@ export default function RoomPage() {
     const [fullScreenCanvas, setFullScreenCanvas] = useState<HTMLCanvasElement | null>(null);
 
     const handleLocalUpload = (file: File) => {
-        if (file && (file.type === "application/pdf" || file.name.toLowerCase().endsWith(".pdf"))) {
-            const reader = new FileReader();
-            reader.onload = (e) => {
-                const dataUrl = e.target?.result as string;
-                if (!dataUrl) return;
+        if (!file) return;
 
+        if (file.type !== "application/pdf" && !file.name.toLowerCase().endsWith(".pdf")) {
+            alert("Please upload a valid PDF document.");
+            return;
+        }
+
+        if (file.size > MAX_FILE_SIZE) {
+            alert(`File size (${(file.size / (1024 * 1024)).toFixed(1)} MB) exceeds the 25 MB limit for realtime collaboration. Please choose a smaller PDF.`);
+            return;
+        }
+
+        setIsDocLoading(true);
+
+        const reader = new FileReader();
+        reader.onerror = () => {
+            setIsDocLoading(false);
+            alert("Failed to read the PDF file. Please try again.");
+        };
+
+        reader.onload = async (e) => {
+            try {
+                const dataUrl = e.target?.result as string;
+                if (!dataUrl) {
+                    setIsDocLoading(false);
+                    return;
+                }
+
+                const docId = Date.now().toString();
                 const size = (file.size / (1024 * 1024)).toFixed(2) + " MB";
                 const dateStr = new Date().toLocaleDateString('en-GB', { day: '2-digit', month: '2-digit', year: 'numeric' });
-                const docData = {
-                    id: Date.now().toString(),
-                    name: file.name,
-                    size,
-                    date: dateStr,
-                    url: dataUrl
-                };
 
+                // Cache immediately in memory for instant local preview
+                docCacheRef.current.set(docId, dataUrl);
+                setActiveDocId(docId);
                 setPdfFile(dataUrl);
                 setActiveDocView("preview");
                 setViewMode("document");
 
+                const isChunked = dataUrl.length > CHUNK_SIZE;
+                const totalChunks = isChunked ? Math.ceil(dataUrl.length / CHUNK_SIZE) : 1;
+
+                const docMeta: RoomDocument = {
+                    id: docId,
+                    name: file.name,
+                    size,
+                    date: dateStr,
+                    isChunked,
+                    chunkCount: totalChunks,
+                    ...(isChunked ? {} : { url: dataUrl })
+                };
+
                 setRecentFiles(prev => {
                     const filtered = prev.filter(f => f.name !== file.name);
-                    return [docData, ...filtered];
+                    return [docMeta, ...filtered];
                 });
 
                 if (db && roomId) {
+                    if (isChunked) {
+                        // Store chunks separately under rooms/${roomId}/chunks/${docId}
+                        const chunkPromises: Promise<any>[] = [];
+                        for (let i = 0; i < totalChunks; i++) {
+                            const chunkData = dataUrl.slice(i * CHUNK_SIZE, (i + 1) * CHUNK_SIZE);
+                            const chunkRef = ref(db, `rooms/${roomId}/chunks/${docId}/${i}`);
+                            chunkPromises.push(set(chunkRef, chunkData));
+                        }
+                        await Promise.all(chunkPromises);
+                    }
+
+                    // Save active document metadata (no huge base64 in document node if chunked)
                     const docRef = ref(db, `rooms/${roomId}/document`);
-                    set(docRef, docData).catch(err => console.error("Firebase upload document error:", err));
+                    await set(docRef, docMeta);
 
-                    const itemRef = ref(db, `rooms/${roomId}/documents/${docData.id}`);
-                    set(itemRef, docData).catch(err => console.error("Firebase save document item error:", err));
+                    // Save document in history list (metadata only)
+                    const itemRef = ref(db, `rooms/${roomId}/documents/${docId}`);
+                    await set(itemRef, docMeta);
                 }
+            } catch (err) {
+                console.error("Firebase upload document error:", err);
+                alert("Could not sync the document to the room. It will remain visible locally.");
+            } finally {
+                setIsDocLoading(false);
+            }
+        };
+        reader.readAsDataURL(file);
+    };
 
-                if (socket) {
-                    socket.emit("upload-document", { roomId, document: docData });
+    const handleSelectRecentFile = async (file: RoomDocument) => {
+        setActiveDocId(file.id);
+        setActiveDocView("preview");
+
+        if (file.url && !file.isChunked) {
+            setPdfFile(file.url);
+        } else if (docCacheRef.current.has(file.id)) {
+            setPdfFile(docCacheRef.current.get(file.id)!);
+        } else if (file.isChunked && db && roomId) {
+            setIsDocLoading(true);
+            try {
+                const chunkSnap = await get(ref(db, `rooms/${roomId}/chunks/${file.id}`));
+                if (chunkSnap.exists()) {
+                    const chunksObj = chunkSnap.val();
+                    const sortedChunks = Object.keys(chunksObj)
+                        .sort((a, b) => Number(a) - Number(b))
+                        .map(k => chunksObj[k]);
+                    const fullDataUrl = sortedChunks.join("");
+                    docCacheRef.current.set(file.id, fullDataUrl);
+                    setPdfFile(fullDataUrl);
                 }
+            } catch (err) {
+                console.error("Firebase load document chunks error:", err);
+            } finally {
+                setIsDocLoading(false);
+            }
+        }
+
+        if (db && roomId) {
+            const docRef = ref(db, `rooms/${roomId}/document`);
+            const docMeta: RoomDocument = {
+                id: file.id,
+                name: file.name,
+                size: file.size,
+                date: file.date,
+                isChunked: file.isChunked,
+                chunkCount: file.chunkCount,
+                ...(file.url ? { url: file.url } : {})
             };
-            reader.readAsDataURL(file);
+            try {
+                await set(docRef, docMeta);
+            } catch (err) {
+                console.error("Firebase update document error:", err);
+            }
         }
     };
 
-    const handleDeleteRecentFile = (e: React.MouseEvent, fileId: string) => {
+    const handleDeleteRecentFile = async (e: React.MouseEvent, fileId: string) => {
         e.stopPropagation();
         if (db && roomId) {
-            const itemRef = ref(db, `rooms/${roomId}/documents/${fileId}`);
-            remove(itemRef).catch(err => console.error("Firebase delete document error:", err));
+            try {
+                await remove(ref(db, `rooms/${roomId}/documents/${fileId}`));
+                await remove(ref(db, `rooms/${roomId}/chunks/${fileId}`));
+            } catch (err) {
+                console.error("Firebase delete document error:", err);
+            }
         }
-        if (pdfFile && recentFiles.find(f => f.id === fileId)?.url === pdfFile) {
+        if (activeDocId === fileId) {
             setPdfFile(null);
+            setActiveDocId(null);
             setActiveDocView("home");
             if (db && roomId) {
-                remove(ref(db, `rooms/${roomId}/document`)).catch(console.error);
-            }
-            if (socket) {
-                socket.emit("remove-document", { roomId });
+                try {
+                    await remove(ref(db, `rooms/${roomId}/document`));
+                } catch (err) {
+                    console.error(err);
+                }
             }
         }
+        docCacheRef.current.delete(fileId);
         setRecentFiles(prev => prev.filter(f => f.id !== fileId));
     };
 
@@ -123,15 +237,17 @@ export default function RoomPage() {
     // 1. Firebase Realtime Database Listeners for Notes, Document, and Room Documents List
     useEffect(() => {
         if (!roomId || !db) return;
+        const database = db; // capture for async callbacks (TS narrowing)
 
         // Reset state immediately so data from previous rooms never leaks
         setNotes("");
         setPdfFile(null);
+        setActiveDocId(null);
         setActiveDocView("home");
         setRecentFiles([]);
         initialDocLoadedRef.current = false;
 
-        const notesRef = ref(db, `rooms/${roomId}/notes`);
+        const notesRef = ref(database, `rooms/${roomId}/notes`);
         const unsubNotes = onValue(notesRef, (snapshot) => {
             const val = snapshot.val();
             if (typeof val === "string") {
@@ -141,27 +257,56 @@ export default function RoomPage() {
             }
         });
 
-        const docRef = ref(db, `rooms/${roomId}/document`);
-        const unsubDoc = onValue(docRef, (snapshot) => {
-            const doc = snapshot.val();
-            if (doc && doc.url) {
-                setPdfFile(doc.url);
-                setActiveDocView("preview");
+        const docRef = ref(database, `rooms/${roomId}/document`);
+        const unsubDoc = onValue(docRef, async (snapshot) => {
+            const doc = snapshot.val() as RoomDocument | null;
+            if (doc && doc.id) {
+                setActiveDocId(doc.id);
+                if (doc.url && !doc.isChunked) {
+                    docCacheRef.current.set(doc.id, doc.url);
+                    setPdfFile(doc.url);
+                    setActiveDocView("preview");
+                } else if (doc.isChunked) {
+                    if (docCacheRef.current.has(doc.id)) {
+                        setPdfFile(docCacheRef.current.get(doc.id)!);
+                        setActiveDocView("preview");
+                    } else {
+                        setIsDocLoading(true);
+                        try {
+                            const chunkSnap = await get(ref(database, `rooms/${roomId}/chunks/${doc.id}`));
+                            if (chunkSnap.exists()) {
+                                const chunksObj = chunkSnap.val();
+                                const sortedChunks = Object.keys(chunksObj)
+                                    .sort((a, b) => Number(a) - Number(b))
+                                    .map(k => chunksObj[k]);
+                                const fullDataUrl = sortedChunks.join("");
+                                docCacheRef.current.set(doc.id, fullDataUrl);
+                                setPdfFile(fullDataUrl);
+                                setActiveDocView("preview");
+                            }
+                        } catch (err) {
+                            console.error("Failed to load chunked document:", err);
+                        } finally {
+                            setIsDocLoading(false);
+                        }
+                    }
+                }
                 if (initialDocLoadedRef.current) {
                     setViewMode("document");
                 }
             } else {
                 setPdfFile(null);
+                setActiveDocId(null);
                 setActiveDocView("home");
             }
             initialDocLoadedRef.current = true;
         });
 
-        const docsRef = ref(db, `rooms/${roomId}/documents`);
+        const docsRef = ref(database, `rooms/${roomId}/documents`);
         const unsubDocs = onValue(docsRef, (snapshot) => {
             const docs = snapshot.val();
             if (docs && typeof docs === "object") {
-                const list = Object.values(docs) as { id: string, name: string, size: string, date: string, url: string }[];
+                const list = Object.values(docs) as RoomDocument[];
                 list.sort((a, b) => Number(b.id) - Number(a.id));
                 setRecentFiles(list);
             } else {
@@ -173,44 +318,6 @@ export default function RoomPage() {
             unsubNotes();
             unsubDoc();
             unsubDocs();
-        };
-    }, [roomId]);
-
-    // 2. Socket.io fallback connection (if custom WS URL configured or Firebase unavailable)
-    useEffect(() => {
-        const socketUrl = process.env.NEXT_PUBLIC_WS_URL;
-        if (!socketUrl && db) return;
-
-        const newSocket = socketUrl ? io(socketUrl) : io();
-        setSocket(newSocket);
-
-        newSocket.on("connect", () => {
-            newSocket.emit("join-room", roomId);
-        });
-
-        newSocket.on("update-notes", (newNotes: string) => {
-            setNotes(newNotes);
-        });
-
-        newSocket.on("update-document", (doc: { id: string, name: string, size: string, date: string, url: string } | null) => {
-            if (doc) {
-                setPdfFile(doc.url);
-                setActiveDocView("preview");
-                if (initialDocLoadedRef.current) {
-                    setViewMode("document");
-                }
-                setRecentFiles(prev => {
-                    const filtered = prev.filter(f => f.id !== doc.id && f.name !== doc.name);
-                    return [doc, ...filtered];
-                });
-            } else {
-                setPdfFile(null);
-                setActiveDocView("home");
-            }
-        });
-
-        return () => {
-            newSocket.disconnect();
         };
     }, [roomId]);
 
@@ -227,10 +334,6 @@ export default function RoomPage() {
                 const notesRef = ref(database, `rooms/${roomId}/notes`);
                 set(notesRef, value).catch(err => console.error("Firebase edit notes error:", err));
             }, 150);
-        }
-
-        if (socket) {
-            socket.emit("edit-notes", { roomId, notes: value });
         }
     };
 
@@ -484,7 +587,6 @@ export default function RoomPage() {
                         <DrawingCanvas
                             key={roomId}
                             activeTool={activeTool as DrawingTool}
-                            socket={socket || undefined}
                             roomId={roomId}
                         />
                     </div>
@@ -571,23 +673,13 @@ export default function RoomPage() {
                                             recentFiles.map((file, idx) => (
                                                 <div
                                                     key={file.id}
-                                                    onClick={() => {
-                                                        setPdfFile(file.url);
-                                                        setActiveDocView("preview");
-                                                        if (db && roomId) {
-                                                            const docRef = ref(db, `rooms/${roomId}/document`);
-                                                            set(docRef, file).catch(err => console.error("Firebase update document error:", err));
-                                                        }
-                                                        if (socket) {
-                                                            socket.emit("upload-document", { roomId, document: file });
-                                                        }
-                                                    }}
-                                                    className={`w-full flex items-center justify-between gap-2 px-3 py-2.5 rounded-lg cursor-pointer transition-colors group border ${pdfFile === file.url ? 'bg-[#2EFF85]/5 border-[#2EFF85]/10' : 'hover:bg-zinc-800/30 border-transparent'}`}
+                                                    onClick={() => handleSelectRecentFile(file)}
+                                                    className={`w-full flex items-center justify-between gap-2 px-3 py-2.5 rounded-lg cursor-pointer transition-colors group border ${activeDocId === file.id ? 'bg-[#2EFF85]/5 border-[#2EFF85]/10' : 'hover:bg-zinc-800/30 border-transparent'}`}
                                                 >
                                                     <div className="flex items-start gap-3 overflow-hidden min-w-0 flex-1">
-                                                        <FileText className={`w-5 h-5 shrink-0 mt-0.5 ${pdfFile === file.url ? 'text-[#2EFF85]' : 'text-zinc-500 group-hover:text-zinc-400'}`} />
+                                                        <FileText className={`w-5 h-5 shrink-0 mt-0.5 ${activeDocId === file.id ? 'text-[#2EFF85]' : 'text-zinc-500 group-hover:text-zinc-400'}`} />
                                                         <div className="flex flex-col text-left overflow-hidden min-w-0 w-full">
-                                                            <span className={`text-sm truncate font-medium ${pdfFile === file.url ? 'text-zinc-200' : 'text-zinc-400 group-hover:text-zinc-200'}`}>
+                                                            <span className={`text-sm truncate font-medium ${activeDocId === file.id ? 'text-zinc-200' : 'text-zinc-400 group-hover:text-zinc-200'}`}>
                                                                 {file.name}
                                                             </span>
                                                             <div className="flex items-center justify-between mt-1 text-xs text-zinc-600">
@@ -631,19 +723,31 @@ export default function RoomPage() {
                                     <div className="flex-1 flex items-center justify-center p-8 bg-[#161618]">
                                         <div
                                             className="flex flex-col items-center justify-center w-full h-full max-w-2xl max-h-[600px] border-2 border-dashed border-zinc-700 hover:border-[#2EFF85] rounded-3xl bg-[#161618]/50 transition-colors cursor-pointer group"
-                                            onClick={() => fileInputRef.current?.click()}
+                                            onClick={() => !isDocLoading && fileInputRef.current?.click()}
                                         >
-                                            <div className="w-16 h-16 rounded-full bg-zinc-800 flex items-center justify-center mb-4 group-hover:bg-[#2EFF85]/20 group-hover:text-[#2EFF85] transition-colors">
-                                                <Plus className="w-8 h-8 text-zinc-400 group-hover:text-[#2EFF85]" />
-                                            </div>
-                                            <h3 className="text-xl font-medium text-white mb-2">Upload Document</h3>
-                                            <p className="text-zinc-500 text-sm">Drag and drop your PDF here, or click to browse</p>
+                                            {isDocLoading ? (
+                                                <div className="flex flex-col items-center justify-center gap-3">
+                                                    <div className="w-9 h-9 border-2 border-[#2EFF85] border-t-transparent rounded-full animate-spin" />
+                                                    <h3 className="text-lg font-medium text-white">Syncing Document...</h3>
+                                                    <p className="text-zinc-400 text-xs">Uploading and splitting PDF chunks for realtime room sync</p>
+                                                </div>
+                                            ) : (
+                                                <>
+                                                    <div className="w-16 h-16 rounded-full bg-zinc-800 flex items-center justify-center mb-4 group-hover:bg-[#2EFF85]/20 group-hover:text-[#2EFF85] transition-colors">
+                                                        <Plus className="w-8 h-8 text-zinc-400 group-hover:text-[#2EFF85]" />
+                                                    </div>
+                                                    <h3 className="text-xl font-medium text-white mb-2">Upload Document</h3>
+                                                    <p className="text-zinc-500 text-sm">Drag and drop your PDF here, or click to browse</p>
+                                                    <p className="text-zinc-600 text-xs mt-1">Supports PDF files up to 25 MB</p>
+                                                </>
+                                            )}
                                             <input
                                                 type="file"
                                                 ref={fileInputRef}
                                                 className="hidden"
                                                 accept="application/pdf"
                                                 onChange={handleFileChange}
+                                                disabled={isDocLoading}
                                             />
                                         </div>
                                     </div>
@@ -652,15 +756,16 @@ export default function RoomPage() {
                                         <div className="flex items-center justify-between px-4 py-2 border-b border-white/5 bg-[#161618] shrink-0">
                                             <span className="text-sm font-medium text-white">Document Preview</span>
                                             <button
-                                                onClick={() => {
+                                                onClick={async () => {
                                                     setPdfFile(null);
+                                                    setActiveDocId(null);
                                                     setActiveDocView("home");
                                                     if (db && roomId) {
-                                                        const docRef = ref(db, `rooms/${roomId}/document`);
-                                                        remove(docRef).catch(err => console.error("Firebase remove document error:", err));
-                                                    }
-                                                    if (socket) {
-                                                        socket.emit("remove-document", { roomId });
+                                                        try {
+                                                            await remove(ref(db, `rooms/${roomId}/document`));
+                                                        } catch (err) {
+                                                            console.error("Firebase remove document error:", err);
+                                                        }
                                                     }
                                                 }}
                                                 className="text-xs px-3 py-1 rounded bg-[#161618] hover:bg-[#2EFF85]/10 text-zinc-400 hover:text-[#2EFF85] transition-colors border border-white/5 hover:border-[#2EFF85]/20"
@@ -668,11 +773,18 @@ export default function RoomPage() {
                                                 Remove
                                             </button>
                                         </div>
-                                        <iframe
-                                            src={pdfFile}
-                                            className="w-full h-full border-0 bg-[#161618]"
-                                            title="PDF Preview"
-                                        />
+                                        {isDocLoading ? (
+                                            <div className="w-full h-full flex flex-col items-center justify-center gap-3 bg-[#161618]">
+                                                <div className="w-8 h-8 border-2 border-[#2EFF85] border-t-transparent rounded-full animate-spin" />
+                                                <span className="text-xs font-mono text-zinc-400">Loading document...</span>
+                                            </div>
+                                        ) : (
+                                            <iframe
+                                                src={pdfFile}
+                                                className="w-full h-full border-0 bg-[#161618]"
+                                                title="PDF Preview"
+                                            />
+                                        )}
                                     </>
                                 )}
                             </div>
