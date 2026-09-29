@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useRef, useEffect } from 'react';
-import { X, Send, Sparkles, Mic } from 'lucide-react';
+import { X, Send, Sparkles, Mic, Trash2 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import ReactMarkdown from 'react-markdown';
 import { useRouter, usePathname } from 'next/navigation';
@@ -389,15 +389,15 @@ const AskAlloy: React.FC<AskAlloyProps> = ({ defaultOpen = false, isOpen: contro
             {!isOpen && showFloatingButton && (
                 <button
                     onClick={handleOpen}
-                    className="fixed bottom-4 right-4 sm:bottom-6 sm:right-6 z-50 px-4 py-4 sm:px-6 sm:py-6 rounded-full bg-[#00C753] hover:bg-[#00a344] text-white font-semibold shadow-lg transition-all duration-300 hover:scale-105"
-                    style={{
-                        animation: 'glow 2s ease-in-out infinite'
-                    }}
+                    className="fixed bottom-5 right-5 sm:bottom-6 sm:right-6 z-50 w-13 h-13 sm:w-14 sm:h-14 rounded-full bg-[#05D668] hover:bg-[#04bd5c] shadow-xl flex items-center justify-center p-1 overflow-hidden active:scale-95 transition-all duration-200"
+                    title="Ask Elloy"
+                    aria-label="Open Ask Elloy AI Assistant"
                 >
-                    <div className="flex items-center gap-2">
-                        <Sparkles className="w-5 h-5 text-white" />
-                        Ask Elloy
-                    </div>
+                    <img
+                        src="/Elloy-logo.png"
+                        alt="Ask Elloy"
+                        className="w-full h-full object-contain"
+                    />
                 </button>
             )}
 
@@ -418,28 +418,40 @@ const AskAlloy: React.FC<AskAlloyProps> = ({ defaultOpen = false, isOpen: contro
                             backdropFilter: 'blur(20px)'
                         }}
                     >
-                        <div className="flex flex-col h-full">
-                            <div className="flex items-center justify-between p-4 sm:p-6 border-b border-white/10 bg-[#121214] shrink-0">
-                                <div className="flex items-center gap-4">
+                        <div className="flex flex-col h-full bg-[#121214]">
+                            <div className="flex items-center justify-between p-3.5 sm:p-4 border-b border-white/10 bg-[#151518] shrink-0">
+                                <div className="flex items-center gap-3">
                                     <div className="relative">
-                                        <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-full border-2 border-[#00C753] p-0.5 flex items-center justify-center overflow-hidden">
-                                            <img src="/logo.png" alt="Logo" className="w-full h-full object-contain rounded-full" />
+                                        <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-full border border-[#2EFF85]/40 p-1 flex items-center justify-center overflow-hidden bg-black/40">
+                                            <img src="/logo.png" alt="Logo" className="w-full h-full object-contain" />
                                         </div>
-                                        <div className="absolute -bottom-0.5 -right-0.5 w-3 h-3 bg-[#00C753] rounded-full border-2 border-[#121214]" />
+                                        <div className="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 bg-[#2EFF85] rounded-full border border-[#151518]" />
                                     </div>
                                     <div>
-                                        <h2 className={inline ? "text-base font-bold text-white leading-tight" : "text-xl font-bold text-white"}>Ask Elloy</h2>
-                                        <p className={inline ? "text-[10px] text-gray-400" : "text-sm text-gray-400"}>Your intelligent assistant for notes, ideas, and collaboration</p>
+                                        <h2 className="text-sm sm:text-base font-bold text-white leading-tight">Ask Elloy</h2>
+                                        <div className="flex items-center gap-1 mt-0.5">
+                                            <span className="text-[11px] text-zinc-400 font-medium">Online</span>
+                                        </div>
                                     </div>
                                 </div>
-                                {!inline && (
+                                <div className="flex items-center gap-1">
+                                    {messages.length > 0 && (
+                                        <button
+                                            onClick={() => setMessages([])}
+                                            className="text-zinc-400 hover:text-red-400 hover:bg-white/5 rounded-lg transition-colors p-1.5"
+                                            title="Clear Chat"
+                                        >
+                                            <Trash2 className="w-4 h-4" />
+                                        </button>
+                                    )}
                                     <button
                                         onClick={() => setIsOpen(false)}
-                                        className="text-gray-400 hover:text-white hover:bg-white/10 rounded-full transition-colors p-2"
+                                        className="text-zinc-400 hover:text-white hover:bg-white/10 rounded-lg transition-colors p-1.5"
+                                        aria-label="Close Ask Elloy"
                                     >
-                                        <X className="w-5 h-5" />
+                                        <X className="w-4 h-4" />
                                     </button>
-                                )}
+                                </div>
                             </div>
 
                             <div className="flex-1 overflow-y-auto p-4 no-scrollbar">

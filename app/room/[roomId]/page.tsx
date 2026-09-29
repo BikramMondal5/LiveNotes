@@ -904,8 +904,8 @@ export default function RoomPage() {
                 </div>
 
                 {/* THE UNIFIED ASK ELLOY CHAT SYSTEM */}
-                {/* Responsive AskAlloy Panel: Full-screen modal on mobile, slide-in sidebar on desktop */}
-                <div className={`h-full shrink-0 transition-all duration-300 ease-in-out ${isAlloyOpen ? 'fixed md:relative inset-0 md:inset-auto z-40 md:z-20 w-full md:w-[380px] xl:w-[480px] border-l border-zinc-800/50 bg-[#161618]' : 'w-0 overflow-hidden'}`}>
+                {/* Desktop: Collapsible inline sidebar */}
+                <div className={`hidden md:block h-full shrink-0 transition-all duration-300 ease-in-out ${isAlloyOpen ? 'w-[380px] xl:w-[480px] border-l border-zinc-800/50 bg-[#161618]' : 'w-0 overflow-hidden'}`}>
                     <AskAlloy
                         isOpen={isAlloyOpen}
                         onOpenChange={setIsAlloyOpen}
@@ -917,6 +917,46 @@ export default function RoomPage() {
                 </div>
 
             </div>
+
+            {/* Mobile Floating Popup Chat Modal for Ask Elloy */}
+            {isAlloyOpen && (
+                <div className="md:hidden fixed inset-0 z-40">
+                    {/* Subtle backdrop to dismiss when clicking outside */}
+                    <div
+                        className="fixed inset-0 bg-black/40 backdrop-blur-[2px] transition-opacity duration-200"
+                        onClick={() => setIsAlloyOpen(false)}
+                    />
+                    {/* Floating Popup Card Modal */}
+                    <div className="fixed bottom-20 right-4 left-4 sm:left-auto sm:right-6 w-[calc(100vw-2rem)] max-w-[390px] h-[520px] max-h-[72vh] rounded-[24px] border border-white/10 bg-[#121214] shadow-[0_16px_50px_rgba(0,0,0,0.85)] flex flex-col overflow-hidden animate-in zoom-in-95 slide-in-from-bottom-4 duration-200 z-50">
+                        <AskAlloy
+                            isOpen={true}
+                            onOpenChange={setIsAlloyOpen}
+                            showFloatingButton={false}
+                            inline={true}
+                            stagedImage={screenshotPreview}
+                            onClearStagedImage={() => setScreenshotPreview(null)}
+                        />
+                    </div>
+                </div>
+            )}
+
+            {/* Mobile Floating AI Bubble Button in Circular Div */}
+            <button
+                onClick={() => setIsAlloyOpen(!isAlloyOpen)}
+                className="fixed bottom-5 right-5 md:hidden z-50 w-13 h-13 sm:w-14 sm:h-14 rounded-full bg-[#05D668] hover:bg-[#04bd5c] shadow-xl flex items-center justify-center p-1 overflow-hidden active:scale-95 transition-all duration-200"
+                title={isAlloyOpen ? "Close Ask Elloy" : "Ask Elloy"}
+                aria-label={isAlloyOpen ? "Close Ask Elloy AI Assistant" : "Open Ask Elloy AI Assistant"}
+            >
+                {isAlloyOpen ? (
+                    <X className="w-6 h-6 text-[#161618]" />
+                ) : (
+                    <img
+                        src="/Elloy-logo.png"
+                        alt="Ask Elloy"
+                        className="w-full h-full object-contain"
+                    />
+                )}
+            </button>
 
             {/* Share Modal */}
             {isShareModalOpen && (
