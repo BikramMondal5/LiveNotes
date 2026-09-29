@@ -216,17 +216,17 @@ const LiveNotesHero = () => {
             <NeonGlow className="top-[20%] left-1/2 -translate-x-1/2 w-[400px] h-[400px] bg-[#2EFF85]" />
 
             {/* Navbar */}
-            <nav className="relative z-20 w-full px-2.5 sm:px-6 py-3.5 sm:py-5">
+            <nav className="relative z-20 w-full px-[clamp(0.75rem,3vw,1.5rem)] py-[clamp(0.75rem,2vh,1.25rem)]">
                 <div className="w-full flex items-center justify-between">
                     <div className="flex items-center gap-2 sm:gap-3">
-                        <img src="/logo.png" alt="LiveNotes Logo" className="w-9 h-9 sm:w-10 sm:h-10 object-cover rounded-full" />
-                        <span className="text-lg sm:text-xl font-bold text-white">LiveNotes</span>
+                        <img src="/logo.png" alt="LiveNotes Logo" className="w-8 h-8 sm:w-10 sm:h-10 object-cover rounded-full" />
+                        <span className="text-base sm:text-xl font-bold text-white">LiveNotes</span>
                     </div>
 
                     <div className="flex items-center gap-2.5 sm:gap-8">
                         <a
                             href="#"
-                            className="text-sm text-[#A1A1AA] hover:text-[#2EFF85] transition-colors"
+                            className="text-xs sm:text-sm text-[#A1A1AA] hover:text-[#2EFF85] transition-colors"
                         >
                             About
                         </a>
@@ -235,7 +235,7 @@ const LiveNotesHero = () => {
                             href="https://github.com/BikramMondal5/LiveNotes"
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="inline-flex items-center h-8 rounded-[8px] bg-[#1C1C1C] hover:bg-[#242424] border border-white/10 hover:border-white/20 text-xs font-medium text-zinc-300 hover:text-white transition-all duration-200 overflow-hidden group shadow-sm shrink-0"
+                            className="inline-flex items-center h-7 sm:h-8 rounded-[8px] bg-[#1C1C1C] hover:bg-[#242424] border border-white/10 hover:border-white/20 text-xs font-medium text-zinc-300 hover:text-white transition-all duration-200 overflow-hidden group shadow-sm shrink-0"
                             title="Star LiveNotes on GitHub"
                         >
                             {/* Left Div: GitHub Icon + Text */}
@@ -257,12 +257,12 @@ const LiveNotesHero = () => {
                                 <img
                                     src={session.user.image}
                                     alt={session.user.name || "User"}
-                                    className="w-8 h-8 rounded-full object-cover border border-white/10 ring-1 ring-white/5"
+                                    className="w-7 h-7 sm:w-8 sm:h-8 rounded-full object-cover border border-white/10 ring-1 ring-white/5"
                                     title={session.user.name || session.user.email || "Logged in"}
                                 />
                             ) : (
                                 <div
-                                    className="w-8 h-8 rounded-full bg-zinc-800 border border-white/10 flex items-center justify-center text-xs font-semibold text-white"
+                                    className="w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-zinc-800 border border-white/10 flex items-center justify-center text-xs font-semibold text-white"
                                     title={session.user.name || session.user.email || "Logged in"}
                                 >
                                     {session.user.name ? session.user.name.charAt(0).toUpperCase() : "U"}
@@ -274,23 +274,23 @@ const LiveNotesHero = () => {
             </nav>
 
             {/* Hero Content */}
-            <div className="relative z-10 flex items-start sm:items-center justify-center min-h-[calc(100vh-80px)] sm:min-h-[calc(100vh-88px)] px-4 sm:px-6 pt-3 sm:pt-0 pb-16 sm:pb-0">
+            <div className="relative z-10 flex items-center justify-center min-h-[calc(100dvh-4.5rem)] sm:min-h-[calc(100vh-5.5rem)] px-[clamp(1rem,4vw,1.5rem)] py-[clamp(1rem,3vh,2rem)]">
                 <motion.div
                     initial={{ opacity: 0, y: 30 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ duration: 0.8, ease: 'easeOut' }}
-                    className="max-w-4xl mx-auto text-center space-y-5 sm:space-y-8 w-full flex flex-col items-center"
+                    className="max-w-4xl mx-auto text-center space-y-[clamp(1.25rem,3.5vh,2rem)] w-full flex flex-col items-center"
                 >
                     {/* Heading */}
-                    <div className="space-y-3 sm:space-y-4">
-                        <h1 className="text-4xl sm:text-6xl md:text-7xl lg:text-8xl font-bold text-white tracking-tight leading-none flex flex-col gap-1 sm:gap-2 items-center">
+                    <div className="space-y-[clamp(0.5rem,1.5vh,1rem)]">
+                        <h1 className="text-[clamp(2.1rem,6.5vw,5.5rem)] font-bold text-white tracking-tight leading-[1.05] flex flex-col gap-1 sm:gap-2 items-center">
                             <span>Start Writing.</span>
                             <span className="text-[#2EFF85] relative inline-block">
                                 Share Instantly.
                                 <div className="absolute -inset-4 bg-[#2EFF85] opacity-20 blur-3xl -z-10" />
                             </span>
                         </h1>
-                        <p className="text-sm sm:text-lg md:text-xl text-[#A1A1AA] max-w-2xl mx-auto leading-relaxed px-2">
+                        <p className="text-[clamp(0.85rem,2.2vw,1.25rem)] text-[#A1A1AA] max-w-2xl mx-auto leading-relaxed px-2">
                             Share notes in real-time with your friends.<br></br>
                             Create a room with a name or join an existing room.
                         </p>
@@ -310,7 +310,7 @@ const LiveNotesHero = () => {
                                     }`}
                             />
 
-                            <div className="relative flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5 sm:gap-3 bg-[#111111] rounded-2xl sm:rounded-full p-2 border border-[#2EFF85]/20 transition-all duration-300 hover:border-[#2EFF85]/40 shadow-xl">
+                            <div className="relative flex flex-col sm:flex-row items-stretch sm:items-center gap-2 sm:gap-3 bg-[#111111] rounded-2xl sm:rounded-full p-1.5 sm:p-2 border border-[#2EFF85]/20 transition-all duration-300 hover:border-[#2EFF85]/40 shadow-xl">
                                 <input
                                     ref={inputRef}
                                     type="text"
@@ -320,13 +320,13 @@ const LiveNotesHero = () => {
                                     onBlur={() => setIsFocused(false)}
                                     onKeyPress={handleKeyPress}
                                     placeholder="Enter your name or room code..."
-                                    className="w-full sm:flex-1 bg-transparent text-white placeholder:text-[#A1A1AA] px-4 sm:px-6 py-2.5 sm:py-4 outline-none text-sm sm:text-base md:text-lg font-['Times_New_Roman',Times,serif]"
+                                    className="w-full sm:flex-1 bg-transparent text-white placeholder:text-[#A1A1AA] px-4 sm:px-6 py-2 sm:py-3.5 md:py-4 outline-none text-[clamp(0.875rem,2vw,1.125rem)] font-['Times_New_Roman',Times,serif]"
                                 />
                                 <motion.button
                                     onClick={handleJoinRoom}
                                     whileHover={{ scale: 1.05 }}
                                     whileTap={{ scale: 0.95 }}
-                                    className="w-full sm:w-auto relative px-6 sm:px-8 py-2.5 sm:py-4 bg-[#2EFF85] text-[#09090B] font-semibold rounded-xl sm:rounded-full text-sm sm:text-base md:text-lg overflow-hidden group shrink-0"
+                                    className="w-full sm:w-auto relative px-5 sm:px-8 py-2 sm:py-3.5 md:py-4 bg-[#2EFF85] text-[#09090B] font-semibold rounded-xl sm:rounded-full text-[clamp(0.875rem,2vw,1.125rem)] overflow-hidden group shrink-0"
                                 >
                                     <span className="relative z-10">Join Room</span>
                                     <div className="absolute inset-0 bg-[#2EFF85] opacity-0 group-hover:opacity-100 blur-xl transition-opacity" />
@@ -346,16 +346,16 @@ const LiveNotesHero = () => {
                         initial={{ opacity: 0, y: 15 }}
                         animate={{ opacity: 1, y: 0 }}
                         transition={{ duration: 0.8, delay: 0.35 }}
-                        className="w-full max-w-2xl mx-auto -mt-3 sm:-mt-6"
+                        className="w-full max-w-2xl mx-auto -mt-2 sm:-mt-5"
                     >
-                        <div className="rounded-2xl bg-[#111113]/90 border border-white/10 p-3 sm:p-4 text-left shadow-2xl backdrop-blur-md">
+                        <div className="rounded-2xl bg-[#111113]/90 border border-white/10 p-2.5 sm:p-4 text-left shadow-2xl backdrop-blur-md">
                             {/* Package Manager Tabs */}
                             <div className="bg-[#18181B] border border-white/5 rounded-xl p-1 inline-flex items-center gap-1 max-w-full overflow-x-auto no-scrollbar">
                                 {packageManagers.map((pm) => (
                                     <button
                                         key={pm.id}
                                         onClick={() => setPkgManager(pm.id)}
-                                        className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all cursor-pointer ${pkgManager === pm.id
+                                        className={`flex items-center gap-1.5 px-2.5 sm:px-3 py-1 sm:py-1.5 rounded-lg text-[clamp(0.7rem,1.8vw,0.8125rem)] font-medium transition-all cursor-pointer ${pkgManager === pm.id
                                             ? 'bg-[#27272A] text-white shadow-sm'
                                             : 'text-zinc-400 hover:text-zinc-200'
                                             }`}
@@ -367,16 +367,16 @@ const LiveNotesHero = () => {
                             </div>
 
                             {/* Subtle divider */}
-                            <div className="border-b border-white/5 my-3" />
+                            <div className="border-b border-white/5 my-2.5 sm:my-3" />
 
                             {/* Command snippet + Copy button */}
-                            <div className="bg-[#0A0A0C] border border-white/5 rounded-xl px-3 sm:px-4 py-2 sm:py-2.5 flex items-center justify-between gap-3 overflow-x-auto no-scrollbar">
-                                <code className="font-mono text-xs sm:text-sm whitespace-nowrap select-all">
+                            <div className="bg-[#0A0A0C] border border-white/5 rounded-xl px-3 sm:px-4 py-1.5 sm:py-2.5 flex items-center justify-between gap-2 sm:gap-3 overflow-x-auto no-scrollbar">
+                                <code className="font-mono text-[clamp(0.75rem,2vw,0.875rem)] whitespace-nowrap select-all">
                                     {currentPm.display}
                                 </code>
                                 <button
                                     onClick={handleCopySnippet}
-                                    className="shrink-0 flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-xl bg-zinc-800/80 hover:bg-zinc-700 text-zinc-300 hover:text-white border border-white/10 text-xs font-medium transition-all active:scale-95 ml-2 cursor-pointer"
+                                    className="shrink-0 flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-xl bg-zinc-800/80 hover:bg-zinc-700 text-zinc-300 hover:text-white border border-white/10 text-[clamp(0.7rem,1.8vw,0.75rem)] font-medium transition-all active:scale-95 ml-1 sm:ml-2 cursor-pointer"
                                     title="Copy command"
                                 >
                                     {isSnippetCopied ? (
@@ -402,7 +402,7 @@ const LiveNotesHero = () => {
                 href="https://github.com/BikramMondal5"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="fixed bottom-5 left-5 z-30 inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-[#161618]/80 hover:bg-[#202024] border border-white/10 hover:border-[#2EFF85]/30 text-xs font-medium text-zinc-400 hover:text-white backdrop-blur-md transition-all duration-200 shadow-lg group"
+                className="fixed bottom-[clamp(0.75rem,2vh,1.25rem)] left-[clamp(0.75rem,2vw,1.25rem)] z-30 inline-flex items-center gap-2 px-2.5 sm:px-3 py-1 sm:py-1.5 rounded-full bg-[#161618]/80 hover:bg-[#202024] border border-white/10 hover:border-[#2EFF85]/30 text-[clamp(0.7rem,1.8vw,0.75rem)] font-medium text-zinc-400 hover:text-white backdrop-blur-md transition-all duration-200 shadow-lg group"
                 title="Bikram Mondal on GitHub"
             >
                 <svg className="w-3.5 h-3.5 fill-current text-zinc-400 group-hover:text-white transition-colors" viewBox="0 0 24 24" aria-hidden="true">
