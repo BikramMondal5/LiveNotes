@@ -1,35 +1,31 @@
 # 📝✨ LiveNotes – Real-Time Note Sharing App
 
 <div align="center">
-    <img src="./screenshot.png" alt="Preview Image"/>
-</div>
+  <img src="./screenshot.png" alt="LiveNotes Preview" width="100%" />
 
-<div align="center">
-    <h3>LiveNotes</h3>
+  <h3>LiveNotes</h3>
 
   <p>
-    Real-time collaborative notes with AI-powered smart assistance.<br />
+    Real-time collaborative notes with AI-powered smart assistance.
   </p>
 
   <p>
-    <a href="https://opensource.org/licenses/Apache">
-      <img src="https://img.shields.io/badge/Apache--2.0-green?style=for-the-badge" alt="apache-2.0-license" />
+    <a href="https://opensource.org/licenses/Apache-2.0">
+      <img src="https://img.shields.io/badge/Apache--2.0-green?style=for-the-badge" alt="Apache 2.0 License" />
     </a>
     <a href="https://react.dev">
-      <img src="https://img.shields.io/badge/React-20232A?style=for-the-badge&logo=react&logoColor=61DAFB" alt="socket.io">
+      <img src="https://img.shields.io/badge/React-20232A?style=for-the-badge&logo=react&logoColor=61DAFB" alt="React" />
     </a>
     <a href="https://www.npmjs.com/">
-        <img src="https://img.shields.io/badge/npm-CB3837?style=for-the-badge&logo=npm&logoColor=white">
+      <img src="https://img.shields.io/badge/npm-CB3837?style=for-the-badge&logo=npm&logoColor=white" alt="npm" />
     </a>
     <a href="https://socket.io/">
-        <img src="https://img.shields.io/badge/Socket.io-010101?&style=for-the-badge&logo=Socket.io&logoColor=white">
+      <img src="https://img.shields.io/badge/Socket.io-010101?style=for-the-badge&logo=socket.io&logoColor=white" alt="Socket.IO" />
     </a>
   </p>
-
 </div>
 
-
-LiveNotes is a collaborative platform that allows users to share and edit notes in real-time with friends and colleagues. Whether you're brainstorming ideas, managing tasks, or sharing quick notes, LiveNotes makes collaboration seamless and efficient. It also integrates with multimodal AI assistance and terminal-based workflows to enhance productivity and streamline note management.
+LiveNotes is a collaborative platform that allows users to share and edit notes in real time with friends and colleagues. Whether you're brainstorming ideas, managing tasks, or sharing quick notes, LiveNotes makes collaboration seamless and efficient. It also integrates with multimodal AI assistance and terminal-based workflows to enhance productivity and streamline note management.
 
 ## 🌟 Features
 
