@@ -1,13 +1,7 @@
-# 📝✨ LiveNotes – Real-Time Note Sharing App
+# 📝✨ LiveNotes – Real-Time AI Powered Note Sharing App
 
 <div align="center">
   <img src="./public/landing-page.jpeg" alt="LiveNotes Preview" width="100%" />
-
-  <h3>LiveNotes</h3>
-
-  <p>
-    Real-time collaborative notes with AI-powered smart assistance.
-  </p>
 
   <p>
     <a href="https://opensource.org/licenses/Apache-2.0">
