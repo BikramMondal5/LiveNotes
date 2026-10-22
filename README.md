@@ -1,7 +1,7 @@
 # 📝✨ LiveNotes – Real-Time Note Sharing App
 
 <div align="center">
-  <img src="./screenshot.png" alt="LiveNotes Preview" width="100%" />
+  <img src="./public/landing-page.jpeg" alt="LiveNotes Preview" width="100%" />
 
   <h3>LiveNotes</h3>
 
