@@ -157,21 +157,14 @@ const LiveNotesHero = () => {
                     <span className="sm:hidden">Zero-deps</span>
                 </>
             ),
-            command: 'irm https://livenotes.vercel.app/install.ps1 | iex\nlivenotes -r <room_name>',
+            command: 'irm https://livenotes.vercel.app/install.ps1 | iex',
             display: (
-                <div className="flex flex-col gap-1 py-0.5 text-left font-mono">
-                    <div className="whitespace-nowrap select-all">
-                        <span className="text-[#2EFF85] font-semibold">irm</span>{' '}
-                        <span className="text-[#00E5FF]">https://livenotes.vercel.app/install.ps1</span>{' '}
-                        <span className="text-zinc-400">|</span>{' '}
-                        <span className="text-[#2EFF85]">iex</span>
-                    </div>
-                    <div className="whitespace-nowrap select-all">
-                        <span className="text-[#2EFF85] font-semibold">livenotes</span>{' '}
-                        <span className="text-[#00E5FF]">-r</span>{' '}
-                        <span className="text-[#00E5FF]">&lt;room_name&gt;</span>
-                    </div>
-                </div>
+                <>
+                    <span className="text-[#2EFF85] font-semibold">irm</span>{' '}
+                    <span className="text-[#00E5FF]">https://livenotes.vercel.app/install.ps1</span>{' '}
+                    <span className="text-zinc-400">|</span>{' '}
+                    <span className="text-[#2EFF85]">iex</span>
+                </>
             ),
             icon: (
                 <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.8" strokeLinecap="round" strokeLinejoin="round">
@@ -184,10 +177,8 @@ const LiveNotesHero = () => {
     const currentPm = packageManagers.find((p) => p.id === pkgManager) || packageManagers[0];
 
     const handleCopySnippet = () => {
-        if (pkgManager === 'zero') {
-            navigator.clipboard.writeText(
-                "irm https://livenotes.vercel.app/install.ps1 | iex\nlivenotes -r <room_name>"
-            );
+        if (pkgManager === 'zero' || pkgManager === 'curl') {
+            navigator.clipboard.writeText(currentPm.command);
         } else {
             navigator.clipboard.writeText("Comming Soon, Stay Tuned!");
         }
