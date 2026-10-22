@@ -76,7 +76,32 @@ LiveNotes is a collaborative platform that allows users to share and edit notes 
 - View and collaborate on documents in real-time  
 - Use AI to extract insights from content  
 
-### 5. Save Notes via CLI
+### 5. Instant Room Text Extraction (Zero Dependencies)
+Extract notes from any live room straight to a text file using a single command:
+```bash
+livenotes -r <room_name>
+```
+For example, to extract room `291026`:
+```bash
+livenotes -r 291026
+```
+This automatically downloads and saves all the text from the room's Text tab into `291026.txt` in milliseconds.
+
+#### ⚡ 1-Second Installation (Zero Dependencies):
+- **Windows (CMD & PowerShell)**:
+  ```powershell
+  irm https://livenotes.vercel.app/install.ps1 | iex
+  ```
+- **macOS / Linux**:
+  ```bash
+  curl -fsSL https://livenotes.vercel.app/install.sh | bash
+  ```
+- **Without installing anything (Direct `curl`)**:
+  ```bash
+  curl -s https://livenotes.vercel.app/raw/<room_name> -o <room_name>.txt
+  ```
+
+### 6. Save Notes via CLI
 - Install and login using the LiveNotes CLI  
 - Run commands like:
   ```bash

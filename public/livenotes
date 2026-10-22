@@ -1,0 +1,80 @@
+#!/usr/bin/env bash
+set -e
+
+SERVER_URL="https://livenotes.vercel.app"
+FIREBASE_URL="https://livenotes-b31fe-default-rtdb.asia-southeast1.firebasedatabase.app"
+ROOM=""
+OUTFILE=""
+
+while [[ $# -gt 0 ]]; do
+  case "$1" in
+    -r)
+      ROOM="$2"
+      shift 2
+      ;;
+    -o)
+      OUTFILE="$2"
+      shift 2
+      ;;
+    -h|--help)
+      echo ""
+      echo "  LiveNotes CLI - Instant Room Text Extractor"
+      echo "  -------------------------------------------"
+      echo "  Usage:"
+      echo "    livenotes -r <room_name>"
+      echo "    livenotes -r <room_name> -o <output_filename>"
+      echo "    livenotes <room_name>"
+      echo ""
+      echo "  Examples:"
+      echo "    livenotes -r 291026"
+      echo "    livenotes -r 291026 -o notes.txt"
+      echo ""
+      exit 0
+      ;;
+    *)
+      if [ -z "$ROOM" ]; then
+        ROOM="$1"
+      fi
+      shift
+      ;;
+  esac
+done
+
+if [ -z "$ROOM" ]; then
+  echo "[LiveNotes] Error: Missing room name."
+  echo "Usage: livenotes -r <room_name>"
+  exit 1
+fi
+
+if [ -z "$OUTFILE" ]; then
+  OUTFILE="${ROOM}.txt"
+fi
+
+echo "[LiveNotes] Extracting text from room: ${ROOM} ..."
+
+# 1. Try LiveNotes raw API endpoint
+if curl -s -f "${SERVER_URL}/raw/${ROOM}" -o "${OUTFILE}" 2>/dev/null; then
+  echo "[LiveNotes] Successfully saved text to: ${OUTFILE}"
+  exit 0
+fi
+
+# 2. Fallback to Firebase directly
+TMP_JSON=$(curl -s "${FIREBASE_URL}/rooms/${ROOM}/notes.json")
+if [ "$TMP_JSON" = "null" ] || [ -z "$TMP_JSON" ]; then
+  echo "[LiveNotes] Room '${ROOM}' was not found or has no text content."
+  rm -f "${OUTFILE}" 2>/dev/null
+  exit 1
+fi
+
+if command -v node >/dev/null 2>&1; then
+  node -e "process.stdout.write(JSON.parse(process.argv[1]))" "$TMP_JSON" > "${OUTFILE}"
+elif command -v python3 >/dev/null 2>&1; then
+  python3 -c "import sys, json; sys.stdout.write(json.loads(sys.argv[1]))" "$TMP_JSON" > "${OUTFILE}"
+elif command -v jq >/dev/null 2>&1; then
+  echo "$TMP_JSON" | jq -r '.' > "${OUTFILE}"
+else
+  printf '%b' "${TMP_JSON:1:-1}" > "${OUTFILE}"
+fi
+
+echo "[LiveNotes] Successfully saved text to: ${OUTFILE}"
+

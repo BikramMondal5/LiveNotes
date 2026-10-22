@@ -1,0 +1,1098 @@
+﻿-- ######################################################################
+-- PROBLEM STATEMENT 1: STUDENT and StudentActivityGroup
+-- Q: Create tables STUDENT and StudentActivityGroup, insert 10 records
+--    each, and write the queries 1(i) to 1(vii).
+-- Assumptions: Activity_ID FK added in STUDENT (NULL = no activity group);
+--              To_Date column is named End_Date (To_Date is an Oracle function).
+-- ######################################################################
+DROP TABLE STUDENT CASCADE CONSTRAINTS PURGE;
+DROP TABLE StudentActivityGroup CASCADE CONSTRAINTS PURGE;
+
+CREATE TABLE StudentActivityGroup (
+  Activity_ID        NUMBER(5) PRIMARY KEY,
+  ActivityGroupName  VARCHAR2(50) NOT NULL,
+  Event_Type         VARCHAR2(30),
+  Event_Name         VARCHAR2(60),
+  Start_Date         DATE,
+  End_Date           DATE,
+  Certificate_Issued CHAR(1) DEFAULT 'N' CHECK (Certificate_Issued IN ('Y','N')),
+  Performance_Date   DATE
+);
+
+CREATE TABLE STUDENT (
+  STUDENT_ID      NUMBER(5) PRIMARY KEY,
+  STUDENT_Fname   VARCHAR2(30) NOT NULL,
+  STUDENT_Lname   VARCHAR2(30),
+  Age             NUMBER(3),
+  STUDENT_EmailID VARCHAR2(60) UNIQUE,
+  PhoneNo         VARCHAR2(15),
+  Branch          VARCHAR2(20),
+  YearofPassing   NUMBER(4),
+  YearofAdmission NUMBER(4),
+  Skill_Set       VARCHAR2(80),
+  Activity_ID     NUMBER(5) REFERENCES StudentActivityGroup(Activity_ID)
+);
+
+INSERT INTO StudentActivityGroup VALUES (1,'Coding Club','Technical','Hackathon 2026',DATE '2026-01-20',DATE '2026-01-22','Y',NULL);
+INSERT INTO StudentActivityGroup VALUES (2,'Science Forum','Academic','National Science Day',DATE '2026-02-28',DATE '2026-02-28','Y',NULL);
+INSERT INTO StudentActivityGroup VALUES (3,'Dance Society','Cultural','Annual Fest Dance',DATE '2026-02-10',DATE '2026-02-12','Y',DATE '2026-02-11');
+INSERT INTO StudentActivityGroup VALUES (4,'Music Band','Cultural','Battle of Bands',DATE '2026-03-01',DATE '2026-03-02','N',DATE '2026-03-02');
+INSERT INTO StudentActivityGroup VALUES (5,'Robotics Club','Technical','RoboWars',DATE '2026-02-15',DATE '2026-02-16','Y',NULL);
+INSERT INTO StudentActivityGroup VALUES (6,'Drama Club','Cultural','Street Play',DATE '2026-03-10',DATE '2026-03-11','N',DATE '2026-03-11');
+INSERT INTO StudentActivityGroup VALUES (7,'Sports Committee','Sports','Inter College Cricket',DATE '2025-12-05',DATE '2025-12-10','Y',NULL);
+INSERT INTO StudentActivityGroup VALUES (8,'Quiz Club','Academic','Tech Quiz',DATE '2026-01-25',DATE '2026-01-25','Y',NULL);
+INSERT INTO StudentActivityGroup VALUES (9,'NSS Unit','Social','Blood Donation Camp',DATE '2026-04-05',DATE '2026-04-05','Y',NULL);
+INSERT INTO StudentActivityGroup VALUES (10,'Photography Club','Cultural','Photo Walk',DATE '2026-03-20',DATE '2026-03-20','N',NULL);
+
+INSERT INTO STUDENT VALUES (1,'Aarav','Sen',20,'aarav@mail.com','9830000001','CSE-AIML',2027,2023,'Python, Java',1);
+INSERT INTO STUDENT VALUES (2,'Ishita','Das',21,'ishita@mail.com','9830000002','CSE-AIML',2027,2023,'Physics, Research',2);
+INSERT INTO STUDENT VALUES (3,'Riya','Ghosh',20,'riya@mail.com','9830000003','IT',2027,2023,'Dance',3);
+INSERT INTO STUDENT VALUES (4,'Kabir','Roy',22,'kabir@mail.com','9830000004','ECE',2026,2022,'Guitar, Vocals',4);
+INSERT INTO STUDENT VALUES (5,'Meera','Nair',21,'meera@mail.com','9830000005','CSE',2027,2023,'Robotics, C++',5);
+INSERT INTO STUDENT VALUES (6,'Zoya','Khan',20,'zoya@mail.com','9830000006','IT',2028,2024,'Acting, Writing',6);
+INSERT INTO STUDENT VALUES (7,'Rohan','Mehta',21,'rohan@mail.com','9830000007','CSE-AIML',2027,2023,'Machine Learning',1);
+INSERT INTO STUDENT VALUES (8,'Sneha','Paul',22,'sneha@mail.com','9830000008','ECE',2026,2022,'Quizzing',2);
+INSERT INTO STUDENT VALUES (9,'Arjun','Bose',20,'arjun@mail.com','9830000009','CSE',2028,2024,'Photography',NULL);
+INSERT INTO STUDENT VALUES (10,'Tanvi','Joshi',21,'tanvi@mail.com','9830000010','IT',2027,2023,'Painting',NULL);
+COMMIT;
+
+-- 1(i) Get the list of students with branch name belonging to activity groups.
+SELECT s.STUDENT_ID, s.STUDENT_Fname, s.STUDENT_Lname, s.Branch, a.ActivityGroupName
+FROM STUDENT s JOIN StudentActivityGroup a ON s.Activity_ID = a.Activity_ID;
+
+-- 1(ii) Get first name, last name and mail ID of students engaged in a specific
+--       event from 2026-01-19 to 2026-03-12.
+SELECT s.STUDENT_Fname, s.STUDENT_Lname, s.STUDENT_EmailID
+FROM STUDENT s JOIN StudentActivityGroup a ON s.Activity_ID = a.Activity_ID
+WHERE a.Start_Date >= DATE '2026-01-19' AND a.End_Date <= DATE '2026-03-12'
+AND   a.Event_Name = '&event_name';
+
+-- 1(iii) List of students who do not have an activity group yet.
+SELECT STUDENT_ID, STUDENT_Fname, STUDENT_Lname FROM STUDENT WHERE Activity_ID IS NULL;
+
+-- 1(iv) List all students who are handling a specified Event_Type.
+SELECT s.STUDENT_Fname, s.STUDENT_Lname, a.Event_Type
+FROM STUDENT s JOIN StudentActivityGroup a ON s.Activity_ID = a.Activity_ID
+WHERE UPPER(a.Event_Type) = UPPER('&event_type');
+
+-- 1(v) List the student activities for which certificates are issued.
+SELECT s.STUDENT_Fname, s.STUDENT_Lname, a.ActivityGroupName, a.Event_Name
+FROM STUDENT s JOIN StudentActivityGroup a ON s.Activity_ID = a.Activity_ID
+WHERE a.Certificate_Issued = 'Y';
+
+-- 1(vi) Find the number of activities which are performance based.
+SELECT COUNT(*) AS Performance_Based FROM StudentActivityGroup
+WHERE Performance_Date IS NOT NULL;
+
+-- 1(vii) Find the student information who took part in National Science Day.
+SELECT s.* FROM STUDENT s JOIN StudentActivityGroup a ON s.Activity_ID = a.Activity_ID
+WHERE a.Event_Name = 'National Science Day';
+
+
+-- ######################################################################
+-- PROBLEM STATEMENT 2: Client_d, Project, Employee
+-- Q: Create Client_d, Project, Employee with the given foreign keys and write
+--    queries 2(i) to 2(xiii).
+-- Note: Project PK is (ProjectID, EmpID, ClientID) because one project can have
+--       many employees/clients. ALTER needs parentheses for multiple constraints.
+-- ######################################################################
+DROP TABLE Project  CASCADE CONSTRAINTS PURGE;
+DROP TABLE Client_d CASCADE CONSTRAINTS PURGE;
+DROP TABLE Employee CASCADE CONSTRAINTS PURGE;
+
+CREATE TABLE Employee (
+  EmpID NUMBER(5) PRIMARY KEY, EmpFname VARCHAR2(30) NOT NULL, EmpLname VARCHAR2(30),
+  Age NUMBER(3), EmailID VARCHAR2(60), PhoneNo VARCHAR2(15), City VARCHAR2(30));
+
+CREATE TABLE Client_d (
+  ClientID CHAR(10) PRIMARY KEY, ClientFname VARCHAR2(30) NOT NULL, ClientLname VARCHAR2(30),
+  Age NUMBER(3), ClientEmailID VARCHAR2(60), PhoneNo VARCHAR2(15), City VARCHAR2(30),
+  EmpID NUMBER(5));
+
+CREATE TABLE Project (
+  ProjectID NUMBER(5) NOT NULL, EmpID NUMBER(5) NOT NULL, ProjectName VARCHAR2(60),
+  ProjectStartDate DATE, ClientID CHAR(10) NOT NULL,
+  CONSTRAINT pk_project PRIMARY KEY (ProjectID, EmpID, ClientID));
+
+ALTER TABLE Client_d ADD CONSTRAINT FK_Client_Emp FOREIGN KEY (EmpID) REFERENCES Employee (EmpID);
+ALTER TABLE Project ADD (
+  CONSTRAINT FK_Project_Client FOREIGN KEY (ClientID) REFERENCES Client_d (ClientID),
+  CONSTRAINT FK_Project_Emp    FOREIGN KEY (EmpID)    REFERENCES Employee (EmpID));
+
+INSERT INTO Employee VALUES (101,'Avinash','Jain',45,'avinash.jain@corp.com','9800000101','Kolkata');
+INSERT INTO Employee VALUES (102,'Steve','Rogers',52,'steve.rogers@corp.com','9800000102','Mumbai');
+INSERT INTO Employee VALUES (103,'Param','Singh',38,'param.singh@corp.com','9800000103','Delhi');
+INSERT INTO Employee VALUES (104,'Riya','Sen',29,'riya.sen@corp.com','9800000104','Kolkata');
+INSERT INTO Employee VALUES (105,'Tony','Stark',48,'tony.stark@corp.com','9800000105','Pune');
+INSERT INTO Employee VALUES (106,'Natasha','Roy',33,'natasha.roy@corp.com','9800000106','Mumbai');
+INSERT INTO Employee VALUES (107,'Bruce','Banner',41,'bruce.banner@corp.com','9800000107','Chennai');
+INSERT INTO Employee VALUES (108,'Anita','Das',36,'anita.das@corp.com','9800000108','Kolkata');
+INSERT INTO Employee VALUES (109,'Rahul','Verma',27,'rahul.verma@corp.com','9800000109','Delhi');
+INSERT INTO Employee VALUES (110,'Sneha','Iyer',31,'sneha.iyer@corp.com','9800000110','Bangalore');
+
+INSERT INTO Client_d VALUES ('C001','Rohit','Mehra',40,'rohit@client.com','9700000001','Mumbai',101);
+INSERT INTO Client_d VALUES ('C002','Kavita','Nair',35,'kavita@client.com','9700000002','Kochi',102);
+INSERT INTO Client_d VALUES ('C003','Imran','Khan',44,'imran@client.com','9700000003','Delhi',102);
+INSERT INTO Client_d VALUES ('C004','Pooja','Shah',38,'pooja@client.com','9700000004','Ahmedabad',103);
+INSERT INTO Client_d VALUES ('C005','Arjun','Reddy',50,'arjun@client.com','9700000005','Hyderabad',104);
+INSERT INTO Client_d VALUES ('C006','Meera','Pillai',33,'meera@client.com','9700000006','Chennai',105);
+INSERT INTO Client_d VALUES ('C007','Sanjay','Gupta',47,'sanjay@client.com','9700000007','Kolkata',106);
+INSERT INTO Client_d VALUES ('C008','Neha','Kapoor',29,'neha@client.com','9700000008','Jaipur',107);
+INSERT INTO Client_d VALUES ('C009','Vikram','Rao',42,'vikram@client.com','9700000009','Bangalore',108);
+INSERT INTO Client_d VALUES ('C010','Deepa','Bose',37,'deepa@client.com','9700000010','Kolkata',109);
+
+INSERT INTO Project VALUES (4,101,'Inventory System',DATE '2021-01-25','C001');
+INSERT INTO Project VALUES (4,101,'Inventory System',DATE '2021-01-25','C010');
+INSERT INTO Project VALUES (5,102,'Payroll Portal',DATE '2021-02-10','C002');
+INSERT INTO Project VALUES (6,103,'CRM Upgrade',DATE '2021-03-05','C003');
+INSERT INTO Project VALUES (200,104,'Data Warehouse',DATE '2022-06-15','C005');
+INSERT INTO Project VALUES (300,102,'Mobile Banking App',DATE '2023-04-01','C004');
+INSERT INTO Project VALUES (400,105,'Smart City Dashboard',DATE '2023-09-12','C006');
+INSERT INTO Project VALUES (500,102,'Logistics Tracker',DATE '2024-02-20','C007');
+INSERT INTO Project VALUES (800,106,'E-Commerce Portal',DATE '2024-07-01','C008');
+INSERT INTO Project VALUES (800,107,'E-Commerce Portal',DATE '2024-07-01','C009');
+INSERT INTO Project VALUES (800,108,'E-Commerce Portal',DATE '2024-07-01','C010');
+COMMIT;
+
+-- 2(i) Get the list of projects with Project ID allocated to clients.
+SELECT p.ProjectID, p.ProjectName, c.ClientID, c.ClientFname || ' ' || c.ClientLname AS Client_Name
+FROM Project p JOIN Client_d c ON p.ClientID = c.ClientID ORDER BY p.ProjectID;
+
+-- 2(ii) Get employee's first name, last name with Mail ID engaged in a project
+--       from 2021-01-19 to 2021-03-12. (table has only 2 name columns)
+SELECT DISTINCT e.EmpFname, e.EmpLname, e.EmailID
+FROM Employee e JOIN Project p ON e.EmpID = p.EmpID
+WHERE p.ProjectStartDate BETWEEN DATE '2021-01-19' AND DATE '2021-03-12';
+
+-- 2(iii) List employees who do not have a project since 2024.
+SELECT e.* FROM Employee e
+WHERE NOT EXISTS (SELECT 1 FROM Project p
+                  WHERE p.EmpID = e.EmpID AND p.ProjectStartDate >= DATE '2024-01-01');
+
+-- 2(iv) List all clients who are handling specified projects.
+SELECT DISTINCT c.ClientID, c.ClientFname, c.ClientLname, p.ProjectName
+FROM Client_d c JOIN Project p ON c.ClientID = p.ClientID
+WHERE UPPER(p.ProjectName) = UPPER('&project_name');
+
+-- 2(v) List the client's information handling Project 4, Project 5 and Project 6.
+SELECT DISTINCT c.* FROM Client_d c JOIN Project p ON c.ClientID = p.ClientID
+WHERE p.ProjectID IN (4,5,6);
+
+-- 2(vi) Find the number of clients involved in each project.
+SELECT ProjectID, COUNT(DISTINCT ClientID) AS No_of_Clients
+FROM Project GROUP BY ProjectID ORDER BY ProjectID;
+
+-- 2(vi-b) Find the project that engages the maximum clients.
+SELECT ProjectID, COUNT(DISTINCT ClientID) AS No_of_Clients
+FROM Project GROUP BY ProjectID
+HAVING COUNT(DISTINCT ClientID) =
+       (SELECT MAX(COUNT(DISTINCT ClientID)) FROM Project GROUP BY ProjectID);
+
+-- 2(vii) Name the project handled by the eldest employee and from which date.
+SELECT e.EmpFname || ' ' || e.EmpLname AS Eldest_Employee, e.Age,
+       p.ProjectName, p.ProjectStartDate AS Handled_From
+FROM Employee e JOIN Project p ON e.EmpID = p.EmpID
+WHERE e.Age = (SELECT MAX(Age) FROM Employee);
+
+-- 2(viii) Get the client name, mail ID and phone no handling Project ID 800.
+SELECT DISTINCT c.ClientFname || ' ' || c.ClientLname AS Client_Name, c.ClientEmailID, c.PhoneNo
+FROM Client_d c JOIN Project p ON c.ClientID = p.ClientID WHERE p.ProjectID = 800;
+
+-- 2(ix) For a city tour, find the client city for Project ID 200 or 400.
+SELECT DISTINCT p.ProjectID, c.City
+FROM Project p JOIN Client_d c ON p.ClientID = c.ClientID
+WHERE p.ProjectID IN (200,400);
+
+-- 2(x) Who is 'Avinash Jain'? Give details.
+SELECT * FROM Employee WHERE EmpFname = 'Avinash' AND EmpLname = 'Jain';
+
+-- 2(xi) What is the mail ID, phone no and project ID of 'Steve Rogers'?
+SELECT DISTINCT e.EmailID, e.PhoneNo, p.ProjectID
+FROM Employee e JOIN Project p ON e.EmpID = p.EmpID
+WHERE e.EmpFname = 'Steve' AND e.EmpLname = 'Rogers';
+
+-- 2(xii) How many projects are handled by 'Steve Rogers'? Allocate Project ID 500
+--        also to Param Singh.
+SELECT COUNT(DISTINCT p.ProjectID) AS Projects_Handled
+FROM Employee e JOIN Project p ON e.EmpID = p.EmpID
+WHERE e.EmpFname = 'Steve' AND e.EmpLname = 'Rogers';
+
+INSERT INTO Project
+SELECT 500, (SELECT EmpID FROM Employee WHERE EmpFname='Param' AND EmpLname='Singh'),
+       ProjectName, ProjectStartDate, ClientID
+FROM Project WHERE ProjectID = 500 AND EmpID = 102;
+COMMIT;
+
+-- 2(xiii) Add a new client 'Jyotindra Nath Singh' to a newly allocated project
+--         with Project ID 600 along with project details.
+INSERT INTO Client_d VALUES ('C011','Jyotindra Nath','Singh',45,'jyotindra@client.com','9700000011','Patna',103);
+INSERT INTO Project VALUES (600,103,'Hospital Management System',DATE '2026-10-01','C011');
+COMMIT;
+
+
+-- ######################################################################
+-- PROBLEM STATEMENT 3: Student, Course, Enrolled
+-- Q: Create tables using PRIMARY KEY, FOREIGN KEY, NOT NULL etc. for
+--    Student(sid,sname,address), Course(cid,cname,fee), Enrolled(cid,sid,doj)
+--    and write queries 3(i) to 3(vii).
+-- Assumption: Semester added to Course; Fee_Paid added to Enrolled.
+-- ######################################################################
+DROP TABLE Enrolled CASCADE CONSTRAINTS PURGE;
+DROP TABLE Course   CASCADE CONSTRAINTS PURGE;
+DROP TABLE Student  CASCADE CONSTRAINTS PURGE;
+
+CREATE TABLE Student (sid NUMBER(5) PRIMARY KEY, sname VARCHAR2(50) NOT NULL, address VARCHAR2(100));
+CREATE TABLE Course (cid VARCHAR2(6) PRIMARY KEY, cname VARCHAR2(50) NOT NULL UNIQUE,
+                     fee NUMBER(8,2) NOT NULL CHECK (fee >= 0));
+CREATE TABLE Enrolled (
+  cid VARCHAR2(6) NOT NULL, sid NUMBER(5) NOT NULL, doj DATE NOT NULL,
+  CONSTRAINT pk_enrolled PRIMARY KEY (cid, sid),
+  CONSTRAINT fk_enr_course  FOREIGN KEY (cid) REFERENCES Course (cid),
+  CONSTRAINT fk_enr_student FOREIGN KEY (sid) REFERENCES Student (sid));
+ALTER TABLE Course   ADD (Semester NUMBER(1));
+ALTER TABLE Enrolled ADD (Fee_Paid NUMBER(8,2) DEFAULT 0 NOT NULL);
+
+INSERT INTO Student VALUES (1,'Anil Sharma','Kolkata');
+INSERT INTO Student VALUES (2,'Riya Sen','Howrah');
+INSERT INTO Student VALUES (3,'Rohan Das','Durgapur');
+INSERT INTO Student VALUES (4,'Anil Kumar','Siliguri');
+INSERT INTO Student VALUES (5,'Sana Khan','Kolkata');
+INSERT INTO Student VALUES (6,'Vikram Singh','Asansol');
+INSERT INTO Course VALUES ('C101','DBMS',15000,5);
+INSERT INTO Course VALUES ('C102','Operating Systems',12000,5);
+INSERT INTO Course VALUES ('C103','Computer Networks',12000,6);
+INSERT INTO Course VALUES ('C104','Machine Learning',18000,6);
+INSERT INTO Course VALUES ('C105','Data Structures',10000,3);
+INSERT INTO Enrolled VALUES ('C101',1,DATE '2025-06-20',15000);
+INSERT INTO Enrolled VALUES ('C101',2,DATE '2025-07-05',7500);
+INSERT INTO Enrolled VALUES ('C101',3,DATE '2025-07-20',15000);
+INSERT INTO Enrolled VALUES ('C102',1,DATE '2025-06-25',12000);
+INSERT INTO Enrolled VALUES ('C102',3,DATE '2025-07-15',0);
+INSERT INTO Enrolled VALUES ('C103',4,DATE '2025-08-01',12000);
+INSERT INTO Enrolled VALUES ('C104',2,DATE '2025-06-30',18000);
+INSERT INTO Enrolled VALUES ('C104',5,DATE '2025-07-10',9000);
+INSERT INTO Enrolled VALUES ('C105',6,DATE '2025-05-20',10000);
+COMMIT;
+
+-- 3(i) Extract the student who has registered to DBMS with the name "Anil Sharma".
+SELECT s.sid, s.sname, s.address, c.cname, e.doj
+FROM Student s JOIN Enrolled e ON s.sid = e.sid JOIN Course c ON c.cid = e.cid
+WHERE s.sname = 'Anil Sharma' AND c.cname = 'DBMS';
+
+-- 3(ii) Get all courses being taught in a semester.
+SELECT cid, cname, fee FROM Course WHERE Semester = &semester;
+
+-- 3(iii) List students along with the courses they are enrolled in.
+SELECT s.sid, s.sname, c.cid, c.cname
+FROM Student s JOIN Enrolled e ON s.sid = e.sid JOIN Course c ON c.cid = e.cid
+ORDER BY s.sid;
+
+-- 3(iv) List all students who enrolled after a certain date (e.g., 01-JUL-2025).
+SELECT s.sid, s.sname, c.cname, e.doj
+FROM Student s JOIN Enrolled e ON s.sid = e.sid JOIN Course c ON c.cid = e.cid
+WHERE e.doj > TO_DATE('01-JUL-2025','DD-MON-YYYY');
+
+-- 3(v) Find the number of students enrolled in each course.
+SELECT c.cid, c.cname, COUNT(e.sid) AS Students_Enrolled
+FROM Course c LEFT JOIN Enrolled e ON c.cid = e.cid GROUP BY c.cid, c.cname;
+
+-- 3(vi) Get the total fee collected per course.
+SELECT c.cid, c.cname, NVL(SUM(e.Fee_Paid),0) AS Total_Fee_Collected
+FROM Course c LEFT JOIN Enrolled e ON c.cid = e.cid GROUP BY c.cid, c.cname;
+
+-- 3(vii) Get the list of enrolled students who need to pay the fee.
+SELECT s.sid, s.sname, c.cname, c.fee, e.Fee_Paid, (c.fee - e.Fee_Paid) AS Balance_Due
+FROM Student s JOIN Enrolled e ON s.sid = e.sid JOIN Course c ON c.cid = e.cid
+WHERE e.Fee_Paid < c.fee;
+
+
+-- ######################################################################
+-- PROBLEM STATEMENT 4: Student table - DDL / DML practice
+-- Q: Student(Enrollment_No, CollegeRoll_No, Student Name, Phone No, Address,
+--    Blood Group). Perform (i) to (xi).
+-- ######################################################################
+DROP TABLE Student CASCADE CONSTRAINTS PURGE;
+
+CREATE TABLE Student (
+  Enrollment_No  NUMBER(10) PRIMARY KEY,
+  CollegeRoll_No VARCHAR2(15) NOT NULL UNIQUE,
+  Student_Name   VARCHAR2(50) NOT NULL,
+  Phone_No       VARCHAR2(15),
+  Address        VARCHAR2(100),
+  Blood_Group    VARCHAR2(5));
+
+-- 4(i) Describe the table after creating it.
+DESC Student;
+
+-- 4(ii) Store 7 to 8 student records in the table.
+INSERT INTO Student VALUES (2023001,'CS/23/001','Aarav Sen','9830011111','Salt Lake, Kolkata','B+');
+INSERT INTO Student VALUES (2023002,'CS/23/002','Ishita Das','9830022222','Howrah','O+');
+INSERT INTO Student VALUES (2023003,'IT/23/003','Riya Ghosh','9830033333','Dum Dum, Kolkata','A+');
+INSERT INTO Student VALUES (2023004,'EC/23/004','Kabir Roy','9830044444','Barasat','O-');
+INSERT INTO Student VALUES (2023005,'CS/23/005','Meera Nair','9830055555','Behala, Kolkata','B+');
+INSERT INTO Student VALUES (2023006,'IT/23/006','Zoya Khan','9830066666','Garia, Kolkata','AB+');
+INSERT INTO Student VALUES (2023007,'EC/23/007','Rohan Mehta','9830077777','Durgapur','A-');
+INSERT INTO Student VALUES (2023008,'CS/23/008','Sneha Paul','9830088888','Siliguri','O+');
+COMMIT;
+
+-- 4(iii) Select all the records from the table.
+SELECT * FROM Student;
+
+-- 4(iv) Select phone number and blood group of students for a blood camp emergency.
+SELECT Student_Name, Phone_No, Blood_Group FROM Student WHERE Blood_Group = 'O+';
+
+-- 4(v) Add columns State, Country and Branch to the student table.
+ALTER TABLE Student ADD (State VARCHAR2(30), Country VARCHAR2(30), Branch VARCHAR2(20));
+UPDATE Student SET State = 'West Bengal', Country = 'India';
+UPDATE Student SET Branch = 'CSE' WHERE CollegeRoll_No LIKE 'CS%';
+UPDATE Student SET Branch = 'IT'  WHERE CollegeRoll_No LIKE 'IT%';
+UPDATE Student SET Branch = 'ECE' WHERE CollegeRoll_No LIKE 'EC%';
+COMMIT;
+
+-- 4(vi) Select a set of students between enrollment numbers to identify branches.
+SELECT Enrollment_No, Student_Name, Branch FROM Student
+WHERE Enrollment_No BETWEEN 2023003 AND 2023006;
+
+-- 4(vii) Update the values of the table using the WHERE clause.
+UPDATE Student SET Address = 'New Town, Kolkata', Phone_No = '9830099999'
+WHERE Enrollment_No = 2023002;
+COMMIT;
+
+-- 4(viii) Drop a column if not required.
+ALTER TABLE Student DROP COLUMN Country;
+
+-- 4(ix) Practice ADD (column), MODIFY (datatype), RENAME (attribute name) with WHERE.
+ALTER TABLE Student ADD (Email VARCHAR2(50));
+ALTER TABLE Student MODIFY (Address VARCHAR2(150));
+ALTER TABLE Student RENAME COLUMN Email TO Email_ID;
+UPDATE Student SET Email_ID = 'aarav.sen@mail.com' WHERE Enrollment_No = 2023001;
+SELECT Enrollment_No, Student_Name, Email_ID FROM Student WHERE Email_ID IS NOT NULL;
+
+-- 4(x) Use of the IN operator.
+SELECT * FROM Student WHERE Blood_Group IN ('O+','O-','B+');
+
+-- 4(xi) Use of the LIKE operator with wildcard characters (% and _).
+SELECT * FROM Student WHERE Student_Name LIKE 'R%';
+SELECT * FROM Student WHERE Student_Name LIKE '%a';
+SELECT * FROM Student WHERE Student_Name LIKE '%an%';
+SELECT * FROM Student WHERE CollegeRoll_No LIKE 'CS/23/00_';
+
+
+-- ######################################################################
+-- PROBLEM STATEMENT 5: Library (Member, Book, BorrowRecord) - Oracle 11g
+-- Q: Set up the schema and write queries 5(i) to 5(x).
+-- Assumption: Price column added to Book (needed for 5(iii)); 5(vi) is
+--             incomplete on the sheet, "Prof. Sharma" assumed as second name.
+-- ######################################################################
+DROP TABLE BorrowRecord   CASCADE CONSTRAINTS PURGE;
+DROP TABLE Book_Price_Log CASCADE CONSTRAINTS PURGE;
+DROP TABLE Book           CASCADE CONSTRAINTS PURGE;
+DROP TABLE Member         CASCADE CONSTRAINTS PURGE;
+
+CREATE TABLE Member (
+  MemberID NUMBER(5) PRIMARY KEY, MemberFname VARCHAR2(30) NOT NULL, MemberLname VARCHAR2(30),
+  Age NUMBER(3), EmailID VARCHAR2(60) UNIQUE, PhoneNo VARCHAR2(15), City VARCHAR2(30));
+
+CREATE TABLE Book (
+  BookID NUMBER(5) PRIMARY KEY, Title VARCHAR2(80) NOT NULL, Author VARCHAR2(50) NOT NULL,
+  Genre VARCHAR2(30), PublishedYear NUMBER(4), ISBN VARCHAR2(20) UNIQUE,
+  CopiesAvailable NUMBER(4) DEFAULT 0 CHECK (CopiesAvailable >= 0));
+ALTER TABLE Book ADD (Price NUMBER(8,2));
+
+CREATE TABLE BorrowRecord (
+  BorrowID NUMBER(6) PRIMARY KEY, MemberID NUMBER(5) NOT NULL, BookID NUMBER(5) NOT NULL,
+  BorrowDate DATE NOT NULL, ReturnDate DATE,
+  CONSTRAINT fk_br_member FOREIGN KEY (MemberID) REFERENCES Member (MemberID),
+  CONSTRAINT fk_br_book   FOREIGN KEY (BookID)   REFERENCES Book (BookID),
+  CONSTRAINT chk_br_dates CHECK (ReturnDate IS NULL OR ReturnDate >= BorrowDate));
+
+CREATE TABLE Book_Price_Log (BookID NUMBER(5), Old_Price NUMBER(8,2), New_Price NUMBER(8,2), Changed_On DATE);
+
+INSERT INTO Member VALUES (1,'Amit','Shah',34,'amit@mail.com','9811100001','Mumbai');
+INSERT INTO Member VALUES (2,'Priya','Das',28,'priya@mail.com','9811100002','Kolkata');
+INSERT INTO Member VALUES (3,'Rahul','Mehta',41,'rahul@mail.com','9811100003','Mumbai');
+INSERT INTO Member VALUES (4,'Prof. Suresh','Reddy',55,'reddy@mail.com','9811100004','Hyderabad');
+INSERT INTO Member VALUES (5,'Prof. Anita','Sharma',50,'sharma@mail.com','9811100005','Delhi');
+INSERT INTO Member VALUES (6,'Sneha','Roy',25,'sneha@mail.com','9811100006','Kolkata');
+INSERT INTO Member VALUES (7,'Karan','Malhotra',31,'karan@mail.com','9811100007','Chennai');
+INSERT INTO Member VALUES (8,'Neha','Gupta',29,'neha@mail.com','9811100008','Pune');
+
+INSERT INTO Book VALUES (1,'To Kill a Mockingbird','Harper Lee','Fiction',1960,'9780061120084',60,450);
+INSERT INTO Book VALUES (2,'Meditations','Marcus Aurelius','Philosophical',2006,'9780140449334',15,300);
+INSERT INTO Book VALUES (3,'The Republic','Plato','Philosophical',2007,'9780140455113',25,350);
+INSERT INTO Book VALUES (4,'The Hobbit','J.R.R. Tolkien','Fantasy',1937,'9780547928227',70,500);
+INSERT INTO Book VALUES (5,'Harry Potter and the Goblet of Fire','J.K. Rowling','Fantasy',2000,'9780747546245',12,550);
+INSERT INTO Book VALUES (6,'1984','George Orwell','Fiction',1949,'9780451524935',55,280);
+INSERT INTO Book VALUES (7,'Go Set a Watchman','Harper Lee','Fiction',2015,'9780062409850',18,400);
+INSERT INTO Book VALUES (8,'Thus Spoke Zarathustra','Friedrich Nietzsche','Philosophical',2005,'9780140441185',40,320);
+
+INSERT INTO BorrowRecord VALUES (1,1,1,DATE '2026-09-01',DATE '2026-09-15');
+INSERT INTO BorrowRecord VALUES (2,2,4,DATE '2026-09-03',DATE '2026-09-20');
+INSERT INTO BorrowRecord VALUES (3,3,6,DATE '2026-09-05',NULL);
+INSERT INTO BorrowRecord VALUES (4,4,2,DATE '2026-09-07',DATE '2026-09-21');
+INSERT INTO BorrowRecord VALUES (5,5,3,DATE '2026-09-10',NULL);
+INSERT INTO BorrowRecord VALUES (6,6,7,DATE '2026-09-12',DATE '2026-09-26');
+INSERT INTO BorrowRecord VALUES (7,7,5,DATE '2026-09-15',NULL);
+INSERT INTO BorrowRecord VALUES (8,2,1,DATE '2026-10-01',NULL);
+COMMIT;
+
+-- 5(i) List all the members' names with their phone numbers.
+SELECT MemberFname || ' ' || MemberLname AS Member_Name, PhoneNo FROM Member;
+
+-- 5(ii) List all the members of the city 'Mumbai' and 'Kolkata'.
+SELECT MemberID, MemberFname, MemberLname, City FROM Member WHERE City IN ('Mumbai','Kolkata');
+
+-- 5(iii) Write the trigger / SQL command to update the price of a book.
+UPDATE Book SET Price = 475 WHERE BookID = 1;
+
+CREATE OR REPLACE TRIGGER trg_book_price
+BEFORE UPDATE OF Price ON Book
+FOR EACH ROW
+BEGIN
+  IF :NEW.Price IS NULL OR :NEW.Price <= 0 THEN
+    RAISE_APPLICATION_ERROR(-20001, 'Book price must be greater than zero');
+  END IF;
+  INSERT INTO Book_Price_Log VALUES (:OLD.BookID, :OLD.Price, :NEW.Price, SYSDATE);
+END;
+/
+
+-- 5(iv) Write an SQL command for who has authored books under Genre 'Philosophical'.
+SELECT DISTINCT Author FROM Book WHERE Genre = 'Philosophical';
+
+-- 5(v) Name the details of the author who writes books on fiction.
+SELECT Author, Title, Genre, PublishedYear, ISBN FROM Book WHERE Genre = 'Fiction';
+
+-- 5(vi) Give the member ID of Prof. Reddy and Prof. (Sharma assumed).
+SELECT MemberID, MemberFname, MemberLname FROM Member
+WHERE MemberFname LIKE 'Prof.%' AND MemberLname IN ('Reddy','Sharma');
+
+-- 5(vii) Who is the borrower, which book was borrowed, with author's name and
+--        number of copies available for a specific book?
+SELECT m.MemberFname || ' ' || m.MemberLname AS Borrower, b.Title, b.Author, b.CopiesAvailable
+FROM BorrowRecord br JOIN Member m ON m.MemberID = br.MemberID
+                     JOIN Book b   ON b.BookID   = br.BookID
+WHERE b.Title = '&book_title';
+
+-- 5(viii) Name the book and ISBN which has more than 50 copies;
+--         get all information for books with less than 20 copies.
+SELECT Title, ISBN FROM Book WHERE CopiesAvailable > 50;
+SELECT * FROM Book WHERE CopiesAvailable < 20;
+
+-- 5(ix) Give the borrower record of those who read books authored by 'Harper Lee'.
+SELECT br.BorrowID, m.MemberFname || ' ' || m.MemberLname AS Borrower, b.Title, br.BorrowDate, br.ReturnDate
+FROM BorrowRecord br JOIN Member m ON m.MemberID = br.MemberID
+                     JOIN Book b   ON b.BookID   = br.BookID
+WHERE b.Author = 'Harper Lee';
+
+-- 5(x) Give the borrower record of those who read books on "Fantasy".
+SELECT br.BorrowID, m.MemberFname || ' ' || m.MemberLname AS Borrower, b.Title, br.BorrowDate, br.ReturnDate
+FROM BorrowRecord br JOIN Member m ON m.MemberID = br.MemberID
+                     JOIN Book b   ON b.BookID   = br.BookID
+WHERE b.Genre = 'Fantasy';
+
+
+-- ######################################################################
+-- PROBLEM STATEMENT 6(a): emp, dept, manages
+-- Q: Apply key and participation constraints. (i) Create tables. (ii) Alter
+--    structure. (iii) Apply PK, FK, UNIQUE, NOT NULL. (iv) Add records.
+--    (v) Create a view / materialized view using JOIN.
+-- Note: manages PK(did) = each dept has one manager (key constraint).
+--       Deferrable FK dept->manages = total participation of dept.
+-- ######################################################################
+DROP TABLE manages CASCADE CONSTRAINTS PURGE;
+DROP TABLE dept    CASCADE CONSTRAINTS PURGE;
+DROP TABLE emp     CASCADE CONSTRAINTS PURGE;
+
+-- 6(a)(i) + (iii) Create tables with constraints
+CREATE TABLE dept (
+  did NUMBER(4) CONSTRAINT pk_dept PRIMARY KEY,
+  dname VARCHAR2(30) CONSTRAINT nn_dname NOT NULL CONSTRAINT uq_dname UNIQUE,
+  location VARCHAR2(30) NOT NULL);
+
+CREATE TABLE emp (
+  eid NUMBER(5) CONSTRAINT pk_emp PRIMARY KEY,
+  ename VARCHAR2(40) NOT NULL,
+  sal NUMBER(10,2) CONSTRAINT chk_sal CHECK (sal > 0));
+
+CREATE TABLE manages (
+  did NUMBER(4) NOT NULL, eid NUMBER(5) NOT NULL, Mgr_Day DATE DEFAULT SYSDATE,
+  CONSTRAINT pk_manages PRIMARY KEY (did),
+  CONSTRAINT fk_mg_dept FOREIGN KEY (did) REFERENCES dept (did) ON DELETE CASCADE,
+  CONSTRAINT fk_mg_emp  FOREIGN KEY (eid) REFERENCES emp (eid));
+
+ALTER TABLE dept ADD CONSTRAINT fk_dept_manages
+  FOREIGN KEY (did) REFERENCES manages (did) DEFERRABLE INITIALLY DEFERRED;
+
+-- 6(a)(ii) Alter table structure if required
+ALTER TABLE emp ADD (email VARCHAR2(50));
+ALTER TABLE emp ADD CONSTRAINT uq_emp_email UNIQUE (email);
+ALTER TABLE emp MODIFY (ename VARCHAR2(60));
+ALTER TABLE emp DROP COLUMN email;
+
+-- 6(a)(iv) Add records
+INSERT INTO dept VALUES (10,'Finance','Kolkata');
+INSERT INTO dept VALUES (20,'Engineering','Bengaluru');
+INSERT INTO dept VALUES (30,'Marketing','Mumbai');
+INSERT INTO dept VALUES (40,'HR','Delhi');
+INSERT INTO emp VALUES (1,'Rahul Sen',85000);
+INSERT INTO emp VALUES (2,'Priya Nair',120000);
+INSERT INTO emp VALUES (3,'Amit Shah',95000);
+INSERT INTO emp VALUES (4,'Sneha Roy',70000);
+INSERT INTO emp VALUES (5,'Vikram Rao',60000);
+INSERT INTO manages VALUES (10,1,DATE '2024-04-01');
+INSERT INTO manages VALUES (20,2,DATE '2023-01-15');
+INSERT INTO manages VALUES (30,3,DATE '2025-06-10');
+INSERT INTO manages VALUES (40,2,DATE '2025-09-01');
+COMMIT;
+
+-- 6(a)(v) Create a view / materialized view using JOIN
+CREATE OR REPLACE VIEW v_dept_manager AS
+SELECT d.did, d.dname, d.location, e.eid, e.ename AS manager, e.sal, m.Mgr_Day
+FROM dept d JOIN manages m ON d.did = m.did JOIN emp e ON e.eid = m.eid;
+
+CREATE MATERIALIZED VIEW mv_dept_manager
+BUILD IMMEDIATE REFRESH COMPLETE ON DEMAND AS
+SELECT d.did, d.dname, d.location, e.eid, e.ename AS manager, e.sal, m.Mgr_Day
+FROM dept d JOIN manages m ON d.did = m.did JOIN emp e ON e.eid = m.eid;
+
+SELECT * FROM v_dept_manager;
+EXEC DBMS_MVIEW.REFRESH('MV_DEPT_MANAGER','C');
+
+
+-- ######################################################################
+-- PROBLEM STATEMENT 6(b): Suppliers, Parts, Catalog
+-- Q: (i) Create Suppliers with key constraints. (ii) Create Parts with key
+--    constraints. (iii) Populate with Amazon electronics data. (iv) MAX/MIN/AVG
+--    cost for a specific pid with supplier names. (v) Suppliers and parts by
+--    colour. (vi) Parts with supplier address. (vii) Cheapest supplier per part.
+-- (Prices are illustrative sample values in INR.)
+-- ######################################################################
+DROP TABLE Catalog   CASCADE CONSTRAINTS PURGE;
+DROP TABLE Parts     CASCADE CONSTRAINTS PURGE;
+DROP TABLE Suppliers CASCADE CONSTRAINTS PURGE;
+
+-- 6(b)(i) Create Suppliers
+CREATE TABLE Suppliers (
+  Sid VARCHAR2(5) PRIMARY KEY, Sname VARCHAR2(50) NOT NULL UNIQUE, Address VARCHAR2(100) NOT NULL);
+
+-- 6(b)(ii) Create Parts (and Catalog)
+CREATE TABLE Parts (pid VARCHAR2(6) PRIMARY KEY, Pname VARCHAR2(60) NOT NULL, color VARCHAR2(20));
+CREATE TABLE Catalog (
+  sid VARCHAR2(5) NOT NULL, pid VARCHAR2(6) NOT NULL, cost NUMBER(10,2) NOT NULL CHECK (cost > 0),
+  CONSTRAINT pk_catalog PRIMARY KEY (sid, pid),
+  CONSTRAINT fk_cat_sup  FOREIGN KEY (sid) REFERENCES Suppliers (Sid),
+  CONSTRAINT fk_cat_part FOREIGN KEY (pid) REFERENCES Parts (pid));
+
+-- 6(b)(iii) Populate with electronic goods data
+INSERT INTO Suppliers VALUES ('S1','Cloudtail India','Bengaluru, Karnataka');
+INSERT INTO Suppliers VALUES ('S2','Appario Retail','Gurugram, Haryana');
+INSERT INTO Suppliers VALUES ('S3','Darshita Electronics','Mumbai, Maharashtra');
+INSERT INTO Suppliers VALUES ('S4','RK World Infocom','Delhi');
+INSERT INTO Suppliers VALUES ('S5','Supercom Net','Kolkata, West Bengal');
+INSERT INTO Parts VALUES ('P101','Wireless Mouse','Black');
+INSERT INTO Parts VALUES ('P102','Bluetooth Speaker','Blue');
+INSERT INTO Parts VALUES ('P103','USB-C Cable','White');
+INSERT INTO Parts VALUES ('P104','Power Bank 20000mAh','Black');
+INSERT INTO Parts VALUES ('P105','Noise Cancelling Headphones','Red');
+INSERT INTO Parts VALUES ('P106','Smart Watch','Black');
+INSERT INTO Parts VALUES ('P107','Full HD Webcam','White');
+INSERT INTO Catalog VALUES ('S1','P101',599);
+INSERT INTO Catalog VALUES ('S2','P101',549);
+INSERT INTO Catalog VALUES ('S3','P101',649);
+INSERT INTO Catalog VALUES ('S1','P102',1999);
+INSERT INTO Catalog VALUES ('S4','P102',1799);
+INSERT INTO Catalog VALUES ('S2','P103',299);
+INSERT INTO Catalog VALUES ('S3','P103',249);
+INSERT INTO Catalog VALUES ('S5','P103',279);
+INSERT INTO Catalog VALUES ('S1','P104',1899);
+INSERT INTO Catalog VALUES ('S2','P104',1799);
+INSERT INTO Catalog VALUES ('S5','P104',1949);
+INSERT INTO Catalog VALUES ('S3','P105',3499);
+INSERT INTO Catalog VALUES ('S4','P105',3299);
+INSERT INTO Catalog VALUES ('S1','P106',2499);
+INSERT INTO Catalog VALUES ('S5','P106',2299);
+INSERT INTO Catalog VALUES ('S2','P107',1599);
+COMMIT;
+
+-- 6(b)(iv) MAX(cost), MIN(cost), AVG(cost) for a specific pid with supplier names
+SELECT c.pid, MAX(c.cost) AS Max_Cost, MIN(c.cost) AS Min_Cost, ROUND(AVG(c.cost),2) AS Avg_Cost
+FROM Catalog c WHERE c.pid = '&pid' GROUP BY c.pid;
+
+SELECT s.Sname, c.pid, c.cost,
+       MAX(c.cost) OVER (PARTITION BY c.pid) AS Max_Cost,
+       MIN(c.cost) OVER (PARTITION BY c.pid) AS Min_Cost,
+       ROUND(AVG(c.cost) OVER (PARTITION BY c.pid),2) AS Avg_Cost
+FROM Catalog c JOIN Suppliers s ON s.Sid = c.sid WHERE c.pid = '&pid';
+
+-- 6(b)(v) Get all suppliers and the parts they supply filtered by colour
+SELECT s.Sname, p.pid, p.Pname, p.color
+FROM Suppliers s JOIN Catalog c ON s.Sid = c.sid JOIN Parts p ON p.pid = c.pid
+WHERE p.color = '&colour';
+
+-- 6(b)(vi) List all parts with their suppliers' address for dispatch
+SELECT p.pid, p.Pname, s.Sname, s.Address, c.cost
+FROM Parts p JOIN Catalog c ON p.pid = c.pid JOIN Suppliers s ON s.Sid = c.sid
+ORDER BY p.pid;
+
+-- 6(b)(vii) Find the cheapest supplier for each part
+SELECT p.pid, p.Pname, s.Sname AS Cheapest_Supplier, c.cost
+FROM Catalog c JOIN Parts p ON p.pid = c.pid JOIN Suppliers s ON s.Sid = c.sid
+WHERE c.cost = (SELECT MIN(c2.cost) FROM Catalog c2 WHERE c2.pid = c.pid);
+
+
+-- ######################################################################
+-- PROBLEM STATEMENT 7: Professor, Projects, Graduate_student
+-- Q: (i) Create Professor, Project, Graduate. (ii) Create Supervises (one
+--    professor many projects, each project one professor). (iii) Participation
+--    constraints. (iv) Many graduates work on many projects. (v) Graduates on a
+--    project with hours. (vi) Professors and projects they supervise.
+--    (vii) Trigger to update project budget when a new graduate joins.
+-- ######################################################################
+DROP TABLE Works_On         CASCADE CONSTRAINTS PURGE;
+DROP TABLE Supervises       CASCADE CONSTRAINTS PURGE;
+DROP TABLE Graduate_Student CASCADE CONSTRAINTS PURGE;
+DROP TABLE Projects         CASCADE CONSTRAINTS PURGE;
+DROP TABLE Professor        CASCADE CONSTRAINTS PURGE;
+
+-- 7(i) Create Professor, Projects, Graduate_Student
+CREATE TABLE Professor (
+  SSN NUMBER(9) PRIMARY KEY, PName VARCHAR2(40) NOT NULL, Age NUMBER(3), Prof_Rank VARCHAR2(30));
+CREATE TABLE Projects (
+  Project_No NUMBER(5) PRIMARY KEY, Sponsor_Name VARCHAR2(50), Starting_Date DATE, Ending_Date DATE,
+  Budget NUMBER(12,2) CHECK (Budget >= 0),
+  CONSTRAINT chk_proj_dates CHECK (Ending_Date >= Starting_Date));
+CREATE TABLE Graduate_Student (
+  SSN NUMBER(9) PRIMARY KEY, GName VARCHAR2(40) NOT NULL, Age NUMBER(3), Degree VARCHAR2(20));
+
+-- 7(ii) + (iii) Supervises: PK(Project_No) = each project has ONE professor;
+--               a professor can appear in MANY rows = many projects
+CREATE TABLE Supervises (
+  Project_No NUMBER(5) PRIMARY KEY,
+  Prof_SSN   NUMBER(9) NOT NULL,
+  CONSTRAINT fk_sup_proj FOREIGN KEY (Project_No) REFERENCES Projects (Project_No),
+  CONSTRAINT fk_sup_prof FOREIGN KEY (Prof_SSN)   REFERENCES Professor (SSN));
+
+-- 7(iv) Many graduates can work on many projects (many-to-many table)
+CREATE TABLE Works_On (
+  Grad_SSN NUMBER(9) NOT NULL, Project_No NUMBER(5) NOT NULL, Hours_Worked NUMBER(5,1) DEFAULT 0,
+  CONSTRAINT pk_works_on PRIMARY KEY (Grad_SSN, Project_No),
+  CONSTRAINT fk_wo_grad FOREIGN KEY (Grad_SSN)   REFERENCES Graduate_Student (SSN),
+  CONSTRAINT fk_wo_proj FOREIGN KEY (Project_No) REFERENCES Projects (Project_No));
+
+INSERT INTO Professor VALUES (111111111,'Dr. R. Banerjee',52,'Professor');
+INSERT INTO Professor VALUES (222222222,'Dr. S. Mukherjee',45,'Associate Professor');
+INSERT INTO Professor VALUES (333333333,'Dr. A. Kapoor',38,'Assistant Professor');
+INSERT INTO Projects VALUES (1,'DST',DATE '2024-01-01',DATE '2025-12-31',2000000);
+INSERT INTO Projects VALUES (2,'DRDO',DATE '2024-06-01',DATE '2026-05-31',3500000);
+INSERT INTO Projects VALUES (3,'Infosys Foundation',DATE '2025-01-01',DATE '2026-12-31',1500000);
+INSERT INTO Projects VALUES (4,'AICTE',DATE '2025-07-01',DATE '2027-06-30',1000000);
+INSERT INTO Supervises VALUES (1,111111111);
+INSERT INTO Supervises VALUES (2,111111111);
+INSERT INTO Supervises VALUES (3,222222222);
+INSERT INTO Supervises VALUES (4,333333333);
+INSERT INTO Graduate_Student VALUES (900000001,'Aarav Sen',24,'M.Tech');
+INSERT INTO Graduate_Student VALUES (900000002,'Ishita Das',25,'PhD');
+INSERT INTO Graduate_Student VALUES (900000003,'Riya Ghosh',23,'M.Tech');
+INSERT INTO Graduate_Student VALUES (900000004,'Kabir Roy',26,'PhD');
+INSERT INTO Graduate_Student VALUES (900000005,'Meera Nair',24,'MS');
+INSERT INTO Works_On VALUES (900000001,1,120);
+INSERT INTO Works_On VALUES (900000001,2,80);
+INSERT INTO Works_On VALUES (900000002,1,150);
+INSERT INTO Works_On VALUES (900000003,3,100);
+INSERT INTO Works_On VALUES (900000004,2,200);
+INSERT INTO Works_On VALUES (900000004,4,60);
+INSERT INTO Works_On VALUES (900000005,3,90);
+COMMIT;
+
+-- 7(iv) Show many graduates on many projects
+SELECT g.GName, COUNT(w.Project_No) AS Projects_Count
+FROM Graduate_Student g JOIN Works_On w ON g.SSN = w.Grad_SSN
+GROUP BY g.GName HAVING COUNT(w.Project_No) > 1;
+
+SELECT w.Project_No, COUNT(w.Grad_SSN) AS Graduates_Count
+FROM Works_On w GROUP BY w.Project_No HAVING COUNT(w.Grad_SSN) > 1;
+
+-- 7(v) List all the graduates working on a project and their hours
+SELECT w.Project_No, g.GName, g.Degree, w.Hours_Worked
+FROM Works_On w JOIN Graduate_Student g ON g.SSN = w.Grad_SSN
+WHERE w.Project_No = &project_no;
+
+-- 7(vi) List all the professors and the projects they supervise
+SELECT pr.PName, pr.Prof_Rank, p.Project_No, p.Sponsor_Name, p.Budget
+FROM Supervises s JOIN Projects p   ON p.Project_No = s.Project_No
+                  JOIN Professor pr ON pr.SSN = s.Prof_SSN;
+
+-- 7(vii) Trigger: update project budget when a new graduate joins a project
+CREATE OR REPLACE TRIGGER trg_budget_on_join
+AFTER INSERT ON Works_On
+FOR EACH ROW
+BEGIN
+  UPDATE Projects SET Budget = Budget + 5000 WHERE Project_No = :NEW.Project_No;
+END;
+/
+INSERT INTO Works_On VALUES (900000005,1,40);   -- budget of project 1 becomes 2005000
+COMMIT;
+
+
+-- ######################################################################
+-- PROBLEM STATEMENT 8: Normalization UNF -> 5NF
+-- Q: Supplier ships parts for projects. Retrieve (a) suppliers, (b) part
+--    delivered, (c) project for which delivery was received, (d) units in that
+--    batch from a specific supplier city. Convert Supply_Detail_UNF to 5NF
+--    stating the steps, then apply the queries.
+-- ######################################################################
+DROP TABLE Delivery          CASCADE CONSTRAINTS PURGE;
+DROP TABLE Part              CASCADE CONSTRAINTS PURGE;
+DROP TABLE Project           CASCADE CONSTRAINTS PURGE;
+DROP TABLE Supplier          CASCADE CONSTRAINTS PURGE;
+DROP TABLE Supply_Detail_1NF CASCADE CONSTRAINTS PURGE;
+DROP TABLE Supply_Detail_UNF CASCADE CONSTRAINTS PURGE;
+
+-- STEP 0: UNF table (lists are positional: 1st part, 1st project, 1st qty belong together)
+CREATE TABLE Supply_Detail_UNF (
+  Supplier_ID NUMBER, Supplier_Name VARCHAR2(60), Supplier_City VARCHAR2(40),
+  Part_List VARCHAR2(4000), Project_List VARCHAR2(4000), Qty_List VARCHAR2(4000));
+INSERT INTO Supply_Detail_UNF VALUES (1,'Alpha Components','Kolkata','P1,P2,P3','PR1,PR1,PR2','100,50,75');
+INSERT INTO Supply_Detail_UNF VALUES (2,'Beta Electronics','Mumbai','P2,P4','PR2,PR3','200,40');
+INSERT INTO Supply_Detail_UNF VALUES (3,'Gamma Supplies','Kolkata','P1','PR3','60');
+COMMIT;
+
+-- STEP 1 (1NF): remove repeating groups - every cell atomic; one row per
+--               (supplier, part, project). Key = (Supplier_ID, Part_ID, Project_ID)
+CREATE TABLE Supply_Detail_1NF AS
+SELECT u.Supplier_ID, u.Supplier_Name, u.Supplier_City,
+       TRIM(REGEXP_SUBSTR(u.Part_List,    '[^,]+', 1, lv.n)) AS Part_ID,
+       TRIM(REGEXP_SUBSTR(u.Project_List, '[^,]+', 1, lv.n)) AS Project_ID,
+       TO_NUMBER(TRIM(REGEXP_SUBSTR(u.Qty_List, '[^,]+', 1, lv.n))) AS Qty
+FROM Supply_Detail_UNF u
+JOIN (SELECT LEVEL AS n FROM dual CONNECT BY LEVEL <= 100) lv
+  ON lv.n <= REGEXP_COUNT(u.Part_List, ',') + 1;
+ALTER TABLE Supply_Detail_1NF ADD CONSTRAINT pk_sd1nf PRIMARY KEY (Supplier_ID, Part_ID, Project_ID);
+
+-- STEP 2 (2NF): remove partial dependency. Supplier_ID -> Supplier_Name, Supplier_City
+--               depends on part of the key, so Supplier gets its own table; Part and
+--               Project master tables are created; Qty depends on the full key (Delivery).
+-- STEP 3 (3NF): no non-key attribute determines another non-key attribute -> no
+--               transitive dependency; already in 3NF.
+-- STEP 4 (BCNF): every determinant (Supplier_ID; the full delivery key) is a
+--               candidate key -> already in BCNF.
+-- STEP 5 (4NF): no independent multi-valued facts; part/project/qty are linked per
+--               delivery, so there is no non-trivial MVD -> already in 4NF.
+-- STEP 6 (5NF): Delivery is a genuine 3-way fact; splitting into Supplier-Part,
+--               Part-Project, Supplier-Project would create spurious tuples on join,
+--               so it cannot be decomposed losslessly -> already in 5NF.
+CREATE TABLE Supplier (
+  Supplier_ID NUMBER PRIMARY KEY, Supplier_Name VARCHAR2(60) NOT NULL, Supplier_City VARCHAR2(40) NOT NULL);
+CREATE TABLE Part    (Part_ID VARCHAR2(10) PRIMARY KEY);
+CREATE TABLE Project (Project_ID VARCHAR2(10) PRIMARY KEY);
+CREATE TABLE Delivery (
+  Supplier_ID NUMBER NOT NULL, Part_ID VARCHAR2(10) NOT NULL, Project_ID VARCHAR2(10) NOT NULL,
+  Qty NUMBER NOT NULL CHECK (Qty > 0),
+  CONSTRAINT pk_delivery PRIMARY KEY (Supplier_ID, Part_ID, Project_ID),
+  CONSTRAINT fk_del_sup  FOREIGN KEY (Supplier_ID) REFERENCES Supplier (Supplier_ID),
+  CONSTRAINT fk_del_part FOREIGN KEY (Part_ID)     REFERENCES Part (Part_ID),
+  CONSTRAINT fk_del_proj FOREIGN KEY (Project_ID)  REFERENCES Project (Project_ID));
+
+INSERT INTO Supplier SELECT DISTINCT Supplier_ID, Supplier_Name, Supplier_City FROM Supply_Detail_1NF;
+INSERT INTO Part     SELECT DISTINCT Part_ID    FROM Supply_Detail_1NF;
+INSERT INTO Project  SELECT DISTINCT Project_ID FROM Supply_Detail_1NF;
+INSERT INTO Delivery SELECT Supplier_ID, Part_ID, Project_ID, Qty FROM Supply_Detail_1NF;
+COMMIT;
+
+-- 8(a) Who the suppliers are
+SELECT Supplier_ID, Supplier_Name, Supplier_City FROM Supplier;
+
+-- 8(b) Which part was delivered
+SELECT s.Supplier_Name, d.Part_ID FROM Delivery d JOIN Supplier s ON s.Supplier_ID = d.Supplier_ID;
+
+-- 8(c) For which project the delivery was received
+SELECT s.Supplier_Name, d.Part_ID, d.Project_ID
+FROM Delivery d JOIN Supplier s ON s.Supplier_ID = d.Supplier_ID;
+
+-- 8(d) How many units came in that batch from a specific supplier city
+SELECT s.Supplier_City, s.Supplier_Name, d.Part_ID, d.Project_ID, d.Qty AS Units_Received
+FROM Delivery d JOIN Supplier s ON s.Supplier_ID = d.Supplier_ID
+WHERE s.Supplier_City = '&city';
+
+
+-- ######################################################################
+-- PROBLEM STATEMENT 9: Stored Procedures and Functions (PL/SQL)
+-- Q: Stored procedures and functions - IF, ELSE, ELSIF, LOOP, WHILE, FOR.
+--    Populate procedure variables with data fetched from a table using SQL.
+-- (Uses Employee table of Problem 2 and Student/Course/Enrolled of Problem 3.)
+-- ######################################################################
+SET SERVEROUTPUT ON
+
+-- 9.1 Procedure: SELECT INTO + IF / ELSIF / ELSE
+CREATE OR REPLACE PROCEDURE emp_category (p_empid IN Employee.EmpID%TYPE) IS
+  v_fname Employee.EmpFname%TYPE;
+  v_lname Employee.EmpLname%TYPE;
+  v_age   Employee.Age%TYPE;
+  v_cat   VARCHAR2(20);
+BEGIN
+  SELECT EmpFname, EmpLname, Age INTO v_fname, v_lname, v_age
+  FROM Employee WHERE EmpID = p_empid;
+  IF v_age < 30 THEN v_cat := 'Junior';
+  ELSIF v_age BETWEEN 30 AND 45 THEN v_cat := 'Mid-level';
+  ELSE v_cat := 'Senior';
+  END IF;
+  DBMS_OUTPUT.PUT_LINE(v_fname || ' ' || v_lname || ' (age ' || v_age || ') is ' || v_cat);
+EXCEPTION
+  WHEN NO_DATA_FOUND THEN DBMS_OUTPUT.PUT_LINE('No employee with ID ' || p_empid);
+END emp_category;
+/
+EXEC emp_category(102);
+
+-- 9.2 Function: FOR loop (factorial)
+CREATE OR REPLACE FUNCTION fact (n IN NUMBER) RETURN NUMBER IS
+  f NUMBER := 1;
+BEGIN
+  FOR i IN 1 .. n LOOP f := f * i; END LOOP;
+  RETURN f;
+END fact;
+/
+SELECT fact(5) FROM dual;
+
+-- 9.3 Function: WHILE loop (prime check)
+CREATE OR REPLACE FUNCTION is_prime (n IN NUMBER) RETURN VARCHAR2 IS
+  i NUMBER := 2;
+BEGIN
+  IF n < 2 THEN RETURN 'NO'; END IF;
+  WHILE i * i <= n LOOP
+    IF MOD(n, i) = 0 THEN RETURN 'NO'; END IF;
+    i := i + 1;
+  END LOOP;
+  RETURN 'YES';
+END is_prime;
+/
+SELECT is_prime(17), is_prime(21) FROM dual;
+
+-- 9.4 Procedure: basic LOOP with EXIT WHEN (Fibonacci)
+CREATE OR REPLACE PROCEDURE fibonacci (p_terms IN NUMBER) IS
+  a NUMBER := 0; b NUMBER := 1; c NUMBER; k NUMBER := 1; s VARCHAR2(500) := '';
+BEGIN
+  LOOP
+    EXIT WHEN k > p_terms;
+    s := s || a || ' ';
+    c := a + b; a := b; b := c; k := k + 1;
+  END LOOP;
+  DBMS_OUTPUT.PUT_LINE(s);
+END fibonacci;
+/
+EXEC fibonacci(10);
+
+-- 9.5 Procedure with OUT parameter (variable populated from table)
+CREATE OR REPLACE PROCEDURE emp_project_count (
+  p_fname IN Employee.EmpFname%TYPE, p_lname IN Employee.EmpLname%TYPE, p_count OUT NUMBER) IS
+BEGIN
+  SELECT COUNT(DISTINCT p.ProjectID) INTO p_count
+  FROM Employee e JOIN Project p ON e.EmpID = p.EmpID
+  WHERE e.EmpFname = p_fname AND e.EmpLname = p_lname;
+END emp_project_count;
+/
+DECLARE v_cnt NUMBER;
+BEGIN
+  emp_project_count('Steve','Rogers',v_cnt);
+  DBMS_OUTPUT.PUT_LINE('Projects handled: ' || v_cnt);
+END;
+/
+
+-- 9.6 Function: fee balance of a student (Problem 3 tables)
+CREATE OR REPLACE FUNCTION fee_balance (p_sid IN NUMBER) RETURN NUMBER IS
+  v_due NUMBER;
+BEGIN
+  SELECT NVL(SUM(c.fee - e.Fee_Paid),0) INTO v_due
+  FROM Enrolled e JOIN Course c ON c.cid = e.cid WHERE e.sid = p_sid;
+  RETURN v_due;
+END fee_balance;
+/
+SELECT sid, sname, fee_balance(sid) AS Balance_Due FROM Student;
+
+-- 9.7 CASE statement and FOR loop
+DECLARE
+  v_grade CHAR(1) := 'B'; v_text VARCHAR2(20);
+BEGIN
+  v_text := CASE v_grade WHEN 'A' THEN 'Excellent' WHEN 'B' THEN 'Good'
+                         WHEN 'C' THEN 'Average' ELSE 'Needs improvement' END;
+  DBMS_OUTPUT.PUT_LINE('Grade ' || v_grade || ' = ' || v_text);
+  FOR i IN 1 .. 10 LOOP DBMS_OUTPUT.PUT_LINE('7 x ' || i || ' = ' || 7 * i); END LOOP;
+END;
+/
+
+
+-- ######################################################################
+-- PROBLEM STATEMENT 10: Cursors and Triggers
+-- Q: Creating cursors, parameterized cursor, locks on cursors, advantages of
+--    cursors. Introduction to triggers - constraints vs triggers, creating,
+--    altering.
+-- (Uses Employee table of Problem 2 and Book table of Problem 5.)
+-- ######################################################################
+SET SERVEROUTPUT ON
+
+-- 10.1 Implicit cursor (SQL%FOUND, SQL%ROWCOUNT)
+BEGIN
+  UPDATE Employee SET Age = Age + 1 WHERE City = 'Kolkata';
+  IF SQL%FOUND THEN DBMS_OUTPUT.PUT_LINE(SQL%ROWCOUNT || ' row(s) updated');
+  ELSE DBMS_OUTPUT.PUT_LINE('No rows matched');
+  END IF;
+  ROLLBACK;
+END;
+/
+
+-- 10.2 Explicit cursor: OPEN, FETCH, CLOSE
+DECLARE
+  CURSOR c_emp IS SELECT EmpID, EmpFname, EmpLname, City FROM Employee ORDER BY EmpID;
+  v_id Employee.EmpID%TYPE; v_fn Employee.EmpFname%TYPE;
+  v_ln Employee.EmpLname%TYPE; v_city Employee.City%TYPE;
+BEGIN
+  OPEN c_emp;
+  LOOP
+    FETCH c_emp INTO v_id, v_fn, v_ln, v_city;
+    EXIT WHEN c_emp%NOTFOUND;
+    DBMS_OUTPUT.PUT_LINE(v_id || ' - ' || v_fn || ' ' || v_ln || ' (' || v_city || ')');
+  END LOOP;
+  DBMS_OUTPUT.PUT_LINE('Rows fetched: ' || c_emp%ROWCOUNT);
+  CLOSE c_emp;
+END;
+/
+
+-- 10.3 Cursor FOR loop (auto open/fetch/close)
+BEGIN
+  FOR r IN (SELECT EmpFname, EmpLname, Age FROM Employee WHERE Age > 40) LOOP
+    DBMS_OUTPUT.PUT_LINE(r.EmpFname || ' ' || r.EmpLname || ' - ' || r.Age);
+  END LOOP;
+END;
+/
+
+-- 10.4 Parameterized cursor
+DECLARE
+  CURSOR c_city (p_city Employee.City%TYPE, p_age Employee.Age%TYPE DEFAULT 0) IS
+    SELECT EmpFname, EmpLname, Age FROM Employee WHERE City = p_city AND Age >= p_age;
+BEGIN
+  FOR r IN c_city('Kolkata') LOOP
+    DBMS_OUTPUT.PUT_LINE('Kolkata: ' || r.EmpFname || ' ' || r.EmpLname);
+  END LOOP;
+  FOR r IN c_city('Mumbai', 40) LOOP
+    DBMS_OUTPUT.PUT_LINE('Mumbai 40+: ' || r.EmpFname || ' ' || r.EmpLname);
+  END LOOP;
+END;
+/
+
+-- 10.5 Locks on cursors: FOR UPDATE ... NOWAIT and WHERE CURRENT OF
+--      (rows stay locked until COMMIT / ROLLBACK)
+DECLARE
+  CURSOR c_book IS
+    SELECT BookID, Title, Price FROM Book WHERE Genre = 'Fiction' FOR UPDATE OF Price NOWAIT;
+BEGIN
+  FOR r IN c_book LOOP
+    UPDATE Book SET Price = ROUND(r.Price * 1.05, 2) WHERE CURRENT OF c_book;
+    DBMS_OUTPUT.PUT_LINE(r.Title || ': ' || r.Price || ' -> ' || ROUND(r.Price * 1.05, 2));
+  END LOOP;
+  COMMIT;
+EXCEPTION
+  WHEN OTHERS THEN ROLLBACK; DBMS_OUTPUT.PUT_LINE('Could not lock rows: ' || SQLERRM);
+END;
+/
+
+-- 10.6 REF CURSOR (cursor variable) returned by a function
+CREATE OR REPLACE FUNCTION emp_by_city (p_city IN VARCHAR2) RETURN SYS_REFCURSOR IS
+  rc SYS_REFCURSOR;
+BEGIN
+  OPEN rc FOR SELECT EmpID, EmpFname, EmpLname FROM Employee WHERE City = p_city;
+  RETURN rc;
+END;
+/
+DECLARE
+  rc SYS_REFCURSOR; v_id Employee.EmpID%TYPE; v_fn Employee.EmpFname%TYPE; v_ln Employee.EmpLname%TYPE;
+BEGIN
+  rc := emp_by_city('Delhi');
+  LOOP
+    FETCH rc INTO v_id, v_fn, v_ln;
+    EXIT WHEN rc%NOTFOUND;
+    DBMS_OUTPUT.PUT_LINE(v_id || ' ' || v_fn || ' ' || v_ln);
+  END LOOP;
+  CLOSE rc;
+END;
+/
+
+-- 10.7 Advantages of cursors:
+--  * row-by-row processing of a query result with IF / loops
+--  * moves SQL results into PL/SQL variables for calculations
+--  * parameterized cursors give reuse with different values
+--  * FOR UPDATE / WHERE CURRENT OF give row locking and safe updates
+--  * %FOUND, %NOTFOUND, %ROWCOUNT, %ISOPEN control the processing
+--  * rows are fetched on demand (BULK COLLECT ... LIMIT for speed)
+--  Drawback: slower than one set-based SQL statement; use only when needed.
+
+-- 10.8 Constraints vs Triggers:
+--  Constraint: declarative rule (PK, FK, UNIQUE, NOT NULL, CHECK), fast, checks all rows.
+--  Trigger   : PL/SQL block fired by an event (INSERT/UPDATE/DELETE), any logic,
+--              audit, derived values, cross-table rules; slower, fires only on the event.
+--  Use constraints when the rule can be declared; triggers when it cannot.
+
+-- 10.9 Creating triggers
+-- (a) BEFORE row-level trigger: validate data
+CREATE OR REPLACE TRIGGER trg_emp_validate
+BEFORE INSERT OR UPDATE OF Age ON Employee
+FOR EACH ROW
+BEGIN
+  IF :NEW.Age < 18 OR :NEW.Age > 65 THEN
+    RAISE_APPLICATION_ERROR(-20010, 'Employee age must be between 18 and 65');
+  END IF;
+  IF INSERTING AND :NEW.EmailID IS NULL THEN
+    :NEW.EmailID := LOWER(:NEW.EmpFname || '.' || :NEW.EmpLname) || '@corp.com';
+  END IF;
+END;
+/
+
+-- (b) AFTER row-level audit trigger (sequence used since 11g has no IDENTITY)
+CREATE TABLE Emp_Audit (
+  Audit_ID NUMBER PRIMARY KEY, Action VARCHAR2(10), EmpID NUMBER(5),
+  Old_Age NUMBER(3), New_Age NUMBER(3), Changed_By VARCHAR2(30), Changed_On DATE);
+CREATE SEQUENCE seq_emp_audit START WITH 1 INCREMENT BY 1;
+
+CREATE OR REPLACE TRIGGER trg_emp_audit
+AFTER INSERT OR UPDATE OR DELETE ON Employee
+FOR EACH ROW
+DECLARE v_action VARCHAR2(10);
+BEGIN
+  IF INSERTING THEN v_action := 'INSERT';
+  ELSIF UPDATING THEN v_action := 'UPDATE';
+  ELSE v_action := 'DELETE';
+  END IF;
+  INSERT INTO Emp_Audit
+  VALUES (seq_emp_audit.NEXTVAL, v_action, NVL(:NEW.EmpID, :OLD.EmpID),
+          :OLD.Age, :NEW.Age, USER, SYSDATE);
+END;
+/
+UPDATE Employee SET Age = 53 WHERE EmpID = 102;   -- logged in Emp_Audit
+UPDATE Employee SET Age = 10 WHERE EmpID = 102;   -- ORA-20010 from trg_emp_validate
+SELECT * FROM Emp_Audit;
+ROLLBACK;
+
+-- 10.10 Altering triggers (body changes use CREATE OR REPLACE; ALTER enables,
+--       disables, renames or recompiles)
+ALTER TRIGGER trg_emp_audit DISABLE;
+ALTER TRIGGER trg_emp_audit ENABLE;
+ALTER TABLE Employee DISABLE ALL TRIGGERS;
+ALTER TABLE Employee ENABLE ALL TRIGGERS;
+ALTER TRIGGER trg_emp_validate RENAME TO trg_emp_check;
+ALTER TRIGGER trg_emp_check COMPILE;
+
+CREATE OR REPLACE TRIGGER trg_emp_check
+BEFORE INSERT OR UPDATE OF Age ON Employee
+FOR EACH ROW
+BEGIN
+  IF :NEW.Age < 21 OR :NEW.Age > 65 THEN
+    RAISE_APPLICATION_ERROR(-20010, 'Employee age must be between 21 and 65');
+  END IF;
+END;
+/
+SELECT trigger_name, trigger_type, triggering_event, status
+FROM user_triggers WHERE table_name = 'EMPLOYEE';
+DROP TRIGGER trg_emp_check;
+
+
+-- ######################################################################
+-- DAY 11: Examination - no new problem statement (revise Problems 1 to 10).
+-- ######################################################################
