@@ -67,11 +67,11 @@ if [ "$TMP_JSON" = "null" ] || [ -z "$TMP_JSON" ]; then
 fi
 
 if command -v node >/dev/null 2>&1; then
-  node -e "process.stdout.write(JSON.parse(process.argv[1]))" "$TMP_JSON" > "${OUTFILE}"
+  printf "%s" "$TMP_JSON" | node -e "let b='';process.stdin.on('data',d=>b+=d);process.stdin.on('end',()=>process.stdout.write(JSON.parse(b)))" > "${OUTFILE}"
 elif command -v python3 >/dev/null 2>&1; then
-  python3 -c "import sys, json; sys.stdout.write(json.loads(sys.argv[1]))" "$TMP_JSON" > "${OUTFILE}"
+  printf "%s" "$TMP_JSON" | python3 -c "import sys, json; sys.stdout.write(json.load(sys.stdin))" > "${OUTFILE}"
 elif command -v jq >/dev/null 2>&1; then
-  echo "$TMP_JSON" | jq -r '.' > "${OUTFILE}"
+  printf "%s" "$TMP_JSON" | jq -r '.' > "${OUTFILE}"
 else
   printf '%b' "${TMP_JSON:1:-1}" > "${OUTFILE}"
 fi

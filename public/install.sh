@@ -13,7 +13,12 @@ echo "       LiveNotes CLI Installer         "
 echo "======================================="
 echo ""
 
-curl -fsSL "${SOURCE_URL}" -o "${TARGET_FILE}"
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" 2>/dev/null && pwd)"
+if [ -f "${SCRIPT_DIR}/livenotes" ]; then
+  cp "${SCRIPT_DIR}/livenotes" "${TARGET_FILE}"
+else
+  curl -fsSL "${SOURCE_URL}" -o "${TARGET_FILE}"
+fi
 chmod +x "${TARGET_FILE}"
 
 echo "[OK] LiveNotes CLI installed successfully to ${TARGET_FILE}"

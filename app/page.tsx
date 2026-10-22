@@ -55,7 +55,7 @@ const LiveNotesHero = () => {
     const [roomInput, setRoomInput] = useState('');
     const [isFocused, setIsFocused] = useState(false);
     const [githubStars, setGithubStars] = useState<number | null>(null);
-    const [pkgManager, setPkgManager] = useState<'npm' | 'pnpm' | 'yarn' | 'bun' | 'curl'>('npm');
+    const [pkgManager, setPkgManager] = useState<'npm' | 'pnpm' | 'yarn' | 'bun' | 'curl' | 'zero'>('npm');
     const [isSnippetCopied, setIsSnippetCopied] = useState(false);
     const inputRef = useRef<HTMLInputElement>(null);
 
@@ -135,12 +135,12 @@ const LiveNotesHero = () => {
         {
             id: 'curl' as const,
             name: 'curl',
-            command: 'curl -fsSL https://livenotes.app/install.sh | bash',
+            command: 'curl -fsSL https://livenotes.vercel.app/install.sh | bash',
             display: (
                 <>
                     <span className="text-[#2EFF85] font-semibold">curl</span>{' '}
                     <span className="text-[#00E5FF]">-fsSL</span>{' '}
-                    <span className="text-[#00E5FF]">https://livenotes.app/install.sh</span>{' '}
+                    <span className="text-[#00E5FF]">https://livenotes.vercel.app/install.sh</span>{' '}
                     <span className="text-zinc-400">|</span>{' '}
                     <span className="text-[#2EFF85]">bash</span>
                 </>
@@ -149,12 +149,48 @@ const LiveNotesHero = () => {
                 <span className="font-mono font-bold text-[11px] leading-none">&gt;_</span>
             ),
         },
+        {
+            id: 'zero' as const,
+            name: (
+                <>
+                    <span className="hidden sm:inline">Zero Dependencies</span>
+                    <span className="sm:hidden">Zero-deps</span>
+                </>
+            ),
+            command: 'irm https://livenotes.vercel.app/install.ps1 | iex\nlivenotes -r <room_name>',
+            display: (
+                <div className="flex flex-col gap-1 py-0.5 text-left font-mono">
+                    <div className="whitespace-nowrap select-all">
+                        <span className="text-[#2EFF85] font-semibold">irm</span>{' '}
+                        <span className="text-[#00E5FF]">https://livenotes.vercel.app/install.ps1</span>{' '}
+                        <span className="text-zinc-400">|</span>{' '}
+                        <span className="text-[#2EFF85]">iex</span>
+                    </div>
+                    <div className="whitespace-nowrap select-all">
+                        <span className="text-[#2EFF85] font-semibold">livenotes</span>{' '}
+                        <span className="text-[#00E5FF]">-r</span>{' '}
+                        <span className="text-[#00E5FF]">&lt;room_name&gt;</span>
+                    </div>
+                </div>
+            ),
+            icon: (
+                <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.8" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M4 5h16L4 19h16" />
+                </svg>
+            ),
+        },
     ];
 
     const currentPm = packageManagers.find((p) => p.id === pkgManager) || packageManagers[0];
 
     const handleCopySnippet = () => {
-        navigator.clipboard.writeText("Comming Soon, Stay Tuned!");
+        if (pkgManager === 'zero') {
+            navigator.clipboard.writeText(
+                "irm https://livenotes.vercel.app/install.ps1 | iex\nlivenotes -r <room_name>"
+            );
+        } else {
+            navigator.clipboard.writeText("Comming Soon, Stay Tuned!");
+        }
         setIsSnippetCopied(true);
         setTimeout(() => setIsSnippetCopied(false), 2000);
     };
@@ -370,10 +406,10 @@ const LiveNotesHero = () => {
                             <div className="border-b border-white/5 my-2.5 sm:my-3" />
 
                             {/* Command snippet + Copy button */}
-                            <div className="bg-[#0A0A0C] border border-white/5 rounded-xl px-3 sm:px-4 py-1.5 sm:py-2.5 flex items-center justify-between gap-2 sm:gap-3 overflow-x-auto no-scrollbar">
-                                <code className="font-mono text-[clamp(0.75rem,2vw,0.875rem)] whitespace-nowrap select-all">
+                            <div className="bg-[#0A0A0C] border border-white/5 rounded-xl px-3 sm:px-4 py-2 sm:py-2.5 flex items-center justify-between gap-2 sm:gap-3 overflow-x-auto no-scrollbar">
+                                <div className="font-mono text-[clamp(0.75rem,2vw,0.875rem)] whitespace-nowrap select-all flex-1 min-w-0">
                                     {currentPm.display}
-                                </code>
+                                </div>
                                 <button
                                     onClick={handleCopySnippet}
                                     className="shrink-0 flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-xl bg-zinc-800/80 hover:bg-zinc-700 text-zinc-300 hover:text-white border border-white/10 text-[clamp(0.7rem,1.8vw,0.75rem)] font-medium transition-all active:scale-95 ml-1 sm:ml-2 cursor-pointer"
