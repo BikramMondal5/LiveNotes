@@ -55,7 +55,7 @@ const LiveNotesHero = () => {
     const [roomInput, setRoomInput] = useState('');
     const [isFocused, setIsFocused] = useState(false);
     const [githubStars, setGithubStars] = useState<number | null>(null);
-    const [pkgManager, setPkgManager] = useState<'npm' | 'pnpm' | 'yarn' | 'bun' | 'curl' | 'zero'>('npm');
+    const [pkgManager, setPkgManager] = useState<'npm' | 'pnpm' | 'yarn' | 'bun' | 'curl'>('npm');
     const [isSnippetCopied, setIsSnippetCopied] = useState(false);
     const inputRef = useRef<HTMLInputElement>(null);
 
@@ -138,28 +138,6 @@ const LiveNotesHero = () => {
             command: 'curl.exe https://livenotes.vercel.app/install | cmd',
             display: (
                 <>
-                    <span className="text-[#2EFF85] font-semibold">curl</span>{' '}
-                    <span className="text-[#00E5FF]">-fsSL</span>{' '}
-                    <span className="text-[#00E5FF]">https://livenotes.vercel.app/install.sh</span>{' '}
-                    <span className="text-zinc-400">|</span>{' '}
-                    <span className="text-[#2EFF85]">bash</span>
-                </>
-            ),
-            icon: (
-                <span className="font-mono font-bold text-[11px] leading-none">&gt;_</span>
-            ),
-        },
-        {
-            id: 'zero' as const,
-            name: (
-                <>
-                    <span className="hidden sm:inline">Zero Dependencies</span>
-                    <span className="sm:hidden">Zero-deps</span>
-                </>
-            ),
-            command: 'curl.exe https://livenotes.vercel.app/install | cmd',
-            display: (
-                <>
                     <span className="text-[#2EFF85] font-semibold">curl.exe</span>{' '}
                     <span className="text-[#00E5FF]">https://livenotes.vercel.app/install</span>{' '}
                     <span className="text-zinc-400">|</span>{' '}
@@ -167,9 +145,7 @@ const LiveNotesHero = () => {
                 </>
             ),
             icon: (
-                <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.8" strokeLinecap="round" strokeLinejoin="round">
-                    <path d="M4 5h16L4 19h16" />
-                </svg>
+                <span className="font-mono font-bold text-[11px] leading-none">&gt;_</span>
             ),
         },
     ];
@@ -177,7 +153,7 @@ const LiveNotesHero = () => {
     const currentPm = packageManagers.find((p) => p.id === pkgManager) || packageManagers[0];
 
     const handleCopySnippet = () => {
-        if (pkgManager === 'zero' || pkgManager === 'curl') {
+        if (pkgManager === 'curl') {
             navigator.clipboard.writeText(currentPm.command);
         } else {
             navigator.clipboard.writeText("Comming Soon, Stay Tuned!");
