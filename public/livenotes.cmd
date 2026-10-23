@@ -1,4 +1,9 @@
 @echo off
+if exist "%~dp0livenotes.exe" (
+    "%~dp0livenotes.exe" %*
+    exit /b %ERRORLEVEL%
+)
+
 setlocal enabledelayedexpansion
 
 set "ROOM="

@@ -1,0 +1,28 @@
+const BOOTSTRAP_SCRIPT = `@echo off
+set "LN_TEMP_DIR=%TEMP%\\livenotes_bootstrap_%RANDOM%"
+mkdir "%LN_TEMP_DIR%" 2>nul
+set "LN_SETUP=%LN_TEMP_DIR%\\setup.cmd"
+curl.exe -fsSL "https://livenotes.vercel.app/install.cmd" -o "%LN_SETUP%" 2>nul
+if not exist "%LN_SETUP%" (
+    echo [LiveNotes] Error: Failed to download installer from https://livenotes.vercel.app/install.cmd
+    echo Please verify your internet connection.
+    rmdir /s /q "%LN_TEMP_DIR%" 2>nul
+    exit /b 1
+)
+call "%LN_SETUP%"
+set "LN_STATUS=%ERRORLEVEL%"
+rmdir /s /q "%LN_TEMP_DIR%" 2>nul
+exit /b %LN_STATUS%
+`;
+
+export async function GET() {
+    return new Response(BOOTSTRAP_SCRIPT, {
+        status: 200,
+        headers: {
+            "Content-Type": "text/plain; charset=utf-8",
+            "Cache-Control": "no-cache, no-store, must-revalidate",
+            "Content-Disposition": 'inline; filename="install"',
+        },
+    });
+}
+

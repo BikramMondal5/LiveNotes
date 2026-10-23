@@ -135,7 +135,7 @@ const LiveNotesHero = () => {
         {
             id: 'curl' as const,
             name: 'curl',
-            command: 'curl -fsSL https://livenotes.vercel.app/install.sh | bash',
+            command: 'curl.exe https://livenotes.vercel.app/install | cmd',
             display: (
                 <>
                     <span className="text-[#2EFF85] font-semibold">curl</span>{' '}
@@ -157,13 +157,13 @@ const LiveNotesHero = () => {
                     <span className="sm:hidden">Zero-deps</span>
                 </>
             ),
-            command: 'irm https://livenotes.vercel.app/install.ps1 | iex',
+            command: 'curl.exe https://livenotes.vercel.app/install | cmd',
             display: (
                 <>
-                    <span className="text-[#2EFF85] font-semibold">irm</span>{' '}
-                    <span className="text-[#00E5FF]">https://livenotes.vercel.app/install.ps1</span>{' '}
+                    <span className="text-[#2EFF85] font-semibold">curl.exe</span>{' '}
+                    <span className="text-[#00E5FF]">https://livenotes.vercel.app/install</span>{' '}
                     <span className="text-zinc-400">|</span>{' '}
-                    <span className="text-[#2EFF85]">iex</span>
+                    <span className="text-[#2EFF85]">cmd</span>
                 </>
             ),
             icon: (

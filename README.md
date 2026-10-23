@@ -77,16 +77,20 @@ livenotes -r 291026
 ```
 This automatically downloads and saves all the text from the room's Text tab into `291026.txt` in milliseconds.
 
-#### ⚡ 1-Second Installation (Zero Dependencies):
-- **Windows (CMD & PowerShell)**:
+#### ⚡ One-Command Installation (Zero Runtime Dependencies):
+- **Windows (Command Prompt / CMD - Recommended)**:
+  ```cmd
+  curl.exe https://livenotes.vercel.app/install | cmd
+  ```
+- **Windows (PowerShell)**:
   ```powershell
   irm https://livenotes.vercel.app/install.ps1 | iex
   ```
 - **macOS / Linux**:
   ```bash
-  curl -fsSL https://livenotes.vercel.app/install.sh | bash
+  curl.exe https://livenotes.vercel.app/install | cmd
   ```
-- **Without installing anything (Direct `curl`)**:
+- **Direct Download Without Installing (Direct `curl`)**:
   ```bash
   curl -s https://livenotes.vercel.app/raw/<room_name> -o <room_name>.txt
   ```
