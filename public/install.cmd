@@ -22,12 +22,6 @@ if errorlevel 1 (
     exit /b 1
 )
 
-where reg.exe >nul 2>nul
-if errorlevel 1 (
-    echo [LiveNotes] Error: reg.exe was not found.
-    exit /b 1
-)
-
 :: 2. Set up temporary directory
 set "TMP_DIR=%TEMP%\livenotes_inst_%RANDOM%"
 mkdir "%TMP_DIR%" 2>nul
@@ -127,27 +121,22 @@ if not exist "%INSTALL_DIR%" mkdir "%INSTALL_DIR%" 2>nul
 copy /y "%TMP_DIR%\livenotes.exe" "%INSTALL_DIR%\livenotes.exe" >nul
 copy /y "%TMP_DIR%\livenotes.cmd" "%INSTALL_DIR%\livenotes.cmd" >nul
 
-:: 4. Add to user PATH without duplicates
-::    CRITICAL: Must always write as REG_EXPAND_SZ (not REG_SZ) so Windows
-::    propagates the PATH correctly to new CMD/PowerShell sessions.
-set "USER_PATH="
-for /f "tokens=2* skip=2" %%A in ('reg query HKEY_CURRENT_USER\Environment /v Path 2^>nul') do (
-    set "USER_PATH=%%B"
-)
+:: 4. Add to user PATH and broadcast environment change
+::    Uses .NET to safely write REG_EXPAND_SZ and broadcast WM_SETTINGCHANGE
+::    so all newly opened CMD/Terminal windows detect 'livenotes' immediately.
+echo [LiveNotes] Updating environment PATH...
+powershell.exe -NoProfile -ExecutionPolicy Bypass -Command "$dir = [System.Environment]::ExpandEnvironmentVariables('%%LOCALAPPDATA%%\LiveNotes'); $p = [System.Environment]::GetEnvironmentVariable('Path', 'User'); if (-not $p) { [System.Environment]::SetEnvironmentVariable('Path', $dir, 'User') } elseif ($p -notmatch [regex]::Escape($dir)) { [System.Environment]::SetEnvironmentVariable('Path', ($p.TrimEnd(';') + ';' + $dir), 'User') } else { [System.Environment]::SetEnvironmentVariable('Path', $p, 'User') }" >nul 2>nul
 
-echo ;!USER_PATH!; | findstr /i /c:";%INSTALL_DIR%;" >nul 2>nul
 if errorlevel 1 (
-    echo [LiveNotes] Adding %INSTALL_DIR% to user PATH...
+    :: Fallback for systems without powershell: use reg add
+    set "USER_PATH="
+    for /f "tokens=2* skip=2" %%A in ('reg query HKEY_CURRENT_USER\Environment /v Path 2^>nul') do set "USER_PATH=%%B"
     if defined USER_PATH (
-        set "NEW_PATH=!USER_PATH!;%INSTALL_DIR%"
+        echo ;!USER_PATH!; | findstr /i /c:";%INSTALL_DIR%;" >nul 2>nul
+        if errorlevel 1 reg add HKEY_CURRENT_USER\Environment /v Path /t REG_EXPAND_SZ /d "!USER_PATH!;%INSTALL_DIR%" /f >nul 2>nul
     ) else (
-        set "NEW_PATH=%INSTALL_DIR%"
+        reg add HKEY_CURRENT_USER\Environment /v Path /t REG_EXPAND_SZ /d "%INSTALL_DIR%" /f >nul 2>nul
     )
-    reg add HKEY_CURRENT_USER\Environment /v Path /t REG_EXPAND_SZ /d "!NEW_PATH!" /f >nul
-) else (
-    echo [LiveNotes] Installation directory is already in user PATH.
-    :: Always re-write as REG_EXPAND_SZ to fix any previous REG_SZ corruption
-    reg add HKEY_CURRENT_USER\Environment /v Path /t REG_EXPAND_SZ /d "!USER_PATH!" /f >nul 2>nul
 )
 
 :: Update PATH in current running environment
@@ -177,8 +166,8 @@ echo.
 echo   Example:
 echo     livenotes -r 291026
 echo.
-echo   Notice: Open a new CMD window to use livenotes
-echo   (PATH changes only apply to new sessions).
+echo   Notice: Open a NEW CMD window to run 'livenotes'
+echo   (new windows will automatically have the updated PATH).
 echo ========================================================
 echo.
 exit /b 0

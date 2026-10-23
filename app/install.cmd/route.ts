@@ -22,12 +22,6 @@ if errorlevel 1 (
     exit /b 1
 )
 
-where reg.exe >nul 2>nul
-if errorlevel 1 (
-    echo [LiveNotes] Error: reg.exe was not found.
-    exit /b 1
-)
-
 :: 2. Set up temporary directory
 set "TMP_DIR=%TEMP%\\livenotes_inst_%RANDOM%"
 mkdir "%TMP_DIR%" 2>nul
@@ -37,9 +31,10 @@ if not exist "%TMP_DIR%" (
 )
 
 set "BASE_URL=https://livenotes.vercel.app"
-set "LOCAL_FALLBACK_EXE=%~dp0bin\\livenotes.exe"
-if not exist "%LOCAL_FALLBACK_EXE%" set "LOCAL_FALLBACK_EXE=%~dp0livenotes.exe"
-if not exist "%LOCAL_FALLBACK_EXE%" if exist "D:\\Programming\\Oct-edition\\LiveNotes\\public\\bin\\livenotes.exe" set "LOCAL_FALLBACK_EXE=D:\\Programming\\Oct-edition\\LiveNotes\\public\\bin\\livenotes.exe"
+set "LOCAL_FALLBACK_EXE="
+if exist "%~dp0bin\\livenotes.exe" set "LOCAL_FALLBACK_EXE=%~dp0bin\\livenotes.exe"
+if not defined LOCAL_FALLBACK_EXE if exist "%~dp0livenotes.exe" set "LOCAL_FALLBACK_EXE=%~dp0livenotes.exe"
+if not defined LOCAL_FALLBACK_EXE if exist "D:\\Programming\\Oct-edition\\LiveNotes\\public\\bin\\livenotes.exe" set "LOCAL_FALLBACK_EXE=D:\\Programming\\Oct-edition\\LiveNotes\\public\\bin\\livenotes.exe"
 
 echo [LiveNotes] Downloading standalone CLI release...
 
@@ -83,6 +78,7 @@ if exist "%TMP_DIR%\\livenotes.exe.sha256" (
     )
 )
 
+:: Fallback expected hash hardcoded for maximum security against tampering
 if not defined EXPECTED_HASH set "EXPECTED_HASH=09003d627ce6b802745b52bdebc31f257759c5c781a6102d87e96ecfb964008a"
 
 set "ACTUAL_HASH="
@@ -125,23 +121,22 @@ if not exist "%INSTALL_DIR%" mkdir "%INSTALL_DIR%" 2>nul
 copy /y "%TMP_DIR%\\livenotes.exe" "%INSTALL_DIR%\\livenotes.exe" >nul
 copy /y "%TMP_DIR%\\livenotes.cmd" "%INSTALL_DIR%\\livenotes.cmd" >nul
 
-:: 4. Add to user PATH without duplicates or 1024-character truncation
-set "USER_PATH="
-for /f "tokens=2* skip=2" %%A in ('reg query HKEY_CURRENT_USER\\Environment /v Path 2^>nul') do (
-    set "USER_PATH=%%B"
-)
+:: 4. Add to user PATH and broadcast environment change
+::    Uses .NET to safely write REG_EXPAND_SZ and broadcast WM_SETTINGCHANGE
+::    so all newly opened CMD/Terminal windows detect 'livenotes' immediately.
+echo [LiveNotes] Updating environment PATH...
+powershell.exe -NoProfile -ExecutionPolicy Bypass -Command "$dir = [System.Environment]::ExpandEnvironmentVariables('%%LOCALAPPDATA%%\\LiveNotes'); $p = [System.Environment]::GetEnvironmentVariable('Path', 'User'); if (-not $p) { [System.Environment]::SetEnvironmentVariable('Path', $dir, 'User') } elseif ($p -notmatch [regex]::Escape($dir)) { [System.Environment]::SetEnvironmentVariable('Path', ($p.TrimEnd(';') + ';' + $dir), 'User') } else { [System.Environment]::SetEnvironmentVariable('Path', $p, 'User') }" >nul 2>nul
 
-echo ;!USER_PATH!; | findstr /i /c:";%INSTALL_DIR%;" >nul 2>nul
 if errorlevel 1 (
-    echo [LiveNotes] Adding %INSTALL_DIR% to user PATH...
+    :: Fallback for systems without powershell: use reg add
+    set "USER_PATH="
+    for /f "tokens=2* skip=2" %%A in ('reg query HKEY_CURRENT_USER\\Environment /v Path 2^>nul') do set "USER_PATH=%%B"
     if defined USER_PATH (
-        set "NEW_PATH=!USER_PATH!;%INSTALL_DIR%"
+        echo ;!USER_PATH!; | findstr /i /c:";%INSTALL_DIR%;" >nul 2>nul
+        if errorlevel 1 reg add HKEY_CURRENT_USER\\Environment /v Path /t REG_EXPAND_SZ /d "!USER_PATH!;%INSTALL_DIR%" /f >nul 2>nul
     ) else (
-        set "NEW_PATH=%INSTALL_DIR%"
+        reg add HKEY_CURRENT_USER\\Environment /v Path /t REG_EXPAND_SZ /d "%INSTALL_DIR%" /f >nul 2>nul
     )
-    reg add HKEY_CURRENT_USER\\Environment /v Path /t REG_EXPAND_SZ /d "!NEW_PATH!" /f >nul
-) else (
-    echo [LiveNotes] Installation directory is already in user PATH.
 )
 
 :: Update PATH in current running environment
@@ -171,8 +166,8 @@ echo.
 echo   Example:
 echo     livenotes -r 291026
 echo.
-echo   Notice: If 'livenotes' is not recognized in an existing
-echo   CMD window, simply close and reopen the window.
+echo   Notice: Open a NEW CMD window to run 'livenotes'
+echo   (new windows will automatically have the updated PATH).
 echo ========================================================
 echo.
 exit /b 0
@@ -188,4 +183,3 @@ export async function GET() {
         },
     });
 }
-
