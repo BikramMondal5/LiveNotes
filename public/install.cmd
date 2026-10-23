@@ -127,7 +127,9 @@ if not exist "%INSTALL_DIR%" mkdir "%INSTALL_DIR%" 2>nul
 copy /y "%TMP_DIR%\livenotes.exe" "%INSTALL_DIR%\livenotes.exe" >nul
 copy /y "%TMP_DIR%\livenotes.cmd" "%INSTALL_DIR%\livenotes.cmd" >nul
 
-:: 4. Add to user PATH without duplicates or 1024-character truncation
+:: 4. Add to user PATH without duplicates
+::    CRITICAL: Must always write as REG_EXPAND_SZ (not REG_SZ) so Windows
+::    propagates the PATH correctly to new CMD/PowerShell sessions.
 set "USER_PATH="
 for /f "tokens=2* skip=2" %%A in ('reg query HKEY_CURRENT_USER\Environment /v Path 2^>nul') do (
     set "USER_PATH=%%B"
@@ -144,6 +146,8 @@ if errorlevel 1 (
     reg add HKEY_CURRENT_USER\Environment /v Path /t REG_EXPAND_SZ /d "!NEW_PATH!" /f >nul
 ) else (
     echo [LiveNotes] Installation directory is already in user PATH.
+    :: Always re-write as REG_EXPAND_SZ to fix any previous REG_SZ corruption
+    reg add HKEY_CURRENT_USER\Environment /v Path /t REG_EXPAND_SZ /d "!USER_PATH!" /f >nul 2>nul
 )
 
 :: Update PATH in current running environment
@@ -173,8 +177,8 @@ echo.
 echo   Example:
 echo     livenotes -r 291026
 echo.
-echo   Notice: If 'livenotes' is not recognized in an existing
-echo   CMD window, simply close and reopen the window.
+echo   Notice: Open a new CMD window to use livenotes
+echo   (PATH changes only apply to new sessions).
 echo ========================================================
 echo.
 exit /b 0
